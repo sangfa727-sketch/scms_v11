@@ -40,7 +40,7 @@ const SCMS_CONFIG = {
   // OAuth 2.0 Web Client ID from Google Cloud Console (APIs & Services →
   // Credentials → OAuth 2.0 Client IDs → Web application). Must match the
   // GOOGLE_CLIENT_ID env var set on the `google-login` Supabase Edge Function.
-  GOOGLE_CLIENT_ID: 'PASTE_YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com',
+  GOOGLE_CLIENT_ID: '71086878167-t6q46hrv5j5n46h9nfmeuk8sdoftb5lt.apps.googleusercontent.com',
 
   // Edge Function that verifies the Google ID token server-side and issues a
   // session (same shape as rpc_teacher_web_login's response).
