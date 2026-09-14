@@ -1,0 +1,403 @@
+/**
+ * SCMS v11 — 02_api.js
+ * All data operations. Read = Supabase anon. Write = n8n TWA webhook.
+ * Every call automatically includes school_id + teacher_id + platform from APP context.
+ */
+
+'use strict';
+
+const API = {
+
+  // ─── BOOTSTRAP ───────────────────────────────────────────────────────────
+
+  async bootstrap(telegram_id, school_id) {
+    const initData = window.APP.initData || '';
+    const body = {
+      action:        'bootstrap',
+      telegram_id,
+      school_id:     school_id || undefined,
+      // Send under BOTH key names so the backend works whether it expects
+      // `initData` (v10 convention) or `tg_init_data` (n8n convention).
+      initData,
+      tg_init_data:  initData,
+      platform:      window.APP.platform,
+    };
+
+    console.log('[API.bootstrap] POST', SCMS_CONFIG.N8N_BOOTSTRAP);
+    console.log('[API.bootstrap] body keys:', Object.keys(body));
+    console.log('[API.bootstrap] telegram_id:', telegram_id, 'has initData:', !!initData);
+
+    let resp;
+    try {
+      resp = await fetch(SCMS_CONFIG.N8N_BOOTSTRAP, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+    } catch (netErr) {
+      // Network / CORS / DNS failure
+      throw new Error('Network error: ' + (netErr.message || netErr));
+    }
+
+    if (!resp.ok) {
+      let txt = '';
+      try { txt = await resp.text(); } catch (_) {}
+      throw new Error(`HTTP ${resp.status} ${resp.statusText} ${txt.slice(0, 200)}`);
+    }
+
+    let json;
+    try {
+      json = await resp.json();
+    } catch (e) {
+      throw new Error('Server returned non-JSON response');
+    }
+    return json;
+  },
+
+  /** v11.6 — bootstrap via web session (no Telegram, direct RPC).
+   *  Verifies session token and returns full school+teacher bootstrap data
+   *  in one call. Doesn't depend on n8n. */
+  async bootstrapByTeacher(teacher_id, session_token) {
+    const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_web_bootstrap`, {
+      method:  'POST',
+      headers: {
+        'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+        'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({
+        p_session_token: session_token,
+      }),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '');
+      throw new Error(`HTTP ${resp.status} ${txt.slice(0, 200)}`);
+    }
+    const result = await resp.json();
+    if (!result || !result.ok) {
+      throw new Error((result && result.message) || 'Web bootstrap failed');
+    }
+    return result;
+  },
+
+  // ─── ATTENDANCE ──────────────────────────────────────────────────────────
+
+  async saveAttendance(cls, date, records) {
+    return twaPost('save_attendance', { class: cls, date, records });
+  },
+
+  async getAttendance(daysBack = 30) {
+    const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
+    return sbQuery('attendance',
+      `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc,class`);
+  },
+
+  // ─── STUDENTS ────────────────────────────────────────────────────────────
+
+  async getStudents() {
+    return sbQuery('students',
+      `school_id=eq.${window.APP.school_id}&status=eq.Active&order=class,name_en`);
+  },
+
+  /** Register new student — server generates student_id + parent-link token. */
+  async registerStudent(data) {
+    return twaPost('register_student', data);
+  },
+
+  /** Edit / update an existing student.
+   *  Backend has no `update_student` TWA route yet — we PATCH Supabase directly
+   *  (allowed by RLS for authenticated reads). For best results, replicate
+   *  fields the bot's `/editstudent` wizard supports. */
+  async updateStudent(studentId, patch) {
+    // Whitelist fields that exist in the DB schema (matches Apply Student Edit)
+    const allowed = ['name_en', 'name_mm', 'name_local', 'class', 'grade',
+                     'gender', 'date_of_birth', 'parent_name', 'parent_phone',
+                     'parent_tg_id', 'status', 'parent_email', 'home_color'];
+    const clean = {};
+    for (const k of allowed) if (k in patch) clean[k] = patch[k];
+    clean.updated_at = new Date().toISOString();
+
+    const url = `${SCMS_CONFIG.SUPABASE_URL}/rest/v1/students`
+              + `?student_id=eq.${encodeURIComponent(studentId)}`
+              + `&school_id=eq.${encodeURIComponent(window.APP.school_id)}`;
+    const resp = await fetch(url, {
+      method:  'PATCH',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+        'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+        'Prefer':        'return=representation',
+      },
+      body: JSON.stringify(clean),
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      throw new Error(`update_student failed (${resp.status}): ${t}`);
+    }
+    const rows = await resp.json();
+    return { ok: true, success: true, student: rows[0] || null };
+  },
+
+  /** Soft-delete (status=Inactive) — admin only.
+   *  Backend has no TWA route; we PATCH Supabase directly. */
+  async deleteStudent(studentId) {
+    const url = `${SCMS_CONFIG.SUPABASE_URL}/rest/v1/students`
+              + `?student_id=eq.${encodeURIComponent(studentId)}`
+              + `&school_id=eq.${encodeURIComponent(window.APP.school_id)}`;
+    const resp = await fetch(url, {
+      method:  'PATCH',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+        'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+      },
+      body: JSON.stringify({
+        status: 'Inactive',
+        updated_at: new Date().toISOString(),
+      }),
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      throw new Error(`delete_student failed (${resp.status}): ${t}`);
+    }
+    return { ok: true, success: true };
+  },
+
+  /** Poll Supabase to see if the bot has captured the parent's Telegram ID
+   *  (via the `/start parent_<STU-id>` deep link → `Update Parent TG ID` node).
+   *  Returns { parent_tg_id, parent_name } once linked, else { parent_tg_id: null }. */
+  async checkParentLink(studentId) {
+    const url = `${SCMS_CONFIG.SUPABASE_URL}/rest/v1/students`
+              + `?student_id=eq.${encodeURIComponent(studentId)}`
+              + `&school_id=eq.${encodeURIComponent(window.APP.school_id)}`
+              + `&select=parent_tg_id,parent_name`;
+    const resp = await fetch(url, {
+      headers: {
+        'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+        'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+      },
+    });
+    if (!resp.ok) return { parent_tg_id: null };
+    const rows = await resp.json();
+    const r = rows[0] || {};
+    const tg = r.parent_tg_id ? String(r.parent_tg_id).trim() : '';
+    return {
+      ok: true,
+      parent_tg_id: tg || null,
+      parent_name:  r.parent_name || null,
+    };
+  },
+
+  /** Update the school logo.
+   *  Reuses the existing `update_school_config` TWA route — backend stores
+   *  the data URL inside `schools.config_json.school_logo` (or wherever your
+   *  rpc_update_school_config writes patches). */
+  async updateSchoolLogo(logoDataUrl) {
+    return twaPost('update_school_config', {
+      school_id: window.APP.school_id,
+      patch: { school_logo: logoDataUrl || null },
+    });
+  },
+
+  // ─── STAFF CHAT (native-only) ─────────────────────────────────────────────
+  // Reads come straight from Supabase; writes go through the chat_send TWA
+  // route (you must add this on the backend — see README).
+
+  // ─── DAILY REPORTS ───────────────────────────────────────────────────────
+
+  async saveDailyReport(data) {
+    return twaPost('save_daily_report', {
+      ...data,
+      date: data.date || new Date().toISOString().slice(0, 10),
+    });
+  },
+
+  async updateDailyReport(id, patch) {
+    return twaPost('update_daily_report', { id, patch });
+  },
+
+  async deleteDailyReport(id) {
+    return twaPost('delete_daily_report', { id });
+  },
+
+  async getDailyReports(daysBack = 7) {
+    const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
+    return sbQuery('daily_reports',
+      `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc,name_en`);
+  },
+
+  // ─── HOMEWORK ────────────────────────────────────────────────────────────
+
+  async saveHomework(data) {
+    return twaPost('save_homework', {
+      ...data,
+      date: data.date || new Date().toISOString().slice(0, 10),
+      school_id:  window.APP.school_id,
+      teacher_id: window.APP.teacher_id,
+    });
+  },
+
+  async updateHomework(id, patch) {
+    return twaPost('update_homework', { id, patch });
+  },
+
+  async deleteHomework(id) {
+    return twaPost('delete_homework', { id });
+  },
+
+  async getHomework(daysBack = 30) {
+    const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
+    return sbQuery('homework_log',
+      `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
+  },
+
+  // ─── INCIDENTS ───────────────────────────────────────────────────────────
+
+  async saveIncident(data) {
+    return twaPost('save_incident', {
+      ...data,
+      date: data.date || new Date().toISOString().slice(0, 10),
+      school_id:  window.APP.school_id,
+      teacher_id: window.APP.teacher_id,
+    });
+  },
+
+  async updateIncident(id, patch) {
+    return twaPost('update_incident', { id, patch });
+  },
+
+  async deleteIncident(id) {
+    return twaPost('delete_incident', { id });
+  },
+
+  async getIncidents(daysBack = 30) {
+    const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
+    return sbQuery('incidents',
+      `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
+  },
+
+  // ─── PARENT COMMS ────────────────────────────────────────────────────────
+
+  async sendParentComm(data) {
+    return twaPost('send_parent_comm', {
+      ...data,
+      school_id:  window.APP.school_id,
+      teacher_id: window.APP.teacher_id,
+    });
+  },
+
+  async updateParentComm(id, patch) {
+    return twaPost('update_parent_comm', { id, patch });
+  },
+
+  async deleteParentComm(id) {
+    return twaPost('delete_parent_comm', { id });
+  },
+
+  async getParentComms(daysBack = 30) {
+    const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
+    return sbQuery('parent_comms',
+      `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
+  },
+
+  // ─── TIMETABLE ───────────────────────────────────────────────────────────
+
+  async saveTimetable(data) {
+    return twaPost('save_timetable', {
+      ...data,
+      school_id:  window.APP.school_id,
+    });
+  },
+
+  async updateTimetable(id, patch) {
+    return twaPost('update_timetable', { id, patch });
+  },
+
+  async deleteTimetable(id) {
+    return twaPost('delete_timetable', { id });
+  },
+
+  async getTimetable() {
+    return sbQuery('timetable',
+      `school_id=eq.${window.APP.school_id}&order=day,period`);
+  },
+
+  // ─── MONTHLY SUMMARY ─────────────────────────────────────────────────────
+
+  async getMonthlySummary(yearMonth) {
+    const ym = yearMonth || new Date().toISOString().slice(0, 7);
+    return sbQuery('monthly_summary',
+      `school_id=eq.${window.APP.school_id}&year_month=eq.${ym}&order=class,name_en`);
+  },
+
+  // ─── SCHOOL CONFIG ───────────────────────────────────────────────────────
+
+  async updateSchoolConfig(patch) {
+    return twaPost('update_school_config', { patch });
+  },
+
+  // ─── STAFF CHAT (native app only — hidden in TWA) ────────────────────────
+  // Reads: direct Supabase query on `chat_messages` table.
+  // Writes: TWA `chat_send` action (backend must add this route — see README).
+
+  async getChatMessages(channel = 'staff', limit = 50) {
+    const url = `${SCMS_CONFIG.SUPABASE_URL}/rest/v1/chat_messages`
+              + `?school_id=eq.${encodeURIComponent(window.APP.school_id)}`
+              + `&channel=eq.${encodeURIComponent(channel)}`
+              + `&order=created_at.desc&limit=${Number(limit) || 50}`;
+    try {
+      const resp = await fetch(url, {
+        headers: {
+          'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+          'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+        },
+      });
+      if (!resp.ok) return [];
+      const rows = await resp.json();
+      // Return oldest-first so the UI can append normally
+      return Array.isArray(rows) ? rows.reverse() : [];
+    } catch (err) {
+      console.warn('[chat] read failed', err);
+      return [];
+    }
+  },
+
+  async sendChatMessage(channel, text) {
+    return twaPost('chat_send', {
+      channel,
+      text,
+      // Server fills these in too, but echoing them helps if the route is a
+      // thin Supabase passthrough.
+      teacher_id:   window.APP.teacher_id,
+      teacher_name: window.APP.teacher_name,
+      created_at:   new Date().toISOString(),
+    });
+  },
+
+  // ─── REFRESH ALL ─────────────────────────────────────────────────────────
+
+  async refreshAll() {
+    const [students, attendance, dailyReports, homework, parentComms, incidents, timetable] =
+      await Promise.allSettled([
+        API.getStudents(),
+        API.getAttendance(30),
+        API.getDailyReports(30),
+        API.getHomework(30),
+        API.getParentComms(30),
+        API.getIncidents(30),
+        API.getTimetable(),
+      ]);
+
+    if (students.status     === 'fulfilled') window.APP.students     = students.value     || [];
+    if (attendance.status   === 'fulfilled') window.APP.attendance   = attendance.value   || [];
+    if (dailyReports.status === 'fulfilled') window.APP.dailyReports = dailyReports.value || [];
+    if (homework.status     === 'fulfilled') window.APP.homework     = homework.value     || [];
+    if (parentComms.status  === 'fulfilled') window.APP.parentComms  = parentComms.value  || [];
+    if (incidents.status    === 'fulfilled') window.APP.incidents    = incidents.value    || [];
+    if (timetable.status    === 'fulfilled') window.APP.timetable    = timetable.value    || [];
+
+    return window.APP;
+  },
+};
+
+window.API = API;
