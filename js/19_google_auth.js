@@ -94,27 +94,13 @@ async function _submitGoogleLogin(idToken, extra) {
     const result = await resp.json();
 
     if (result && result.ok) {
-      const webSession = {
-        type: 'web',
-        auth_mode: 'google',
-        session_token: result.session_token,
-        teacher_id: result.teacher_id,
-        teacher_name: result.teacher_name,
-        school_id: result.school_id,
-        role: result.role,
-        must_change_password: false,
-        logged_in_at: Date.now(),
-      };
-      try { localStorage.setItem('scms_web_session', JSON.stringify(webSession)); } catch (e) {}
-      _closeGoogleChoiceModal();
-      if (typeof window.bootAfterLogin === 'function') window.bootAfterLogin({ webSession });
-      else window.location.reload();
+      _completeLogin(result, 'google');
       return;
     }
 
     if (result && result.error === 'no_account' && result.needs_choice) {
       _gisPendingChoice = { id_token: idToken };
-      _openGoogleChoiceModal();
+      _showGoogleChoiceScreen();
       return;
     }
 
@@ -124,10 +110,34 @@ async function _submitGoogleLogin(idToken, extra) {
   }
 }
 
+/**
+ * Common "we have a valid session" tail for every auth method (Google,
+ * email/password). Saves the session and hands off to the app boot — it
+ * does NOT touch any auth-screen DOM, since by this point we're leaving
+ * the landing/auth flow entirely.
+ */
+function _completeLogin(result, authMode) {
+  const webSession = {
+    type: 'web',
+    auth_mode: authMode,
+    session_token: result.session_token,
+    teacher_id: result.teacher_id,
+    teacher_name: result.teacher_name,
+    school_id: result.school_id,
+    role: result.role,
+    must_change_password: !!result.must_change_password,
+    logged_in_at: Date.now(),
+  };
+  try { localStorage.setItem('scms_web_session', JSON.stringify(webSession)); } catch (e) {}
+  if (typeof window.bootAfterLogin === 'function') window.bootAfterLogin();
+  else window.location.reload();
+}
+
 function _setGoogleStatus(text, isError) {
-  // Prefer the choice-modal's status element when it's open (it's the one
-  // the user is actually looking at); fall back to the landing page's.
-  const el = document.getElementById('googleChoiceStatus') || document.getElementById('googleAuthStatus');
+  // Prefer the current auth-screen's status element; fall back to the
+  // landing page's own (used for the initial "Signing in…" state before
+  // any screen transition has happened).
+  const el = document.getElementById('authScreenStatus') || document.getElementById('googleAuthStatus');
   if (!el) return;
   el.textContent = text || '';
   el.style.display = text ? 'block' : 'none';
@@ -135,20 +145,49 @@ function _setGoogleStatus(text, isError) {
 }
 
 /* ============================================================================
-   NEW-ACCOUNT CHOICE MODAL — "Register a new school" vs "I have an invite code"
+   FULL-PAGE AUTH TRANSITIONS
+   The landing screen lives inside #bootScreen (see 00_landing.js /
+   14_app.js). Rather than stacking a modal on top of it, every subsequent
+   auth step (new-account choice, new-school form, invite form, email
+   sign-in/sign-up) fades the current content out, swaps it for the next
+   screen, and fades back in — reusing the same .fade-out opacity
+   transition #bootScreen already uses for the boot→app handoff.
 ============================================================================ */
 
-window.openGoogleChoiceModal = _openGoogleChoiceModal;
-function _openGoogleChoiceModal() {
-  const wrap = document.createElement('div');
-  wrap.id = 'googleChoiceModal';
-  wrap.className = 'modal-overlay';
-  wrap.innerHTML = `
-    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:380px">
-      <div class="modal-handle"></div>
-      <h3 class="modal-title">👋 ကြိုဆိုပါတယ်</h3>
-      <p class="modal-subtitle">ဒီ Google account နဲ့ account မရှိသေးပါ။ ဘာလုပ်ချင်ပါသလဲ?</p>
+function _transitionAuthScreen(html) {
+  const boot = document.getElementById('bootScreen');
+  if (!boot) return; // shouldn't happen — landing always lives inside #bootScreen
+  boot.classList.add('fade-out');
+  setTimeout(() => {
+    boot.innerHTML = html;
+    boot.classList.remove('fade-out');
+  }, 350);
+}
 
+window._backToLanding = function () {
+  window.location.reload();
+};
+
+function _authScreenShell(titleHtml, subtitleText, bodyHtml) {
+  return `
+    <div class="boot-inner" style="width:100%; max-width:380px; text-align:left; padding:0 24px;">
+      <div class="boot-logo" style="justify-content:flex-start; margin-bottom:24px;">
+        <span class="boot-logo-mark">S</span>
+        <span class="boot-logo-text">CMS</span>
+      </div>
+      <h2 style="margin:0 0 4px;">${titleHtml}</h2>
+      <p class="login-help-text" style="margin:0 0 20px;">${subtitleText}</p>
+      ${bodyHtml}
+    </div>`;
+}
+
+/* ── Google: new-account choice (new school vs invite code) ──────────────── */
+
+function _showGoogleChoiceScreen() {
+  _transitionAuthScreen(_authScreenShell(
+    '👋 ကြိုဆိုပါတယ်',
+    'ဒီ Google account နဲ့ SCMS account မရှိသေးပါ။ ဘာလုပ်ချင်ပါသလဲ?',
+    `
       <button class="landing-btn-ghost" onclick="showGoogleNewSchoolForm()">
         <span class="landing-btn-icon">🏫</span>
         <div class="landing-btn-text">
@@ -164,24 +203,16 @@ function _openGoogleChoiceModal() {
         </div>
       </button>
 
-      <div id="googleChoiceForm"></div>
-      <div id="googleChoiceStatus" class="form-error" style="display:none"></div>
+      <div id="authScreenForm"></div>
+      <div id="authScreenStatus" class="form-error" style="display:none"></div>
 
-      <button class="btn-secondary mt16" onclick="closeGoogleChoiceModal()">Cancel</button>
-    </div>`;
-  wrap.onclick = _closeGoogleChoiceModal;
-  document.body.appendChild(wrap);
-  wrap.classList.add('active');
-}
-
-window.closeGoogleChoiceModal = _closeGoogleChoiceModal;
-function _closeGoogleChoiceModal() {
-  document.getElementById('googleChoiceModal')?.remove();
-  _gisPendingChoice = null;
+      <button class="btn-secondary mt16" onclick="_backToLanding()">← နောက်သို့</button>
+    `
+  ));
 }
 
 window.showGoogleNewSchoolForm = function () {
-  const form = document.getElementById('googleChoiceForm');
+  const form = document.getElementById('authScreenForm');
   if (!form) return;
   form.innerHTML = `
     <label class="field-label">Your name</label>
@@ -204,7 +235,7 @@ window.submitGoogleNewSchool = async function () {
 };
 
 window.showGoogleInviteForm = function () {
-  const form = document.getElementById('googleChoiceForm');
+  const form = document.getElementById('authScreenForm');
   if (!form) return;
   form.innerHTML = `
     <label class="field-label">Your name</label>
@@ -225,6 +256,159 @@ window.submitGoogleInvite = async function () {
     invite_code: code,
     teacher_name: name || null,
   });
+};
+
+/* ── Email + password: sign in ─────────────────────────────────────────── */
+
+window.showEmailSignInScreen = function () {
+  _transitionAuthScreen(_authScreenShell(
+    '📧 Email နဲ့ Sign in',
+    'သင့် email address နဲ့ password ကို ထည့်ပါ',
+    `
+      <label class="field-label">Email</label>
+      <input class="form-input" id="emailLoginEmail" type="email" placeholder="you@example.com" autocomplete="username">
+      <label class="field-label">Password</label>
+      <input class="form-input" id="emailLoginPw" type="password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')submitEmailLogin()">
+
+      <button class="btn-primary mt16" onclick="submitEmailLogin()">Sign in</button>
+      <div id="authScreenStatus" class="form-error" style="display:none"></div>
+
+      <p class="login-help-text mt16">Account မရှိသေးဘူးလား? <a href="#" onclick="showEmailSignUpScreen(); return false;">Sign up</a></p>
+      <button class="btn-secondary mt8" onclick="_backToLanding()">← နောက်သို့</button>
+    `
+  ));
+};
+
+window.submitEmailLogin = async function () {
+  const email = document.getElementById('emailLoginEmail')?.value.trim();
+  const pw = document.getElementById('emailLoginPw')?.value;
+  if (!email || !pw) { _setGoogleStatus('Email/Password ထည့်ပါ', true); return; }
+  _setGoogleStatus('Signing in…');
+  try {
+    const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_email_login`, {
+      method: 'POST',
+      headers: {
+        'apikey': SCMS_CONFIG.SUPABASE_ANON,
+        'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ p_email: email, p_password: pw, p_device_ua: navigator.userAgent.slice(0, 200) }),
+    });
+    const result = await resp.json();
+    if (result && result.ok) { _completeLogin(result, 'email'); return; }
+    _setGoogleStatus(result?.message || 'Sign-in မအောင်မြင်ပါ', true);
+  } catch (e) {
+    _setGoogleStatus('Connection error', true);
+  }
+};
+
+/* ── Email + password: sign up ─────────────────────────────────────────── */
+
+let _emailSignupChoice = null; // 'new' | 'invite'
+
+window.showEmailSignUpScreen = function () {
+  _emailSignupChoice = null;
+  _transitionAuthScreen(_authScreenShell(
+    '✨ Account အသစ် ဖန်တီးမည်',
+    'Email/Password ကိုယ်တိုင် ရွေးချယ်နိုင်ပါတယ်',
+    `
+      <label class="field-label">Your name</label>
+      <input class="form-input" id="emailSignupName" type="text" placeholder="e.g. Sangfa">
+      <label class="field-label">Email</label>
+      <input class="form-input" id="emailSignupEmail" type="email" placeholder="you@example.com" autocomplete="username">
+      <label class="field-label">Password</label>
+      <input class="form-input" id="emailSignupPw" type="password" placeholder="၆ လုံးအနည်းဆုံး" autocomplete="new-password">
+
+      <div class="landing-divider mt16"><span>ဘာလုပ်ချင်ပါသလဲ</span></div>
+
+      <button class="landing-btn-ghost" id="tabNewSchool" onclick="_signupChoiceTab('new')">
+        <span class="landing-btn-icon">🏫</span>
+        <div class="landing-btn-text">
+          <div class="landing-btn-title">School အသစ် စတင်မည်</div>
+        </div>
+      </button>
+      <button class="landing-btn-ghost mt8" id="tabInvite" onclick="_signupChoiceTab('invite')">
+        <span class="landing-btn-icon">✉️</span>
+        <div class="landing-btn-text">
+          <div class="landing-btn-title">Invite code ရှိပါတယ်</div>
+        </div>
+      </button>
+
+      <div id="signupExtraField" class="mt8"></div>
+
+      <button class="btn-primary mt16" id="emailSignupBtn" onclick="submitEmailSignup()" disabled>ဆက်သွားရန် ရွေးချယ်ပါ</button>
+      <div id="authScreenStatus" class="form-error" style="display:none"></div>
+
+      <p class="login-help-text mt16">Account ရှိပြီးသားလား? <a href="#" onclick="showEmailSignInScreen(); return false;">Sign in</a></p>
+      <button class="btn-secondary mt8" onclick="_backToLanding()">← နောက်သို့</button>
+    `
+  ));
+};
+
+window._signupChoiceTab = function (which) {
+  _emailSignupChoice = which;
+  const extra = document.getElementById('signupExtraField');
+  const btn = document.getElementById('emailSignupBtn');
+  if (!extra || !btn) return;
+  if (which === 'new') {
+    extra.innerHTML = `
+      <label class="field-label">School name</label>
+      <input class="form-input" id="signupSchoolName" type="text" placeholder="e.g. Vavida ISB">`;
+    btn.textContent = 'School စတင်မည်';
+  } else {
+    extra.innerHTML = `
+      <label class="field-label">Invite code</label>
+      <input class="form-input" id="signupInviteCode" type="text" placeholder="e.g. AC3F79"
+             autocapitalize="characters" style="text-transform:uppercase">`;
+    btn.textContent = 'Join ဝင်မည်';
+  }
+  btn.disabled = false;
+};
+
+window.submitEmailSignup = async function () {
+  const name = document.getElementById('emailSignupName')?.value.trim();
+  const email = document.getElementById('emailSignupEmail')?.value.trim();
+  const pw = document.getElementById('emailSignupPw')?.value;
+  if (!name) { _setGoogleStatus('နာမည် ထည့်ပါ', true); return; }
+  if (!email) { _setGoogleStatus('Email ထည့်ပါ', true); return; }
+  if (!pw || pw.length < 6) { _setGoogleStatus('Password အနည်းဆုံး ၆ လုံး ထည့်ပါ', true); return; }
+
+  const payload = {
+    p_email: email, p_password: pw, p_teacher_name: name,
+    p_device_ua: navigator.userAgent.slice(0, 200),
+    p_invite_code: null, p_new_school_name: null,
+  };
+  if (_emailSignupChoice === 'new') {
+    const school = document.getElementById('signupSchoolName')?.value.trim();
+    if (!school) { _setGoogleStatus('School name ထည့်ပါ', true); return; }
+    payload.p_new_school_name = school;
+  } else if (_emailSignupChoice === 'invite') {
+    const code = document.getElementById('signupInviteCode')?.value.trim().toUpperCase();
+    if (!code) { _setGoogleStatus('Invite code ထည့်ပါ', true); return; }
+    payload.p_invite_code = code;
+  } else {
+    _setGoogleStatus('School အသစ် (သို့) Invite code ရွေးပါ', true);
+    return;
+  }
+
+  _setGoogleStatus('Creating account…');
+  try {
+    const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_email_signup`, {
+      method: 'POST',
+      headers: {
+        'apikey': SCMS_CONFIG.SUPABASE_ANON,
+        'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    const result = await resp.json();
+    if (result && result.ok) { _completeLogin(result, 'email'); return; }
+    _setGoogleStatus(result?.message || 'Sign-up မအောင်မြင်ပါ', true);
+  } catch (e) {
+    _setGoogleStatus('Connection error', true);
+  }
 };
 
 /* ============================================================================
