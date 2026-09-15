@@ -2673,10 +2673,14 @@ html[data-platform="web"] .tab-btn-chat {
 }
 
 /* ── Modal: prevent jitter, keep above keyboard ──────────────────────── */
+/* z-index 10000 — must stay ABOVE .boot-screen (z-index: 9999). The
+   landing screen lives inside #bootScreen, so any modal shown from it
+   (webLoginModal, changePwModal, googleChoiceModal, tgConnectModal) needs
+   to outrank the boot screen or it renders invisibly behind it. */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1500;
+  z-index: 10000;
   /* Use both vh and dvh — dvh handles keyboard opening on iOS/Android */
   height: 100vh;
   height: 100dvh;
