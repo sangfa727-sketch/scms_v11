@@ -362,6 +362,11 @@ window.bootAfterLogin = function () {
 // Exposed so the More menu can offer a "Sign out" option
 window.signOut = function () {
   if (typeof clearSavedSession === 'function') clearSavedSession();
+  // v11.7: also clear the web session (Google / email+password / Teacher-ID
+  // logins) — this function used to only clear the legacy Telegram-native
+  // session, so web-session users could never actually sign out; the app
+  // would just log them straight back in on reload.
+  if (typeof clearWebSession === 'function') clearWebSession();
   window.location.reload();
 };
 
