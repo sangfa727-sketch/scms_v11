@@ -805,6 +805,28 @@ a { color: inherit; }
 .form-input:focus { border-color: var(--text2); }
 .form-input::placeholder { color: var(--muted); }
 
+/* Password field with a show/hide eye-icon toggle (v11.8) */
+.pw-field-wrap { position: relative; }
+.pw-field-wrap .form-input { padding-right: 44px; }
+.pw-toggle-btn {
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; line-height: 1; padding: 8px 10px;
+  opacity: 0.55; transition: opacity 0.15s;
+}
+.pw-toggle-btn:hover { opacity: 1; }
+
+/* "Remember me" checkbox row on the email sign-in screen (v11.8) */
+.remember-me-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 14px; cursor: pointer;
+  font-size: 13.5px; color: var(--text2);
+}
+.remember-me-row input[type="checkbox"] {
+  width: 16px; height: 16px; accent-color: var(--text);
+  cursor: pointer;
+}
+
 .form-textarea {
   width: 100%;
   padding: 10px 12px;
