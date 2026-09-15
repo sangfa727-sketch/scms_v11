@@ -547,23 +547,36 @@ window.showToast = function(msg, duration = 2500) {
 
 // ─── GLOBAL MODAL HELPERS ────────────────────────────────────────────────────
 
+window._modalStack = []; // stacked modal layers
+
 window.openModal = function(html, onClose) {
   const overlay = document.getElementById('modalOverlay');
-  overlay.innerHTML = html;
   overlay.classList.add('active');
-  overlay.dataset.onClose = '';
-  overlay.onclick = function(e) {
-    if (e.target === overlay) closeModal(onClose);
+
+  const layer = document.createElement('div');
+  layer.className = 'modal-layer';
+  layer.innerHTML = html;
+  layer.onclick = function(e) {
+    if (e.target === layer) closeModal();
   };
-  window._modalOnClose = onClose;
+  overlay.appendChild(layer);
+
+  window._modalStack.push({ layer, onClose });
 };
 
-window.closeModal = function(onClose) {
+window.closeModal = function(onCloseOverride) {
   const overlay = document.getElementById('modalOverlay');
-  overlay.classList.remove('active');
-  overlay.innerHTML = '';
-  const cb = onClose || window._modalOnClose;
-  window._modalOnClose = null;
+  const top = window._modalStack.pop();
+  if (!top) {
+    overlay.classList.remove('active');
+    overlay.innerHTML = '';
+    return;
+  }
+  top.layer.remove();
+  if (!window._modalStack.length) {
+    overlay.classList.remove('active');
+  }
+  const cb = onCloseOverride || top.onClose;
   if (typeof cb === 'function') cb();
 };
 
