@@ -169,11 +169,27 @@ async function twaPost(action, data = {}) {
     platform:   window.APP.platform,
     data,
   };
-  const resp = await fetch(SCMS_CONFIG.N8N_WEBHOOK, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(payload),
-  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  let resp;
+  try {
+    resp = await fetch(SCMS_CONFIG.N8N_WEBHOOK, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+      signal:  controller.signal,
+    });
+  } catch (netErr) {
+    if (netErr.name === 'AbortError') {
+      throw new Error(`TWA ${action} timed out after 15s — n8n server did not respond. Check the n8n execution log for this webhook.`);
+    }
+    throw new Error('Network error: ' + (netErr.message || netErr));
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   if (!resp.ok) {
     const txt = await resp.text();
     throw new Error(`TWA ${action} failed ${resp.status}: ${txt}`);
