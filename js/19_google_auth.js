@@ -579,10 +579,35 @@ function _stopTelegramConnectPolling() {
   _tgConnectToken = null;
 }
 
-window.disconnectTelegram = async function () {
+window.disconnectTelegram = function () {
   const sess = getWebSession();
   if (!sess || !sess.session_token) return;
-  if (!confirm('Telegram ချိတ်ဆက်မှုကို ဖြုတ်မလား?')) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'tgDisconnectConfirmModal';
+  wrap.className = 'modal-overlay';
+  wrap.innerHTML = `
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">🔌 Telegram ဖြုတ်မှာလား?</h3>
+      <p class="modal-subtitle">Parent report/backup login အတွက် Telegram ချိတ်ဆက်မှု ပြတ်သွားပါမယ်။</p>
+
+      <button class="btn-danger solid mt16" onclick="_doDisconnectTelegramConfirmed()">ဖြုတ်မည်</button>
+      <button class="btn-secondary mt8" onclick="_closeTgDisconnectConfirm()">Cancel</button>
+    </div>`;
+  wrap.onclick = _closeTgDisconnectConfirm;
+  document.body.appendChild(wrap);
+  wrap.classList.add('active');
+};
+
+window._closeTgDisconnectConfirm = function () {
+  document.getElementById('tgDisconnectConfirmModal')?.remove();
+};
+
+window._doDisconnectTelegramConfirmed = async function () {
+  _closeTgDisconnectConfirm();
+  const sess = getWebSession();
+  if (!sess || !sess.session_token) return;
 
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_telegram_disconnect`, {
