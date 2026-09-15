@@ -129,7 +129,7 @@ function renderMore() {
 }
 
 window.confirmSignOut = function () {
-  if (confirm('Sign out of SCMS? You\'ll need to sign in again with Telegram next time.')) {
+  if (confirm('Sign out of SCMS? You\'ll need to sign in again next time.')) {
     if (typeof signOut === 'function') signOut();
   }
 };
