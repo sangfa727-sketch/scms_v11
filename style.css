@@ -753,6 +753,17 @@ a { color: inherit; }
   align-items: flex-end;
   justify-content: center;
 }
+@media (min-width: 640px) {
+  .modal-layer {
+    align-items: center;
+  }
+  .modal-sheet {
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    max-height: 88vh;
+  }
+}
 .modal-sheet {
   width: 100%;
   background: var(--surface);
