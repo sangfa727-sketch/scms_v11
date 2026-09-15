@@ -565,13 +565,14 @@ window.doWebLogin = async function () {
 
 window.getWebSession = function () {
   try {
-    const raw = localStorage.getItem(_WEB_SESSION_KEY);
+    const raw = localStorage.getItem(_WEB_SESSION_KEY) || sessionStorage.getItem(_WEB_SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (e) { return null; }
 };
 
 window.clearWebSession = function () {
   try { localStorage.removeItem(_WEB_SESSION_KEY); } catch (e) {}
+  try { sessionStorage.removeItem(_WEB_SESSION_KEY); } catch (e) {}
 };
 
 /**
@@ -597,7 +598,9 @@ window.verifyWebSession = async function () {
       clearWebSession();
       return null;
     }
-    // Refresh local cache with the verified data
+    // Refresh local cache with the verified data — write back to whichever
+    // storage it actually came from (localStorage = remembered, sessionStorage
+    // = "remember me" was unchecked).
     const updated = {
       ...sess,
       teacher_name:         result.teacher_name,
@@ -605,7 +608,10 @@ window.verifyWebSession = async function () {
       school_id:            result.school_id,
       must_change_password: result.must_change_password,
     };
-    try { localStorage.setItem(_WEB_SESSION_KEY, JSON.stringify(updated)); } catch (e) {}
+    try {
+      const store = localStorage.getItem(_WEB_SESSION_KEY) ? localStorage : sessionStorage;
+      store.setItem(_WEB_SESSION_KEY, JSON.stringify(updated));
+    } catch (e) {}
     return updated;
   } catch (e) {
     return null;
