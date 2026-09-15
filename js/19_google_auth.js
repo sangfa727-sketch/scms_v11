@@ -171,6 +171,7 @@ function _openGoogleChoiceModal() {
     </div>`;
   wrap.onclick = _closeGoogleChoiceModal;
   document.body.appendChild(wrap);
+  wrap.classList.add('active');
 }
 
 window.closeGoogleChoiceModal = _closeGoogleChoiceModal;
@@ -259,6 +260,7 @@ window.openTelegramConnectModal = function () {
     </div>`;
   wrap.onclick = closeTelegramConnectModal;
   document.body.appendChild(wrap);
+  wrap.classList.add('active');
 };
 
 window.closeTelegramConnectModal = function () {
