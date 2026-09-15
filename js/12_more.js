@@ -129,9 +129,30 @@ function renderMore() {
 }
 
 window.confirmSignOut = function () {
-  if (confirm('Sign out of SCMS? You\'ll need to sign in again next time.')) {
-    if (typeof signOut === 'function') signOut();
-  }
+  const wrap = document.createElement('div');
+  wrap.id = 'signOutConfirmModal';
+  wrap.className = 'modal-overlay';
+  wrap.innerHTML = `
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">🚪 Sign out မှာလား?</h3>
+      <p class="modal-subtitle">Sign out ဖြစ်သွားရင် နောက်တစ်ခါ ပြန် login ဝင်ရပါမယ်။</p>
+
+      <button class="btn-danger solid mt16" onclick="_doSignOutConfirmed()">Sign out</button>
+      <button class="btn-secondary mt8" onclick="_closeSignOutConfirm()">Cancel</button>
+    </div>`;
+  wrap.onclick = _closeSignOutConfirm;
+  document.body.appendChild(wrap);
+  wrap.classList.add('active');
+};
+
+window._closeSignOutConfirm = function () {
+  document.getElementById('signOutConfirmModal')?.remove();
+};
+
+window._doSignOutConfirmed = function () {
+  _closeSignOutConfirm();
+  if (typeof signOut === 'function') signOut();
 };
 
 /* ─────────────────────────────────────────────────────────────────
