@@ -115,8 +115,13 @@ async function _submitGoogleLogin(idToken, extra) {
  * email/password). Saves the session and hands off to the app boot — it
  * does NOT touch any auth-screen DOM, since by this point we're leaving
  * the landing/auth flow entirely.
+ *
+ * `remember` (default true) controls WHERE the session is cached:
+ *   true  → localStorage  (survives closing the browser — "remember me")
+ *   false → sessionStorage (cleared when the tab/browser closes)
+ * getWebSession()/clearWebSession() in 00_landing.js check both.
  */
-function _completeLogin(result, authMode) {
+function _completeLogin(result, authMode, remember) {
   const webSession = {
     type: 'web',
     auth_mode: authMode,
@@ -128,7 +133,15 @@ function _completeLogin(result, authMode) {
     must_change_password: !!result.must_change_password,
     logged_in_at: Date.now(),
   };
-  try { localStorage.setItem('scms_web_session', JSON.stringify(webSession)); } catch (e) {}
+  try {
+    if (remember === false) {
+      sessionStorage.setItem('scms_web_session', JSON.stringify(webSession));
+      localStorage.removeItem('scms_web_session');
+    } else {
+      localStorage.setItem('scms_web_session', JSON.stringify(webSession));
+      sessionStorage.removeItem('scms_web_session');
+    }
+  } catch (e) {}
   if (typeof window.bootAfterLogin === 'function') window.bootAfterLogin();
   else window.location.reload();
 }
@@ -180,6 +193,29 @@ function _authScreenShell(titleHtml, subtitleText, bodyHtml) {
       ${bodyHtml}
     </div>`;
 }
+
+/**
+ * A password <input> wrapped with a show/hide eye-icon toggle button.
+ */
+function _pwFieldHtml(id, placeholder, autocomplete, extraAttrs) {
+  return `
+    <div class="pw-field-wrap">
+      <input class="form-input" id="${id}" type="password" placeholder="${placeholder}" autocomplete="${autocomplete}" ${extraAttrs || ''}>
+      <button type="button" class="pw-toggle-btn" onclick="togglePwVisibility('${id}', this)" aria-label="Show password">👁️</button>
+    </div>`;
+}
+
+window.togglePwVisibility = function (id, btn) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+};
 
 /* ── Google: new-account choice (new school vs invite code) ──────────────── */
 
@@ -268,8 +304,12 @@ window.showEmailSignInScreen = function () {
       <label class="field-label">Email</label>
       <input class="form-input" id="emailLoginEmail" type="email" placeholder="you@example.com" autocomplete="username">
       <label class="field-label">Password</label>
-      <input class="form-input" id="emailLoginPw" type="password" placeholder="••••••••" autocomplete="current-password"
-             onkeydown="if(event.key==='Enter')submitEmailLogin()">
+      ${_pwFieldHtml('emailLoginPw', '••••••••', 'current-password', 'onkeydown="if(event.key===\'Enter\')submitEmailLogin()"')}
+
+      <label class="remember-me-row">
+        <input type="checkbox" id="emailLoginRemember" checked>
+        <span>Remember me</span>
+      </label>
 
       <button class="btn-primary mt16" onclick="submitEmailLogin()">Sign in</button>
       <div id="authScreenStatus" class="form-error" style="display:none"></div>
@@ -283,6 +323,7 @@ window.showEmailSignInScreen = function () {
 window.submitEmailLogin = async function () {
   const email = document.getElementById('emailLoginEmail')?.value.trim();
   const pw = document.getElementById('emailLoginPw')?.value;
+  const remember = document.getElementById('emailLoginRemember')?.checked !== false;
   if (!email || !pw) { _setGoogleStatus('Email/Password ထည့်ပါ', true); return; }
   _setGoogleStatus('Signing in…');
   try {
@@ -296,7 +337,7 @@ window.submitEmailLogin = async function () {
       body: JSON.stringify({ p_email: email, p_password: pw, p_device_ua: navigator.userAgent.slice(0, 200) }),
     });
     const result = await resp.json();
-    if (result && result.ok) { _completeLogin(result, 'email'); return; }
+    if (result && result.ok) { _completeLogin(result, 'email', remember); return; }
     _setGoogleStatus(result?.message || 'Sign-in မအောင်မြင်ပါ', true);
   } catch (e) {
     _setGoogleStatus('Connection error', true);
@@ -318,7 +359,7 @@ window.showEmailSignUpScreen = function () {
       <label class="field-label">Email</label>
       <input class="form-input" id="emailSignupEmail" type="email" placeholder="you@example.com" autocomplete="username">
       <label class="field-label">Password</label>
-      <input class="form-input" id="emailSignupPw" type="password" placeholder="၆ လုံးအနည်းဆုံး" autocomplete="new-password">
+      ${_pwFieldHtml('emailSignupPw', '၆ လုံးအနည်းဆုံး', 'new-password')}
 
       <div class="landing-divider mt16"><span>ဘာလုပ်ချင်ပါသလဲ</span></div>
 
