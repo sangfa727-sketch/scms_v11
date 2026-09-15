@@ -470,6 +470,7 @@ window.openWebLoginModal = function () {
     </div>`;
   wrap.onclick = closeWebLoginModal;
   document.body.appendChild(wrap);
+  wrap.classList.add('active');
   setTimeout(() => document.getElementById('webLoginId')?.focus(), 50);
 };
 
@@ -663,6 +664,7 @@ window.openChangePasswordModal = function (opts) {
     </div>`;
   if (!firstTime) wrap.onclick = closeChangePasswordModal;
   document.body.appendChild(wrap);
+  wrap.classList.add('active');
 };
 
 window.closeChangePasswordModal = function () {
