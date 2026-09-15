@@ -71,6 +71,9 @@ window.renderLanding = function () {
 
         <div id="googleSignInBtn" class="landing-google-btn"></div>
         <div id="googleAuthStatus" class="login-help-text" style="display:none"></div>
+        <p class="login-help-text" style="text-align:center; margin-top:10px;">
+          <a href="#" onclick="showEmailSignInScreen(); return false;">Sign in with email</a>
+        </p>
 
         <div class="landing-divider"><span>or</span></div>
 
