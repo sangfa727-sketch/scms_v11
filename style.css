@@ -779,6 +779,18 @@ a { color: inherit; }
   to   { transform: translateY(0); }
 }
 
+@media (min-width: 900px) {
+  #studentList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+    padding: 0 16px 16px;
+    align-items: start;
+  }
+  #studentList .list-card {
+    margin: 0;
+  }
+}
 .modal-handle {
   width: 40px; height: 4px;
   border-radius: 2px;
