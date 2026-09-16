@@ -3334,3 +3334,65 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .mt8 { margin-top: 8px; }
 .text-center { text-align: center; }
 .text-muted { color: var(--text2); }
+/* ── Date strip: month/year label + week navigation ─────────────────── */
+.date-strip-head {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px;
+  padding: 0 16px 8px;
+}
+.date-strip-nav {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.date-strip-nav:hover { background: var(--bg3); }
+.date-strip-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.02em;
+  min-width: 150px;
+  text-align: center;
+}
+.date-strip-label:hover { color: var(--text); }
+
+/* ── Stats bar: "More" toggle + Leave/Tardy/Sick/Excused/Half-day breakdown ── */
+.att-statbar-more {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg2);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.att-statbar-more.open { color: var(--text); background: var(--bg3); }
+.att-statbar-more-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+}
+.att-statbar-breakdown {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 8px;
+}
+.att-statbar-mini {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.att-statbar-mini span {
+  font-weight: 500;
+  color: var(--muted);
+}
