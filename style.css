@@ -503,6 +503,31 @@ a { color: inherit; }
   color: var(--att-color);
 }
 
+/* ── Attendance page: desktop layout ─────────────────────────────────── */
+@media (min-width: 900px) {
+  .attend-toprow {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .attend-toprow .date-strip {
+    flex: 0 1 auto;
+    padding-bottom: 0;
+  }
+  .attend-toprow .chips-row {
+    flex: 0 1 auto;
+    padding: 6px 0 0;
+    margin: 0;
+  }
+
+  .att-statbar { max-width: 460px; }
+
+  .att-codes-row {
+    grid-template-columns: repeat(7, 48px);
+    justify-content: start;
+  }
+}
 /* ── Homework ──────────────────────────────────────────────────── */
 .hw-type-dot {
   width: 10px; height: 10px;
