@@ -99,8 +99,51 @@ const API = {
       `school_id=eq.${window.APP.school_id}&status=eq.Active&order=class,name_en`);
   },
 
-  /** Register new student — server generates student_id + parent-link token. */
+    /** Register new student.
+   *  Web sessions call rpc_register_student directly — no n8n dependency,
+   *  and it de-dupes server-side (same school+class+english name) so manual
+   *  entry and future AI/chat entry can never create two rows for one student.
+   *  Telegram/native platforms still go through the n8n TWA webhook. */
   async registerStudent(data) {
+    if (window.APP.platform === 'web') {
+      const sess = getWebSession();
+      if (!sess || !sess.session_token) {
+        throw new Error('No active web session — please sign in again.');
+      }
+      const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_register_student`, {
+        method:  'POST',
+        headers: {
+          'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+          'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+          'Content-Type':  'application/json',
+        },
+        body: JSON.stringify({
+          p_session_token:  sess.session_token,
+          p_name_local:     data.name_local || null,
+          p_name_en:        data.name_en,
+          p_class:          data.class,
+          p_grade:          data.grade || null,
+          p_gender:         data.gender || null,
+          p_date_of_birth:  data.date_of_birth || null,
+          p_home_color:     data.home_color || null,
+          p_parent_name:    data.parent_name || null,
+          p_parent_phone:   data.parent_phone || null,
+          p_parent_email:   data.parent_email || null,
+        }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => '');
+        throw new Error(`HTTP ${resp.status} ${txt.slice(0, 200)}`);
+      }
+      const result = await resp.json();
+      if (!result || !result.ok) {
+        const err = new Error(result?.message || result?.error || 'Registration failed');
+        err.duplicate = !!result?.duplicate;
+        err.existing_student_id = result?.existing_student_id;
+        throw err;
+      }
+      return { student: result.student };
+    }
     return twaPost('register_student', data);
   },
 
