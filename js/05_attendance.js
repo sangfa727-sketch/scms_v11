@@ -303,9 +303,23 @@ function _renderAttendStats() {
   const students = window.APP.students.filter(s => s.class === _attendClass && s.status === 'Active');
   const total   = students.length;
   const marked  = Object.keys(_attendMarks).length;
-  const present = Object.values(_attendMarks).filter(v => v === 'P').length;
-  const absent  = Object.values(_attendMarks).filter(v => ['A', 'S'].includes(v)).length;
+  const counts  = { P: 0, A: 0, L: 0, T: 0, S: 0, E: 0, H: 0 };
+  Object.values(_attendMarks).forEach(v => { if (counts[v] !== undefined) counts[v]++; });
+  const present = counts.P;
+  const absent  = counts.A + counts.S;
   const pct     = total ? Math.round((marked / total) * 100) : 0;
+
+  const breakdown = [
+    { code: 'L', label: 'Leave',    n: counts.L },
+    { code: 'T', label: 'Tardy',    n: counts.T },
+    { code: 'S', label: 'Sick',     n: counts.S },
+    { code: 'E', label: 'Excused',  n: counts.E },
+    { code: 'H', label: 'Half-day', n: counts.H },
+  ];
+  const hasBreakdown = breakdown.some(b => b.n > 0);
+  const breakdownRow = breakdown.map(b => `
+    <span class="att-statbar-mini">${b.n} <span>${b.label}</span></span>
+  `).join('');
 
   el.innerHTML = `
     <div class="att-statbar">
@@ -323,12 +337,24 @@ function _renderAttendStats() {
         <span class="att-statbar-num">${absent}</span>
         <span class="att-statbar-lbl">Absent</span>
       </div>
+      <button type="button" class="att-statbar-more" onclick="toggleAttendBreakdown(this)">
+        More${hasBreakdown ? '<span class="att-statbar-more-dot"></span>' : ''}
+      </button>
       <div class="att-statbar-progress">
         <div class="att-statbar-progress-fill" style="width:${pct}%"></div>
       </div>
     </div>
+    <div class="att-statbar-breakdown" id="attendStatsBreakdown" hidden>${breakdownRow}</div>
   `;
 }
+
+window.toggleAttendBreakdown = function(btn) {
+  const row = document.getElementById('attendStatsBreakdown');
+  if (!row) return;
+  const wasHidden = row.hasAttribute('hidden');
+  if (wasHidden) row.removeAttribute('hidden'); else row.setAttribute('hidden', '');
+  btn.classList.toggle('open', wasHidden);
+};
 
 // ─── Save attendance ──────────────────────────────────────────────────────
 
