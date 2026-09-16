@@ -123,7 +123,14 @@
         <h1 class="page-title"><em>Attendance</em></h1>
         <p class="page-subtitle" id="attendSubtitle">Mark today's attendance for your class.</p>
       </div>
-      <div class="date-strip" id="dateStrip"></div>
+     
+      <div class="date-strip-head">
+  <button type="button" class="date-strip-nav" onclick="shiftDateStrip(-1)" aria-label="Previous week">‹</button>
+  <button type="button" class="date-strip-label" id="dateStripLabel" onclick="resetDateStripToToday()" title="Jump to today"></button>
+  <button type="button" class="date-strip-nav" onclick="shiftDateStrip(1)" aria-label="Next week">›</button>
+</div>
+<div class="date-strip" id="dateStrip"></div>
+      
       <div class="chips-row" id="attendClassChips"></div>
       <div class="stats-grid" id="attendStats"></div>
       <div class="attend-grid" id="attendList"></div>
