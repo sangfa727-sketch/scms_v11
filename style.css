@@ -503,34 +503,16 @@ a { color: inherit; }
   color: var(--att-color);
 }
 
-/* ── Attendance page: desktop layout ─────────────────────────────────── */
+/* ── Desktop layout: center every page in a readable column ─────────────
+   One rule instead of per-page side-by-side tricks — Calendar, Summary,
+   Quick Actions and Student list all stay in natural top-to-bottom order
+   and simply stop stretching edge-to-edge on wide screens. Applies to
+   Students / Attendance / Daily / HW / More alike. */
 @media (min-width: 900px) {
-  .attend-toprow {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
+  .page.active {
+    max-width: 960px;
+    margin: 0 auto;
   }
-  .attend-toprow .date-strip {
-    flex: 0 0 auto;
-    padding-bottom: 0;
-  }
-  .attend-toprow-side {
-    flex: 0 1 460px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .attend-toprow-side .chips-row {
-    padding: 0;
-    margin: 0;
-  }
-  .attend-toprow-side #attendStats {
-    margin-bottom: 0;
-  }
-
-  .att-statbar { max-width: 100%; }
 
   .att-codes-row {
     grid-template-columns: repeat(7, 48px);
