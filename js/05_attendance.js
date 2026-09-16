@@ -16,6 +16,7 @@ let _attendClass   = null;
 let _attendDate    = new Date().toISOString().slice(0, 10);
 let _attendMarks   = {};   // { student_id: status_code }
 let _attendNotes   = {};   // { student_id: note_text }
+let _stripAnchor   = new Date();   // last (rightmost) day shown in the date strip
 
 function renderAttendance() {
   _renderDateStrip();
@@ -23,28 +24,53 @@ function renderAttendance() {
   _renderAttendStats();
 }
 
-// ─── Date strip (last 7 days) ─────────────────────────────────────────────
+// ─── Date strip (7 days ending at _stripAnchor, navigable by week) ─────────
 
 function _renderDateStrip() {
   const strip = document.getElementById('dateStrip');
+  const label = document.getElementById('dateStripLabel');
   if (!strip) return;
-  const today = new Date();
+  const todayIso = new Date().toISOString().slice(0, 10);
   let html = '';
+  const days = [];
   for (let i = 6; i >= 0; i--) {
-    const d   = new Date(today);
-    d.setDate(today.getDate() - i);
+    const d = new Date(_stripAnchor);
+    d.setDate(_stripAnchor.getDate() - i);
+    days.push(d);
     const iso = d.toISOString().slice(0, 10);
     const day = d.toLocaleDateString('en-US', { weekday: 'short' });
     const num = d.getDate();
     const active = iso === _attendDate ? ' active' : '';
-    const isToday = iso === today.toISOString().slice(0, 10) ? ' today' : '';
+    const isToday = iso === todayIso ? ' today' : '';
     html += `<button class="date-chip${active}${isToday}" onclick="selectAttendDate('${iso}')">${day}<span>${num}</span></button>`;
   }
   strip.innerHTML = html;
+
+  if (label) {
+    const first = days[0], last = days[6];
+    const fm = first.toLocaleDateString('en-US', { month: 'short' });
+    const lm = last.toLocaleDateString('en-US', { month: 'short' });
+    label.textContent = (fm === lm)
+      ? last.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : `${fm} – ${lm} ${last.getFullYear()}`;
+  }
 }
 
 window.selectAttendDate = function(iso) {
   _attendDate  = iso;
+  _attendMarks = {};
+  _renderDateStrip();
+  if (_attendClass) _renderAttendGrid(_attendClass);
+};
+
+window.shiftDateStrip = function(dir) {
+  _stripAnchor.setDate(_stripAnchor.getDate() + dir * 7);
+  _renderDateStrip();
+};
+
+window.resetDateStripToToday = function() {
+  _stripAnchor = new Date();
+  _attendDate  = new Date().toISOString().slice(0, 10);
   _attendMarks = {};
   _renderDateStrip();
   if (_attendClass) _renderAttendGrid(_attendClass);
