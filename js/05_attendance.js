@@ -159,7 +159,7 @@ function _renderAttendGrid(cls) {
           onclick="markAttend('${esc(s.student_id)}','${esc(c.code)}')"
           title="${esc(desc)}"
           aria-label="${esc(desc)}">
-          ${esc(c.code)}
+      ${esc(desc)}
         </button>`;
     }).join('');
 
