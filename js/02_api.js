@@ -6,6 +6,33 @@
 
 'use strict';
 
+
+/** Call a Postgres RPC directly via PostgREST for web sessions.
+ *  Throws on transport/HTTP error or on {ok:false} from the function,
+ *  with e.duplicate/e.existing_student_id/etc. carried through when present. */
+async function _webRpc(fnName, params) {
+  const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
+    method:  'POST',
+    headers: {
+      'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+      'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => '');
+    throw new Error(`HTTP ${resp.status} ${txt.slice(0, 200)}`);
+  }
+  const result = await resp.json();
+  if (!result || !result.ok) {
+    const err = new Error(result?.message || result?.error || `${fnName} failed`);
+    Object.assign(err, result || {});
+    throw err;
+  }
+  return result;
+}
+
 const API = {
 
   // ─── BOOTSTRAP ───────────────────────────────────────────────────────────
@@ -82,7 +109,11 @@ const API = {
 
   // ─── ATTENDANCE ──────────────────────────────────────────────────────────
 
-  async saveAttendance(cls, date, records) {
+    async saveAttendance(cls, date, records) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_save_attendance', {
+      p_session_token: getWebSession()?.session_token,
+      p_class: cls, p_date: date, p_records: records,
+    });
     return twaPost('save_attendance', { class: cls, date, records });
   },
 
@@ -248,11 +279,16 @@ const API = {
 
   // ─── DAILY REPORTS ───────────────────────────────────────────────────────
 
-  async saveDailyReport(data) {
-    return twaPost('save_daily_report', {
-      ...data,
-      date: data.date || new Date().toISOString().slice(0, 10),
+    async saveDailyReport(data) {
+    const date = data.date || new Date().toISOString().slice(0, 10);
+    if (window.APP.platform === 'web') return _webRpc('rpc_save_daily_report', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: data.student_id, p_name_en: data.name_en, p_class: data.class,
+      p_date: date, p_meal: data.meal, p_nap_min: data.nap_min ?? null,
+      p_mood: data.mood, p_behaviour_note: data.behaviour_note || null,
+      p_toilet_ok: data.toilet_ok ?? null,
     });
+    return twaPost('save_daily_report', { ...data, date });
   },
 
   async updateDailyReport(id, patch) {
@@ -271,10 +307,18 @@ const API = {
 
   // ─── HOMEWORK ────────────────────────────────────────────────────────────
 
-  async saveHomework(data) {
+   async saveHomework(data) {
+    const date = data.date || new Date().toISOString().slice(0, 10);
+    if (window.APP.platform === 'web') return _webRpc('rpc_save_homework', {
+      p_session_token: getWebSession()?.session_token,
+      p_class: data.class, p_subject: data.subject, p_type: data.type,
+      p_description: data.description, p_lb_page: data.lb_page || null,
+      p_wb_page: data.wb_page || null, p_due_date: data.due_date || null,
+      p_date: date,
+    });
     return twaPost('save_homework', {
       ...data,
-      date: data.date || new Date().toISOString().slice(0, 10),
+      date,
       school_id:  window.APP.school_id,
       teacher_id: window.APP.teacher_id,
     });
