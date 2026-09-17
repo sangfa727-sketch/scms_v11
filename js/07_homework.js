@@ -82,9 +82,10 @@ window.openHomeworkModal = function() {
       <div class="modal-handle"></div>
       <h3 class="modal-title">Add Homework / Lesson</h3>
 
-      <label class="field-label">Subject</label>
-      <select class="form-input" id="hwSubject">
+            <label class="field-label">Subject</label>
+      <select class="form-input" id="hwSubject" onchange="handleSubjectSelectChange(this)">
         ${subjects.map(s => `<option>${esc(s)}</option>`).join('')}
+        <option value="__add__">+ Add subject…</option>
       </select>
 
       <label class="field-label">Class</label>
@@ -166,9 +167,10 @@ window.openEditHomework = function(id) {
       <div class="modal-handle"></div>
       <h3 class="modal-title">Edit Homework</h3>
 
-      <label class="field-label">Subject</label>
-      <select class="form-input" id="ehwSubject">
+            <label class="field-label">Subject</label>
+      <select class="form-input" id="ehwSubject" onchange="handleSubjectSelectChange(this)">
         ${subjects.map(s => `<option ${s===h.subject?'selected':''}>${esc(s)}</option>`).join('')}
+        <option value="__add__">+ Add subject…</option>
       </select>
 
       <label class="field-label">Class</label>
@@ -248,3 +250,59 @@ async function doDeleteHomework(id) {
     showToast('Delete failed: ' + (e.message || 'error'));
   }
 }
+
+/* ─── Add a new subject (from the Subject picker) ──────────────────── */
+
+window.handleSubjectSelectChange = function(sel) {
+  if (sel.value !== '__add__') return;
+  const opts = [...sel.options].filter(o => o.value !== '__add__');
+  sel.value = opts[0]?.value || '';
+  openAddSubjectPrompt(sel.id);
+};
+
+window.openAddSubjectPrompt = function(selectId) {
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:340px">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">Add subject</h3>
+      <input class="form-input" id="newSubjectInput" placeholder="e.g. Myanmar, Art, PE" autofocus>
+      <button class="btn-primary mt16" id="addSubjectBtn" onclick="_confirmAddSubject('${esc(selectId)}')">Add</button>
+      <button class="btn-secondary mt8" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+};
+
+window._confirmAddSubject = async function(selectId) {
+  const input = document.getElementById('newSubjectInput');
+  const name = (input?.value || '').trim();
+  if (!name) { showToast('Enter a subject name'); return; }
+
+  const subjects = window.APP.config?.subjects?.length
+    ? window.APP.config.subjects
+    : ['Mathematics', 'English', 'Science', 'Social Studies'];
+  if (subjects.some(s => s.toLowerCase() === name.toLowerCase())) {
+    showToast('That subject already exists');
+    return;
+  }
+
+  const btn = document.getElementById('addSubjectBtn');
+  btn.disabled = true; btn.textContent = 'Adding…';
+  try {
+    const updated = [...subjects, name];
+    await API.updateSchoolConfig({ subjects: updated });
+    window.APP.config = window.APP.config || {};
+    window.APP.config.subjects = updated;
+
+    closeModal();
+    showToast('✓ Subject added');
+
+    const sel = document.getElementById(selectId);
+    if (sel) {
+      sel.innerHTML = updated.map(s => `<option${s === name ? ' selected' : ''}>${esc(s)}</option>`).join('')
+        + `<option value="__add__">+ Add subject…</option>`;
+    }
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Add';
+    showToast('Failed: ' + (e.message || 'error'));
+  }
+};
