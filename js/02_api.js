@@ -436,6 +436,76 @@ const API = {
     return twaPost('update_school_config', { patch });
   },
 
+    // ─── GRADING & ASSESSMENT (web only for now — new feature, not on n8n) ────
+
+  async getSubjects() {
+    return sbQuery('subjects',
+      `school_id=eq.${window.APP.school_id}&is_active=eq.true&order=display_order`);
+  },
+
+  async addSubject(name, code, color) {
+    return _webRpc('rpc_add_subject', {
+      p_session_token: getWebSession()?.session_token,
+      p_subject_name: name, p_subject_code: code || null, p_subject_color: color || null,
+    });
+  },
+
+  async getTerms() {
+    return sbQuery('terms', `school_id=eq.${window.APP.school_id}&order=term_order`);
+  },
+
+  async addTerm(data) {
+    return _webRpc('rpc_add_term', {
+      p_session_token:  getWebSession()?.session_token,
+      p_academic_year:  data.academic_year || null,
+      p_term_name:      data.term_name,
+      p_term_order:     data.term_order || null,
+      p_start_date:     data.start_date || null,
+      p_end_date:       data.end_date || null,
+      p_is_current:     !!data.is_current,
+    });
+  },
+
+  async getAssessments(filters = {}) {
+    let params = `school_id=eq.${window.APP.school_id}&order=date.desc`;
+    if (filters.class)      params += `&class=eq.${encodeURIComponent(filters.class)}`;
+    if (filters.subject_id) params += `&subject_id=eq.${filters.subject_id}`;
+    if (filters.term_id)    params += `&term_id=eq.${filters.term_id}`;
+    return sbQuery('assessments', params);
+  },
+
+  async createAssessment(data) {
+    return _webRpc('rpc_create_assessment', {
+      p_session_token: getWebSession()?.session_token,
+      p_term_id:    data.term_id || null,
+      p_subject_id: data.subject_id || null,
+      p_class:      data.class,
+      p_title:      data.title,
+      p_type:       data.type,
+      p_max_score:  data.max_score,
+      p_weight:     data.weight,
+      p_date:       data.date,
+    });
+  },
+
+  async deleteAssessment(id) {
+    return _webRpc('rpc_delete_assessment', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id,
+    });
+  },
+
+  async getGrades(assessmentId) {
+    return sbQuery('grades', `assessment_id=eq.${assessmentId}`);
+  },
+
+  async saveGrades(assessmentId, records) {
+    return _webRpc('rpc_save_grades', {
+      p_session_token: getWebSession()?.session_token,
+      p_assessment_id: assessmentId,
+      p_records:       records,
+    });
+  },
   // ─── STAFF CHAT (native app only — hidden in TWA) ────────────────────────
   // Reads: direct Supabase query on `chat_messages` table.
   // Writes: TWA `chat_send` action (backend must add this route — see README).
