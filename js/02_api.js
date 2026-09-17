@@ -428,7 +428,11 @@ const API = {
 
   // ─── SCHOOL CONFIG ───────────────────────────────────────────────────────
 
-  async updateSchoolConfig(patch) {
+    async updateSchoolConfig(patch) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_update_school_config_web', {
+      p_session_token: getWebSession()?.session_token,
+      p_patch: patch,
+    });
     return twaPost('update_school_config', { patch });
   },
 
