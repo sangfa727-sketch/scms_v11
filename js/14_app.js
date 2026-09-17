@@ -579,6 +579,34 @@ window.closeModal = function(onCloseOverride) {
   const cb = onCloseOverride || top.onClose;
   if (typeof cb === 'function') cb();
 };
+// ─── GENERIC CONFIRM DIALOG (replaces native confirm()) ─────────────────────
+window.showConfirm = function (title, message, confirmLabel, onConfirm, opts = {}) {
+  const danger = opts.danger !== false;
+  const wrap = document.createElement('div');
+  wrap.id = '_genericConfirmModal';
+  wrap.className = 'modal-overlay';
+  wrap.innerHTML = `
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">${esc(title)}</h3>
+      <p class="modal-subtitle">${esc(message)}</p>
+      <button class="${danger ? 'btn-danger solid' : 'btn-primary'} mt16" id="_genericConfirmBtn">${esc(confirmLabel)}</button>
+      <button class="btn-secondary mt8" id="_genericConfirmCancel">Cancel</button>
+    </div>`;
+  wrap.onclick = window._closeGenericConfirm;
+  document.body.appendChild(wrap);
+  wrap.classList.add('active');
+
+  document.getElementById('_genericConfirmCancel').onclick = window._closeGenericConfirm;
+  document.getElementById('_genericConfirmBtn').onclick = () => {
+    window._closeGenericConfirm();
+    onConfirm();
+  };
+};
+
+window._closeGenericConfirm = function () {
+  document.getElementById('_genericConfirmModal')?.remove();
+};
 
 // ─── SKELETON LOADING HELPER ─────────────────────────────────────────────────
 
