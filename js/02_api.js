@@ -324,14 +324,23 @@ const API = {
     });
   },
 
-  async updateHomework(id, patch) {
+    async updateHomework(id, patch) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_update_homework', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_subject: patch.subject, p_class: patch.class, p_type: patch.type,
+      p_description: patch.description, p_lb_page: patch.lb_page || null,
+      p_wb_page: patch.wb_page || null, p_due_date: patch.due_date || null,
+    });
     return twaPost('update_homework', { id, patch });
   },
 
   async deleteHomework(id) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_delete_homework', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id,
+    });
     return twaPost('delete_homework', { id });
   },
-
   async getHomework(daysBack = 30) {
     const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
     return sbQuery('homework_log',
