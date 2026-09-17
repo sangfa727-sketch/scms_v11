@@ -193,3 +193,51 @@ window.getGradeList = function() {
   );
   return [...set].sort();
 };
+/* ─── Subjects (shared by Homework + Grades — single source of truth) ──── */
+
+window._ensureSubjectsLoaded = async function(force = false) {
+  if (!force && window.APP.subjectsCache && window.APP.subjectsCache.length) {
+    return window.APP.subjectsCache;
+  }
+  try {
+    window.APP.subjectsCache = await API.getSubjects();
+  } catch (e) {
+    window.APP.subjectsCache = window.APP.subjectsCache || [];
+  }
+  return window.APP.subjectsCache;
+};
+
+window.openAddSubjectPrompt = function(onAdded) {
+  window._pendingSubjectAddCallback = onAdded || null;
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:340px">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">Add subject</h3>
+      <input class="form-input" id="newSubjectInput" placeholder="e.g. Myanmar, Art, PE" autofocus>
+      <button class="btn-primary mt16" id="addSubjectBtn" onclick="_confirmAddSubject()">Add</button>
+      <button class="btn-secondary mt8" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+};
+
+window._confirmAddSubject = async function() {
+  const input = document.getElementById('newSubjectInput');
+  const name = (input?.value || '').trim();
+  if (!name) { showToast('Enter a subject name'); return; }
+
+  const btn = document.getElementById('addSubjectBtn');
+  btn.disabled = true; btn.textContent = 'Adding…';
+  try {
+    const res = await API.addSubject(name, null, null);
+    await _ensureSubjectsLoaded(true);
+    closeModal();
+    showToast('✓ Subject added');
+    if (typeof window._pendingSubjectAddCallback === 'function') {
+      window._pendingSubjectAddCallback(res.subject);
+    }
+    window._pendingSubjectAddCallback = null;
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Add';
+    showToast(e.duplicate ? 'That subject already exists' : 'Failed: ' + (e.message || 'error'));
+  }
+};
