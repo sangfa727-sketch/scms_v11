@@ -116,23 +116,41 @@
       <div id="studentList"></div>
     </section>
 
-       <!-- ATTENDANCE -->
+          <!-- ATTENDANCE -->
     <section class="page" id="page-attend">
-      <div class="page-header">
+      <div class="page-header" id="attendPageHeader">
         <div class="page-eyebrow">Daily check-in</div>
         <h1 class="page-title"><em>Attendance</em></h1>
         <p class="page-subtitle" id="attendSubtitle">Mark today's attendance for your class.</p>
+        <div class="chips-row" id="attendClassChips"></div>
       </div>
-     
-      <div class="date-strip-head">
-  <button type="button" class="date-strip-nav" onclick="shiftDateStrip(-1)" aria-label="Previous week">‹</button>
-  <button type="button" class="date-strip-label" id="dateStripLabel" onclick="resetDateStripToToday()" title="Jump to today"></button>
-  <button type="button" class="date-strip-nav" onclick="shiftDateStrip(1)" aria-label="Next week">›</button>
-</div>
-<div class="date-strip" id="dateStrip"></div>
-      
-      <div class="chips-row" id="attendClassChips"></div>
-      <div class="stats-grid" id="attendStats"></div>
+      <div class="attend-toprow">
+        <div class="attend-cal-col">
+          <div class="date-strip-head">
+            <button type="button" class="date-strip-nav" onclick="shiftDateStrip(-1)" aria-label="Previous week">‹</button>
+            <button type="button" class="date-strip-label" id="dateStripLabel" onclick="resetDateStripToToday()" title="Jump to today"></button>
+            <button type="button" class="date-strip-nav" onclick="shiftDateStrip(1)" aria-label="Next week">›</button>
+          </div>
+          <div class="date-strip" id="dateStrip"></div>
+        </div>
+        <div class="attend-stats-col">
+          <div class="stats-grid" id="attendStats"></div>
+          <div class="attend-toolbar">
+            <button class="btn-pill-action" onclick="markAllAttend('P')">
+              <span class="dot-mini" style="background:#10B981"></span> All Present
+            </button>
+            <button class="btn-pill-action" onclick="clearAllAttend()">
+              <span class="dot-mini" style="background:#8A8A82"></span> Clear marks
+            </button>
+            <button class="btn-pill-action ghost" onclick="showAttendLegend()" title="Code legend">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              </svg>
+              Codes
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="attend-grid" id="attendList"></div>
       <div style="height:12px;"></div>
       <button class="btn-primary" id="btnSaveAttendance">
