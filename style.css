@@ -520,6 +520,60 @@ a { color: inherit; }
     padding: 0 28px;
     margin-left: auto;
   }
+
+  /* Attendance header: title left, class dropdown top-right */
+  #attendPageHeader {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    column-gap: 16px;
+  }
+  #attendPageHeader .page-eyebrow,
+  #attendPageHeader .page-title,
+  #attendPageHeader .page-subtitle {
+    grid-column: 1;
+  }
+  #attendPageHeader .chips-row {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: start;
+    margin: 2px 0 0;
+    padding: 0;
+  }
+
+  /* Calendar (left half) + Summary/Actions (right half), side by side */
+  .attend-toprow {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .attend-cal-col {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .attend-cal-col .date-strip-head {
+    justify-content: flex-start;
+    padding: 0 0 8px;
+  }
+  .attend-stats-col {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .attend-stats-col #attendStats {
+    margin-bottom: 0;
+  }
+  .attend-stats-col .att-statbar {
+    padding: 10px 12px;
+  }
+  .attend-stats-col .att-statbar-num {
+    font-size: 19px;
+  }
+  .attend-stats-col .attend-toolbar {
+    margin-bottom: 0;
+  }
 }
 
 /* ── Homework ──────────────────────────────────────────────────── */
@@ -3395,4 +3449,31 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .att-statbar-mini span {
   font-weight: 500;
   color: var(--muted);
+}
+/* ── Class picker: dropdown instead of chip row (scales to many classes) ── */
+.attend-class-select-wrap {
+  position: relative;
+  display: inline-block;
+}
+.attend-class-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 30px 8px 16px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+}
+.attend-class-select-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--bg);
+  font-size: 10px;
+  pointer-events: none;
 }
