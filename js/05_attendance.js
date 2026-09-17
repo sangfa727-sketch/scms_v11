@@ -95,11 +95,12 @@ function _renderAttendClassChips() {
 
   if (!_attendClass || !classes.includes(_attendClass)) _attendClass = classes[0];
 
-  el.innerHTML = classes.map(c => `
-    <button class="chip${c === _attendClass ? ' active' : ''}" data-class="${esc(c)}" onclick="selectAttendClass('${esc(c)}')">
-      ${esc(c)}
-    </button>
-  `).join('');
+    el.innerHTML = `
+    <div class="attend-class-select-wrap">
+      <select class="attend-class-select" onchange="selectAttendClass(this.value)">
+        ${classes.map(c => `<option value="${esc(c)}"${c === _attendClass ? ' selected' : ''}>${esc(c)} class</option>`).join('')}
+      </select>
+    </div>`;
 
   _renderAttendGrid(_attendClass);
 }
@@ -154,22 +155,7 @@ function _renderAttendGrid(cls) {
 
   const codes = _getAttendanceCodes();
 
-  // Bulk-action toolbar above the grid
-  const toolbar = `
-    <div class="attend-toolbar">
-      <button class="btn-pill-action" onclick="markAllAttend('P')">
-        <span class="dot-mini" style="background:#10B981"></span> All Present
-      </button>
-      <button class="btn-pill-action" onclick="clearAllAttend()">
-        <span class="dot-mini" style="background:#8A8A82"></span> Clear marks
-      </button>
-      <button class="btn-pill-action ghost" onclick="showAttendLegend()" title="Code legend">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-        </svg>
-        Codes
-      </button>
-    </div>`;
+  
 
   const rows = students.map(s => {
     const current  = _attendMarks[s.student_id] || '';
@@ -209,7 +195,7 @@ function _renderAttendGrid(cls) {
       </div>`;
   }).join('');
 
-  el.innerHTML = toolbar + `<div class="attend-list-wrap">${rows}</div>`;
+    el.innerHTML = `<div class="attend-list-wrap">${rows}</div>`;
 
   _renderAttendStats();
 }
