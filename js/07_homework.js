@@ -139,8 +139,8 @@ window.saveHomework = async function() {
       school_id:   window.APP.school_id,
     };
 
-    await API.saveHomework(data);
-    window.APP.homework.unshift(data);
+        const res = await API.saveHomework(data);
+    window.APP.homework.unshift(res?.homework || data);
 
     closeModal();
     _renderHwList();
@@ -231,10 +231,13 @@ window.saveEditHomework = async function(id) {
 };
 
 window.confirmDeleteHomework = function(id) {
-  if (!confirm('Delete this homework entry?')) return;
-  doDeleteHomework(id);
+  showConfirm(
+    '🗑 Delete this homework?',
+    'This entry will be removed for good — this can\'t be undone.',
+    'Delete',
+    () => doDeleteHomework(id)
+  );
 };
-
 async function doDeleteHomework(id) {
   try {
     await API.deleteHomework(id);
