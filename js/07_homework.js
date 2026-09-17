@@ -72,8 +72,11 @@ function _renderHwList() {
   }).join('');
 }
 
-window.openHomeworkModal = function() {
-  const subjects = window.APP.config?.subjects || ['Mathematics','English','Science','Social Studies'];
+window.openHomeworkModal = async function() {
+  const subjectRows = await _ensureSubjectsLoaded();
+  const subjects = subjectRows.length
+    ? subjectRows.map(s => s.subject_name)
+    : ['Mathematics', 'English', 'Science', 'Social Studies'];
   const types    = window.APP.config?.homework_types || ['Homework','Lesson','Test','Quiz','Project','Worksheet'];
   const classes  = [...new Set(window.APP.students.map(s => s.class).filter(Boolean))].sort();
 
@@ -155,10 +158,13 @@ window.saveHomework = async function() {
 
 /* ─── Edit + Delete ─────────────────────────────────────────────── */
 
-window.openEditHomework = function(id) {
+window.openEditHomework = async function(id) {
   const h = window.APP.homework.find(x => String(x.id) === String(id));
   if (!h) { showToast('Item not found'); return; }
-  const subjects = window.APP.config?.subjects || ['Mathematics','English','Science','Social Studies'];
+  const subjectRows = await _ensureSubjectsLoaded();
+  const subjects = subjectRows.length
+    ? subjectRows.map(s => s.subject_name)
+    : ['Mathematics', 'English', 'Science', 'Social Studies'];
   const types    = window.APP.config?.homework_types || ['Homework','Lesson','Test','Quiz','Project','Worksheet'];
   const classes  = [...new Set(window.APP.students.map(s => s.class).filter(Boolean))].sort();
 
@@ -252,30 +258,21 @@ async function doDeleteHomework(id) {
 }
 
 /* ─── Add a new subject (from the Subject picker) ──────────────────── */
+/* openAddSubjectPrompt / _confirmAddSubject / _ensureSubjectsLoaded now
+ * live in 03_utils.js, shared with the Grades page. */
 
 window.handleSubjectSelectChange = function(sel) {
   if (sel.value !== '__add__') return;
   const opts = [...sel.options].filter(o => o.value !== '__add__');
   sel.value = opts[0]?.value || '';
-  openAddSubjectPrompt(sel.id);
+  openAddSubjectPrompt((newSubj) => {
+    const s = document.getElementById(sel.id);
+    if (!s) return;
+    const names = (window.APP.subjectsCache || []).map(x => x.subject_name);
+    s.innerHTML = names.map(n => `<option${n === newSubj.subject_name ? ' selected' : ''}>${esc(n)}</option>`).join('')
+      + `<option value="__add__">+ Add subject…</option>`;
+  });
 };
-
-window.openAddSubjectPrompt = function(selectId) {
-  openModal(`
-    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:340px">
-      <div class="modal-handle"></div>
-      <h3 class="modal-title">Add subject</h3>
-      <input class="form-input" id="newSubjectInput" placeholder="e.g. Myanmar, Art, PE" autofocus>
-      <button class="btn-primary mt16" id="addSubjectBtn" onclick="_confirmAddSubject('${esc(selectId)}')">Add</button>
-      <button class="btn-secondary mt8" onclick="closeModal()">Cancel</button>
-    </div>
-  `);
-};
-
-window._confirmAddSubject = async function(selectId) {
-  const input = document.getElementById('newSubjectInput');
-  const name = (input?.value || '').trim();
-  if (!name) { showToast('Enter a subject name'); return; }
 
   const subjects = window.APP.config?.subjects?.length
     ? window.APP.config.subjects
