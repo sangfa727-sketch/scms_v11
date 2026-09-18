@@ -273,33 +273,3 @@ window.handleSubjectSelectChange = function(sel) {
       + `<option value="__add__">+ Add subject…</option>`;
   });
 };
-
-  const subjects = window.APP.config?.subjects?.length
-    ? window.APP.config.subjects
-    : ['Mathematics', 'English', 'Science', 'Social Studies'];
-  if (subjects.some(s => s.toLowerCase() === name.toLowerCase())) {
-    showToast('That subject already exists');
-    return;
-  }
-
-  const btn = document.getElementById('addSubjectBtn');
-  btn.disabled = true; btn.textContent = 'Adding…';
-  try {
-    const updated = [...subjects, name];
-    await API.updateSchoolConfig({ subjects: updated });
-    window.APP.config = window.APP.config || {};
-    window.APP.config.subjects = updated;
-
-    closeModal();
-    showToast('✓ Subject added');
-
-    const sel = document.getElementById(selectId);
-    if (sel) {
-      sel.innerHTML = updated.map(s => `<option${s === name ? ' selected' : ''}>${esc(s)}</option>`).join('')
-        + `<option value="__add__">+ Add subject…</option>`;
-    }
-  } catch (e) {
-    btn.disabled = false; btn.textContent = 'Add';
-    showToast('Failed: ' + (e.message || 'error'));
-  }
-};
