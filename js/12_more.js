@@ -57,6 +57,10 @@ function renderMore() {
         <span class="more-icon">⚡</span>
         <span>Incidents</span>
       </button>
+      <button class="more-tile" onclick="goToPage('grades')">
+        <span class="more-icon">🎓</span>
+        <span>Grades</span>
+      </button>
       <button class="more-tile" onclick="goToPage('parents')">
         <span class="more-icon">📨</span>
         <span>Parent messages</span>
