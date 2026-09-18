@@ -160,8 +160,8 @@ window.saveIncident = async function() {
       school_id:      window.APP.school_id,
     };
 
-    await API.saveIncident(data);
-    window.APP.incidents.unshift(data);
+        const res = await API.saveIncident(data);
+    window.APP.incidents.unshift(res?.incident || data);
 
     closeModal();
     _renderIncidentList();
@@ -238,8 +238,12 @@ window.saveEditIncident = async function(id) {
 };
 
 window.confirmDeleteIncident = function(id) {
-  if (!confirm('Delete this incident record?')) return;
-  doDeleteIncident(id);
+  showConfirm(
+    '🗑 Delete this incident record?',
+    'This can\'t be undone.',
+    'Delete',
+    () => doDeleteIncident(id)
+  );
 };
 
 async function doDeleteIncident(id) {
