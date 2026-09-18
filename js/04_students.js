@@ -249,6 +249,7 @@ window.openEditStudentModal = function(studentId) {
 };
 
 function _openStudentForm({ mode, student }) {
+  _pendingPhotoFile = null;
   const isEdit  = mode === 'edit';
   const s       = student || {};
   const grades  = window.getGradeList();
