@@ -280,6 +280,7 @@ async function initApp() {
     if (typeof renderIncidents  === 'function') renderIncidents();
     if (typeof renderTimetable  === 'function') renderTimetable();
     if (typeof renderSummary    === 'function') renderSummary();
+    if (typeof renderGrades     === 'function') renderGrades();
     if (typeof renderMore       === 'function') renderMore();
     if (typeof renderSidebar    === 'function') renderSidebar();
     if (typeof _applyLogoToHeader === 'function') _applyLogoToHeader();
