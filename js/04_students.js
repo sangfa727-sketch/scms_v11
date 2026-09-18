@@ -140,7 +140,7 @@ function _renderStudentList() {
     return `
       <div class="list-card stu-card" onclick="openStudentDetail('${esc(s.student_id)}')">
         <div class="card-row">
-          <div class="card-avatar" style="background:${homeHex}">${esc((s.name_en||'?')[0])}</div>
+          <div class="card-avatar" style="background:${homeHex}">${avatarContent(s)}</div>
           <div class="card-info">
             <div class="card-name">
               ${esc(s.name_en || s.name_local || s.student_id)}
@@ -181,7 +181,7 @@ window.openStudentDetail = function(studentId) {
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <div class="detail-header">
-        <div class="detail-avatar" style="background:${homeHex}">${esc((s.name_en||'?')[0])}</div>
+               <div class="detail-avatar" style="background:${homeHex}">${avatarContent(s)}</div>
         <div style="flex:1; min-width:0;">
           <h3 class="modal-title mb0">${esc(s.name_en || s.name_local || '—')}</h3>
           ${s.name_local && s.name_local !== s.name_en ? `<div class="detail-local">${esc(s.name_local)}</div>` : ''}
@@ -256,10 +256,18 @@ function _openStudentForm({ mode, student }) {
   const classes = window.getClassList();
   const colors  = window.HOME_COLORS;
 
+    const homeHex = homeColorHex(s.home_color);
+
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <h3 class="modal-title">${isEdit ? 'Edit Student' : 'Add New Student'}</h3>
+
+      <div class="stu-photo-picker" onclick="document.getElementById('stuPhotoInput').click()">
+        <div class="stu-photo-circle" id="stuPhotoPreview" style="background:${homeHex}">${avatarContent(s)}</div>
+        <div class="stu-photo-edit-badge">📷</div>
+      </div>
+      <input type="file" id="stuPhotoInput" accept="image/*" style="display:none" onchange="_onStuPhotoPicked(this)">
 
       <label class="field-label">Local name (Myanmar / native)</label>
       <input class="form-input" id="newStuLocal" placeholder="ကျောင်းသားနာမည်…" value="${esc(s.name_local || '')}">
@@ -356,7 +364,20 @@ window.selectHomeColor = function(colorId) {
   const hidden = document.getElementById('newStuColor');
   if (hidden) hidden.value = colorId;
 };
+window._onStuPhotoPicked = function(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('Please pick an image file'); return; }
+  if (file.size > 3 * 1024 * 1024) { showToast('Photo must be under 3MB'); return; }
 
+  _pendingPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const preview = document.getElementById('stuPhotoPreview');
+    if (preview) preview.innerHTML = `<img src="${reader.result}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block">`;
+  };
+  reader.readAsDataURL(file);
+};
 window.saveStudentForm = async function(mode, studentId) {
   const btn = document.getElementById('saveStudentBtn');
 
@@ -388,13 +409,23 @@ window.saveStudentForm = async function(mode, studentId) {
   btn.disabled = true;
   btn.textContent = mode === 'edit' ? 'Saving…' : 'Registering…';
 
-  try {
+      try {
     if (mode === 'edit') {
       await API.updateStudent(studentId, data);
       // Update local cache
       const idx = window.APP.students.findIndex(x => x.student_id === studentId);
       if (idx >= 0) {
         window.APP.students[idx] = { ...window.APP.students[idx], ...data };
+      }
+      if (_pendingPhotoFile) {
+        try {
+          const url = await API.uploadStudentPhoto(studentId, _pendingPhotoFile);
+          await API.setStudentPhoto(studentId, url);
+          if (idx >= 0) window.APP.students[idx].photo_url = url;
+        } catch (photoErr) {
+          showToast('Saved, but photo upload failed: ' + (photoErr.message || 'error'));
+        }
+        _pendingPhotoFile = null;
       }
       closeModal();
       renderStudents();
@@ -413,6 +444,17 @@ window.saveStudentForm = async function(mode, studentId) {
         status: 'Active',
         school_id: window.APP.school_id,
       };
+
+      if (_pendingPhotoFile && newStudent.student_id) {
+        try {
+          const url = await API.uploadStudentPhoto(newStudent.student_id, _pendingPhotoFile);
+          await API.setStudentPhoto(newStudent.student_id, url);
+          newStudent.photo_url = url;
+        } catch (photoErr) {
+          showToast('Registered, but photo upload failed: ' + (photoErr.message || 'error'));
+        }
+        _pendingPhotoFile = null;
+      }
 
       window.APP.students.push(newStudent);
 
