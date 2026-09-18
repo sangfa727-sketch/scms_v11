@@ -15,6 +15,7 @@
 let _stuClass  = 'All';
 let _stuSearch = '';
 let _parentLinkPollTimer = null;   // polls server after registering a student
+let _pendingPhotoFile    = null;   // File picked in the Add/Edit form, uploaded on save
 
 function renderStudents() {
   _renderStudentStats();
