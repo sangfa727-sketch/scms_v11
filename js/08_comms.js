@@ -62,8 +62,12 @@ function _renderCommsList() {
 }
 
 window.confirmDeleteComm = function(id) {
-  if (!confirm('Delete this message from the log?')) return;
-  doDeleteComm(id);
+  showConfirm(
+    '🗑 Delete this message from the log?',
+    'This can\'t be undone.',
+    'Delete',
+    () => doDeleteComm(id)
+  );
 };
 
 async function doDeleteComm(id) {
@@ -160,7 +164,7 @@ window.sendParentComm = async function() {
 
   btn.disabled = true; btn.textContent = 'Sending…';
   try {
-    await API.sendParentComm({
+       const res = await API.sendParentComm({
       message_preview: msg,
       class:           isIndividual ? (_commPickedStudent?.class || '') : document.getElementById('commClass')?.value,
       student_id:      isIndividual ? _commPickedStudent?.student_id   : null,
@@ -168,6 +172,11 @@ window.sendParentComm = async function() {
       type:            'General',
       date:            new Date().toISOString().slice(0, 10),
     });
+    if (res?.comm) {
+      window.APP.parentComms = window.APP.parentComms || [];
+      window.APP.parentComms.unshift(res.comm);
+      if (typeof _renderCommsList === 'function') _renderCommsList();
+    }
     closeModal();
     showToast('✓ Message sent');
     if (window.APP.tg?.HapticFeedback) window.APP.tg.HapticFeedback.notificationOccurred('success');
