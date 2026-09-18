@@ -440,6 +440,7 @@ const FAB_PAGES = {
   hw:        { title: 'Add homework',       action: () => openHomeworkModal() },
   incidents: { title: 'Log incident',       action: () => openIncidentModal() },
   parents:   { title: 'Message parent',     action: () => openParentCommModal() },
+  grades:    { title: 'New assessment',     action: () => openNewAssessmentModal() },
   timetable: { title: 'Add timetable entry',action: () => openAddTimetable() },
 };
 
