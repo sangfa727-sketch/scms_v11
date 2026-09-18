@@ -135,7 +135,7 @@ function _renderPickerList() {
           const homeHex = s.home_color ? homeColorHex(s.home_color) : _pickerClassColor(s.class);
           return `
             <button class="picker-row" onclick="pickStudent('${esc(s.student_id)}')">
-              <span class="picker-avatar" style="background:${homeHex}">${esc((s.name_en||'?')[0])}</span>
+              <span class="picker-avatar" style="background:${homeHex}">${avatarContent(s)}</span>
               <span class="picker-row-info">
                 <span class="picker-row-name">${esc(s.name_en || s.name_local)}</span>
                 ${s.name_local && s.name_local !== s.name_en
