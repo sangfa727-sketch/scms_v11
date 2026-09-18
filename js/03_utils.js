@@ -179,7 +179,24 @@ window.getClassList = function() {
   );
   return [...set].sort();
 };
+/* ─── Student avatar: photo > gender icon > initial letter ─────────── */
 
+const AVATAR_ICON_BOY = `<svg viewBox="0 0 48 48" width="62%" height="62%" fill="#fff" style="display:block"><path d="M24 4C17 4 12 9 12 16c0 1.2.1 2.3.4 3.4C14.6 16 18.7 13 24 13s9.4 3 11.6 6.4c.3-1.1.4-2.2.4-3.4 0-7-5-12-12-12z"/><circle cx="24" cy="19" r="9"/><path d="M6 43c0-8.8 8.1-16 18-16s18 7.2 18 16v1H6v-1z"/></svg>`;
+const AVATAR_ICON_GIRL = `<svg viewBox="0 0 48 48" width="62%" height="62%" fill="#fff" style="display:block"><circle cx="24" cy="19" r="9"/><path d="M24 6c-6.6 0-12 5.4-12 12 0 1.7.3 3.3 1 4.8.6-2 2-3.5 3.6-4.4-.4 1.8 0 3.7 1.4 5.1-1-2.4-.7-5.2 1-7.1 1.7 2 4.7 2 6.4 0 1.7 1.9 2 4.7 1 7.1 1.4-1.4 1.8-3.3 1.4-5.1 1.6.9 3 2.4 3.6 4.4.7-1.5 1-3.1 1-4.8 0-6.6-5.4-12-12-12z"/><ellipse cx="9.5" cy="25" rx="3" ry="6.5"/><ellipse cx="38.5" cy="25" rx="3" ry="6.5"/><path d="M6 43c0-8.8 8.1-16 18-16s18 7.2 18 16v1H6v-1z"/></svg>`;
+
+/** Fill for a student's avatar circle: their photo if set, else a flat
+ *  boy/girl icon based on gender, else the first letter of their name.
+ *  Caller supplies the colored circle container — this just returns the
+ *  inner HTML. */
+window.avatarContent = function(s) {
+  if (s && s.photo_url) {
+    return `<img src="${esc(s.photo_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block">`;
+  }
+  const g = ((s && s.gender) || '').trim().toUpperCase();
+  if (g === 'M') return AVATAR_ICON_BOY;
+  if (g === 'F') return AVATAR_ICON_GIRL;
+  return esc(((s && (s.name_en || s.name_local)) || '?')[0] || '?');
+};
 /** Return the list of grade names the school uses. */
 window.getGradeList = function() {
   const cfg = (window.APP.config || {});
