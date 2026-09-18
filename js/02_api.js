@@ -178,6 +178,38 @@ const API = {
     return twaPost('register_student', data);
   },
 
+    /** Upload a student's photo to Supabase Storage and return its public URL.
+   *  Path convention: <school_id>/<student_id>.<ext> — re-upload overwrites. */
+  async uploadStudentPhoto(studentId, file) {
+    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${window.APP.school_id}/${studentId}.${ext}`;
+    const resp = await fetch(
+      `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/student-photos/${path}`,
+      {
+        method:  'POST',
+        headers: {
+          'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+          'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+          'Content-Type':  file.type || 'image/jpeg',
+          'x-upsert':      'true',
+        },
+        body: file,
+      }
+    );
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => '');
+      throw new Error(`Photo upload failed (${resp.status}): ${t.slice(0, 200)}`);
+    }
+    return `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/public/student-photos/${path}?t=${Date.now()}`;
+  },
+
+  async setStudentPhoto(studentId, photoUrl) {
+    return _webRpc('rpc_set_student_photo', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId,
+      p_photo_url: photoUrl,
+    });
+  },
   /** Edit / update an existing student.
    *  Backend has no `update_student` TWA route yet — we PATCH Supabase directly
    *  (allowed by RLS for authenticated reads). For best results, replicate
