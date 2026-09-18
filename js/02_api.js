@@ -401,6 +401,13 @@ const API = {
   // ─── INCIDENTS ───────────────────────────────────────────────────────────
 
   async saveIncident(data) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_save_incident', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: data.student_id, p_name_en: data.name_en, p_class: data.class,
+      p_type: data.type, p_severity: data.severity, p_description: data.description,
+      p_action_taken: data.action_taken, p_parent_notified: !!data.parent_notified,
+      p_date: data.date,
+    });
     return twaPost('save_incident', {
       ...data,
       date: data.date || new Date().toISOString().slice(0, 10),
@@ -410,10 +417,19 @@ const API = {
   },
 
   async updateIncident(id, patch) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_update_incident', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_type: patch.type, p_severity: patch.severity,
+      p_description: patch.description, p_action_taken: patch.action_taken,
+      p_parent_notified: !!patch.parent_notified,
+    });
     return twaPost('update_incident', { id, patch });
   },
 
   async deleteIncident(id) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_delete_incident', {
+      p_session_token: getWebSession()?.session_token, p_id: id,
+    });
     return twaPost('delete_incident', { id });
   },
 
@@ -425,7 +441,12 @@ const API = {
 
   // ─── PARENT COMMS ────────────────────────────────────────────────────────
 
-  async sendParentComm(data) {
+    async sendParentComm(data) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_send_parent_comm', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: data.student_id, p_name_en: data.name_en, p_class: data.class,
+      p_type: data.type, p_message_preview: data.message_preview, p_date: data.date,
+    });
     return twaPost('send_parent_comm', {
       ...data,
       school_id:  window.APP.school_id,
@@ -438,6 +459,9 @@ const API = {
   },
 
   async deleteParentComm(id) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_delete_parent_comm', {
+      p_session_token: getWebSession()?.session_token, p_id: id,
+    });
     return twaPost('delete_parent_comm', { id });
   },
 
@@ -449,7 +473,12 @@ const API = {
 
   // ─── TIMETABLE ───────────────────────────────────────────────────────────
 
-  async saveTimetable(data) {
+    async saveTimetable(data) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_save_timetable', {
+      p_session_token: getWebSession()?.session_token,
+      p_day: data.day, p_period: data.period, p_start_time: data.start_time,
+      p_class: data.class, p_subject: data.subject, p_room: data.room,
+    });
     return twaPost('save_timetable', {
       ...data,
       school_id:  window.APP.school_id,
@@ -457,10 +486,18 @@ const API = {
   },
 
   async updateTimetable(id, patch) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_update_timetable', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_day: patch.day, p_period: patch.period, p_start_time: patch.start_time,
+      p_class: patch.class, p_subject: patch.subject, p_room: patch.room,
+    });
     return twaPost('update_timetable', { id, patch });
   },
 
   async deleteTimetable(id) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_delete_timetable', {
+      p_session_token: getWebSession()?.session_token, p_id: id,
+    });
     return twaPost('delete_timetable', { id });
   },
 
