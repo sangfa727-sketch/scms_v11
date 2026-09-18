@@ -3549,3 +3549,13 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   font-size: 13px;
   border: 2px solid var(--surface);
 }
+.stu-photo-remove-link {
+  display: block;
+  margin: -12px auto 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: underline;
+  text-align: center;
+}
+.stu-photo-remove-link:hover { color: var(--text); }
