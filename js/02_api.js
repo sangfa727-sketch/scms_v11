@@ -182,7 +182,22 @@ const API = {
    *  Backend has no `update_student` TWA route yet — we PATCH Supabase directly
    *  (allowed by RLS for authenticated reads). For best results, replicate
    *  fields the bot's `/editstudent` wizard supports. */
-  async updateStudent(studentId, patch) {
+    async updateStudent(studentId, patch) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_update_student', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId,
+      p_name_local: patch.name_local || null,
+      p_name_en:    patch.name_en,
+      p_class:      patch.class,
+      p_grade:      patch.grade || null,
+      p_gender:     patch.gender || null,
+      p_date_of_birth: patch.date_of_birth || null,
+      p_home_color: patch.home_color || null,
+      p_parent_name:  patch.parent_name || null,
+      p_parent_phone: patch.parent_phone || null,
+      p_parent_email: patch.parent_email || null,
+    });
+
     // Whitelist fields that exist in the DB schema (matches Apply Student Edit)
     const allowed = ['name_en', 'name_mm', 'name_local', 'class', 'grade',
                      'gender', 'date_of_birth', 'parent_name', 'parent_phone',
@@ -212,9 +227,13 @@ const API = {
     return { ok: true, success: true, student: rows[0] || null };
   },
 
-  /** Soft-delete (status=Inactive) — admin only.
-   *  Backend has no TWA route; we PATCH Supabase directly. */
+  /** Soft-delete (status=Inactive) — admin only. */
   async deleteStudent(studentId) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_delete_student', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId,
+    });
+
     const url = `${SCMS_CONFIG.SUPABASE_URL}/rest/v1/students`
               + `?student_id=eq.${encodeURIComponent(studentId)}`
               + `&school_id=eq.${encodeURIComponent(window.APP.school_id)}`;
