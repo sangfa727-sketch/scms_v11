@@ -73,7 +73,7 @@ function _renderDailyList(cls) {
     return `
       <div class="list-card ${done ? 'card-done' : ''}" data-daily-id="${esc(report?.id || '')}">
         <div class="card-row">
-          <div class="card-avatar" style="background:${homeHex}">${esc((s.name_en || '?')[0])}</div>
+          <div class="card-avatar" style="background:${homeHex}">${avatarContent(s)}</div>
           <div class="card-info">
             <div class="card-name">${esc(s.name_en || s.name_local)}</div>
             ${done
