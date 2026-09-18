@@ -16,6 +16,7 @@ let _stuClass  = 'All';
 let _stuSearch = '';
 let _parentLinkPollTimer = null;   // polls server after registering a student
 let _pendingPhotoFile    = null;   // File picked in the Add/Edit form, uploaded on save
+let _removePhotoRequested = false; // "Remove photo" tapped — clear on save
 
 function renderStudents() {
   _renderStudentStats();
@@ -250,6 +251,7 @@ window.openEditStudentModal = function(studentId) {
 
 function _openStudentForm({ mode, student }) {
   _pendingPhotoFile = null;
+  _removePhotoRequested = false;
   const isEdit  = mode === 'edit';
   const s       = student || {};
   const grades  = window.getGradeList();
@@ -268,7 +270,10 @@ function _openStudentForm({ mode, student }) {
         <div class="stu-photo-edit-badge">📷</div>
       </div>
       <input type="file" id="stuPhotoInput" accept="image/*" style="display:none" onchange="_onStuPhotoPicked(this)">
-
+            <button type="button" class="stu-photo-remove-link" id="stuPhotoRemoveBtn"
+              onclick="_removeStuPhoto()" style="${s.photo_url ? '' : 'display:none'}">
+        Remove photo
+      </button>
       <label class="field-label">Local name (Myanmar / native)</label>
       <input class="form-input" id="newStuLocal" placeholder="ကျောင်းသားနာမည်…" value="${esc(s.name_local || '')}">
 
@@ -371,12 +376,28 @@ window._onStuPhotoPicked = function(input) {
   if (file.size > 3 * 1024 * 1024) { showToast('Photo must be under 3MB'); return; }
 
   _pendingPhotoFile = file;
+  _removePhotoRequested = false;
   const reader = new FileReader();
   reader.onload = () => {
     const preview = document.getElementById('stuPhotoPreview');
     if (preview) preview.innerHTML = `<img src="${reader.result}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block">`;
   };
+      const removeBtn = document.getElementById('stuPhotoRemoveBtn');
+    if (removeBtn) removeBtn.style.display = '';
   reader.readAsDataURL(file);
+};
+
+window._removeStuPhoto = function() {
+  _pendingPhotoFile = null;
+  _removePhotoRequested = true;
+  const preview = document.getElementById('stuPhotoPreview');
+  if (preview) {
+    const genderGuess = document.querySelector('#genderPills .pill.active')?.textContent.trim() || '';
+    preview.innerHTML = avatarContent({ gender: genderGuess, name_en: document.getElementById('newStuEn')?.value });
+  }
+  const removeBtn = document.getElementById('stuPhotoRemoveBtn');
+  if (removeBtn) removeBtn.style.display = 'none';
+  document.getElementById('stuPhotoInput').value = '';
 };
 window.saveStudentForm = async function(mode, studentId) {
   const btn = document.getElementById('saveStudentBtn');
@@ -417,7 +438,7 @@ window.saveStudentForm = async function(mode, studentId) {
       if (idx >= 0) {
         window.APP.students[idx] = { ...window.APP.students[idx], ...data };
       }
-      if (_pendingPhotoFile) {
+            if (_pendingPhotoFile) {
         try {
           const url = await API.uploadStudentPhoto(studentId, _pendingPhotoFile);
           await API.setStudentPhoto(studentId, url);
@@ -426,6 +447,14 @@ window.saveStudentForm = async function(mode, studentId) {
           showToast('Saved, but photo upload failed: ' + (photoErr.message || 'error'));
         }
         _pendingPhotoFile = null;
+      } else if (_removePhotoRequested) {
+        try {
+          await API.setStudentPhoto(studentId, null);
+          if (idx >= 0) window.APP.students[idx].photo_url = null;
+        } catch (photoErr) {
+          showToast('Saved, but removing photo failed: ' + (photoErr.message || 'error'));
+        }
+        _removePhotoRequested = false;
       }
       closeModal();
       renderStudents();
