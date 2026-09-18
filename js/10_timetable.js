@@ -153,9 +153,8 @@ window.saveTimetableEntry = async function(id) {
       if (idx >= 0) window.APP.timetable[idx] = { ...window.APP.timetable[idx], ...data };
       showToast('✓ Updated');
     } else {
-      const res = await API.saveTimetable(data);
-      // Server may return the inserted row; refresh from APP.timetable on next bootstrap
-      const newRow = (res && (res.data || res[0])) || { ...data, id: 'tmp_' + Date.now() };
+            const res = await API.saveTimetable(data);
+      const newRow = res?.entry || (res && (res.data || res[0])) || { ...data, id: 'tmp_' + Date.now() };
       window.APP.timetable.push(newRow);
       showToast('✓ Added');
     }
@@ -168,8 +167,12 @@ window.saveTimetableEntry = async function(id) {
 };
 
 window.confirmDeleteTimetable = function(id) {
-  if (!confirm('Delete this timetable entry?')) return;
-  doDeleteTimetable(id);
+  showConfirm(
+    '🗑 Delete this timetable entry?',
+    'This can\'t be undone.',
+    'Delete',
+    () => doDeleteTimetable(id)
+  );
 };
 
 async function doDeleteTimetable(id) {
