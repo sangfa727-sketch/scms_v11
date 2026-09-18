@@ -522,25 +522,26 @@ a { color: inherit; }
     margin-left: auto;
   }
 
-  /* Attendance header: title left, class dropdown top-right */
-  #attendPageHeader {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: start;
-    column-gap: 16px;
-  }
-  #attendPageHeader .page-eyebrow,
-  #attendPageHeader .page-title,
-  #attendPageHeader .page-subtitle {
-    grid-column: 1;
-  }
-  #attendPageHeader .chips-row {
-    grid-column: 2;
-    grid-row: 1 / 4;
-    align-self: start;
-    margin: 2px 0 0;
-    padding: 0;
-  }
+  /* Attendance header: title left, class dropdown top-right — same on mobile
+   and desktop, opposite corner from the page title. */
+#attendPageHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  column-gap: 16px;
+}
+#attendPageHeader .page-eyebrow,
+#attendPageHeader .page-title,
+#attendPageHeader .page-subtitle {
+  grid-column: 1;
+}
+#attendPageHeader .chips-row {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  align-self: start;
+  margin: 2px 0 0;
+  padding: 0;
+}
 
   /* Calendar (left half) + Summary/Actions (right half), side by side */
   .attend-toprow {
