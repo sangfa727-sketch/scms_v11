@@ -594,6 +594,13 @@ const API = {
       p_records:       records,
     });
   },
+    async getReportCard(termId, cls) {
+    return _webRpc('rpc_get_report_card', {
+      p_session_token: getWebSession()?.session_token,
+      p_term_id: termId,
+      p_class: cls,
+    });
+  },
   // ─── STAFF CHAT (native app only — hidden in TWA) ────────────────────────
   // Reads: direct Supabase query on `chat_messages` table.
   // Writes: TWA `chat_send` action (backend must add this route — see README).
