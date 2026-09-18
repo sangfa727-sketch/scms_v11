@@ -182,7 +182,7 @@ function _renderAttendGrid(cls) {
     return `
       <div class="attend-row-clean" id="arow-${esc(s.student_id)}" data-marked="${current ? '1' : '0'}">
         <div class="att-row-head">
-          <span class="att-avatar-sm" style="background:${homeHex}">${esc(initials)}</span>
+          <span class="att-avatar-sm" style="background:${homeHex}">${avatarContent(s)}</span>
           <span class="att-row-name">${esc(s.name_en || s.name_local || s.student_id)}</span>
           ${noteIndicator}
           <button class="att-note-btn" onclick="openAttendNote('${esc(s.student_id)}')" aria-label="Add note" title="Add reason / note">
