@@ -117,7 +117,13 @@ const API = {
     return twaPost('save_attendance', { class: cls, date, records });
   },
 
-  async getAttendance(daysBack = 30) {
+    async getAttendance(daysBack = 30) {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_attendance', {
+        p_session_token: getWebSession()?.session_token, p_days_back: daysBack,
+      });
+      return res.rows;
+    }
     const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
     return sbQuery('attendance',
       `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc,class`);
@@ -125,7 +131,11 @@ const API = {
 
   // ─── STUDENTS ────────────────────────────────────────────────────────────
 
-  async getStudents() {
+    async getStudents() {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_students', { p_session_token: getWebSession()?.session_token });
+      return res.rows;
+    }
     return sbQuery('students',
       `school_id=eq.${window.APP.school_id}&status=eq.Active&order=class,name_en`);
   },
@@ -350,7 +360,13 @@ const API = {
     return twaPost('delete_daily_report', { id });
   },
 
-  async getDailyReports(daysBack = 7) {
+    async getDailyReports(daysBack = 7) {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_daily_reports', {
+        p_session_token: getWebSession()?.session_token, p_days_back: daysBack,
+      });
+      return res.rows;
+    }
     const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
     return sbQuery('daily_reports',
       `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc,name_en`);
@@ -392,7 +408,13 @@ const API = {
     });
     return twaPost('delete_homework', { id });
   },
-  async getHomework(daysBack = 30) {
+    async getHomework(daysBack = 30) {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_homework', {
+        p_session_token: getWebSession()?.session_token, p_days_back: daysBack,
+      });
+      return res.rows;
+    }
     const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
     return sbQuery('homework_log',
       `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
@@ -433,7 +455,13 @@ const API = {
     return twaPost('delete_incident', { id });
   },
 
-  async getIncidents(daysBack = 30) {
+    async getIncidents(daysBack = 30) {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_incidents', {
+        p_session_token: getWebSession()?.session_token, p_days_back: daysBack,
+      });
+      return res.rows;
+    }
     const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
     return sbQuery('incidents',
       `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
@@ -465,7 +493,13 @@ const API = {
     return twaPost('delete_parent_comm', { id });
   },
 
-  async getParentComms(daysBack = 30) {
+    async getParentComms(daysBack = 30) {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_parent_comms', {
+        p_session_token: getWebSession()?.session_token, p_days_back: daysBack,
+      });
+      return res.rows;
+    }
     const since = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
     return sbQuery('parent_comms',
       `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
@@ -501,15 +535,25 @@ const API = {
     return twaPost('delete_timetable', { id });
   },
 
-  async getTimetable() {
+    async getTimetable() {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_timetable', { p_session_token: getWebSession()?.session_token });
+      return res.rows;
+    }
     return sbQuery('timetable',
       `school_id=eq.${window.APP.school_id}&order=day,period`);
   },
 
   // ─── MONTHLY SUMMARY ─────────────────────────────────────────────────────
 
-  async getMonthlySummary(yearMonth) {
+    async getMonthlySummary(yearMonth) {
     const ym = yearMonth || new Date().toISOString().slice(0, 7);
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_monthly_summary', {
+        p_session_token: getWebSession()?.session_token, p_year_month: ym,
+      });
+      return res.rows;
+    }
     return sbQuery('monthly_summary',
       `school_id=eq.${window.APP.school_id}&year_month=eq.${ym}&order=class,name_en`);
   },
@@ -526,9 +570,9 @@ const API = {
 
     // ─── GRADING & ASSESSMENT (web only for now — new feature, not on n8n) ────
 
-  async getSubjects() {
-    return sbQuery('subjects',
-      `school_id=eq.${window.APP.school_id}&is_active=eq.true&order=display_order`);
+    async getSubjects() {
+    const res = await _webRpc('rpc_get_subjects', { p_session_token: getWebSession()?.session_token });
+    return res.rows;
   },
 
   async addSubject(name, code, color) {
@@ -538,8 +582,9 @@ const API = {
     });
   },
 
-  async getTerms() {
-    return sbQuery('terms', `school_id=eq.${window.APP.school_id}&order=term_order`);
+    async getTerms() {
+    const res = await _webRpc('rpc_get_terms', { p_session_token: getWebSession()?.session_token });
+    return res.rows;
   },
 
   async addTerm(data) {
@@ -554,12 +599,14 @@ const API = {
     });
   },
 
-  async getAssessments(filters = {}) {
-    let params = `school_id=eq.${window.APP.school_id}&order=date.desc`;
-    if (filters.class)      params += `&class=eq.${encodeURIComponent(filters.class)}`;
-    if (filters.subject_id) params += `&subject_id=eq.${filters.subject_id}`;
-    if (filters.term_id)    params += `&term_id=eq.${filters.term_id}`;
-    return sbQuery('assessments', params);
+    async getAssessments(filters = {}) {
+    const res = await _webRpc('rpc_get_assessments', {
+      p_session_token: getWebSession()?.session_token,
+      p_class:      filters.class || null,
+      p_subject_id: filters.subject_id || null,
+      p_term_id:    filters.term_id || null,
+    });
+    return res.rows;
   },
 
   async createAssessment(data) {
@@ -583,8 +630,12 @@ const API = {
     });
   },
 
-  async getGrades(assessmentId) {
-    return sbQuery('grades', `assessment_id=eq.${assessmentId}`);
+    async getGrades(assessmentId) {
+    const res = await _webRpc('rpc_get_grades', {
+      p_session_token: getWebSession()?.session_token,
+      p_assessment_id: assessmentId,
+    });
+    return res.rows;
   },
 
   async saveGrades(assessmentId, records) {
