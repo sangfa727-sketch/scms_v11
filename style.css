@@ -504,25 +504,7 @@ a { color: inherit; }
   color: var(--att-color);
 }
 
-/* ── Desktop layout: center every page in a readable column ─────────────
-   One rule instead of per-page side-by-side tricks — Calendar, Summary,
-   Quick Actions and Student list all stay in natural top-to-bottom order
-   and simply stop stretching edge-to-edge on wide screens. Applies to
-   Students / Attendance / Daily / HW / More alike. */
-@media (min-width: 900px) {
-  .page.active {
-    max-width: 960px;
-    margin: 0 auto;
-  }
-
-  #btnSaveAttendance {
-    width: auto;
-    min-width: 220px;
-    padding: 0 28px;
-    margin-left: auto;
-  }
-
-  /* Attendance header: title left, class dropdown top-right — same on mobile
+/* Attendance header: title left, class dropdown top-right — same on mobile
    and desktop, opposite corner from the page title. */
 #attendPageHeader {
   display: grid;
@@ -542,6 +524,25 @@ a { color: inherit; }
   margin: 2px 0 0;
   padding: 0;
 }
+/* ── Desktop layout: center every page in a readable column ─────────────
+   One rule instead of per-page side-by-side tricks — Calendar, Summary,
+   Quick Actions and Student list all stay in natural top-to-bottom order
+   and simply stop stretching edge-to-edge on wide screens. Applies to
+   Students / Attendance / Daily / HW / More alike. */
+@media (min-width: 900px) {
+  .page.active {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  #btnSaveAttendance {
+    width: auto;
+    min-width: 220px;
+    padding: 0 28px;
+    margin-left: auto;
+  }
+
+  
 
   /* Calendar (left half) + Summary/Actions (right half), side by side */
   .attend-toprow {
