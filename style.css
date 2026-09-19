@@ -2477,91 +2477,70 @@ html[data-platform="web"] .tab-btn-chat {
 .lang-switch {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 9999px;         /* pill shape */
-  background: var(--color-surface, #fff);
-  color: var(--color-text, #0f172a);
-  font-size: 13px;
-  font-weight: 600;
+  gap: 5px;
+  height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  touch-action: manipulation;
 }
 
 .lang-switch:hover {
-  background: var(--color-primary, #2563eb);
-  color: #fff;
-  border-color: var(--color-primary, #2563eb);
-  transform: translateY(-1px);
+  background: var(--bg3);
+  color: var(--text);
+  border-color: var(--border2);
 }
 
-.lang-switch:active {
-  transform: translateY(0);
-}
+.lang-switch:active { transform: scale(0.95); }
 
 .lang-switch:focus-visible {
-  outline: 2px solid var(--color-primary, #2563eb);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.lang-switch .lang-icon {
-  font-size: 15px;
+.lang-switch .lang-flag {
+  font-size: 14px;
   line-height: 1;
 }
 
-/* Mobile: label ကို ဖျောက်ပြီး icon ပဲ ပြ */
+.lang-switch .lang-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* Mobile — label ဖျောက်၊ flag ပဲ ပြ */
 @media (max-width: 480px) {
-  .lang-switch {
-    padding: 0 10px;
-  }
-  .lang-switch #langSwitchLabel {
-    display: none;
-  }
+  .lang-switch { padding: 0 9px; gap: 0; }
+  .lang-switch .lang-label { display: none; }
 }
 
-/* ── Dropdown (optional) ── */
-.lang-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 160px;
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  padding: 6px;
-  z-index: 1000;
-  display: none;
+/* ── မြန်မာစာအတွက် font + line-height ── */
+html[lang="my"] {
+  line-height: 1.7;
 }
-
-.lang-menu.open { display: block; }
-
-.lang-menu button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 14px;
-  text-align: left;
-  cursor: pointer;
+html[lang="my"] body {
+  font-family: 'Inter Tight', 'Noto Sans Myanmar', 'Padauk', 'Myanmar Text', sans-serif;
 }
-
-.lang-menu button:hover {
-  background: var(--color-bg, #f8fafc);
+html[lang="my"] .page-title,
+html[lang="my"] .school-name,
+html[lang="my"] .card-name,
+html[lang="my"] .att-row-name,
+html[lang="my"] .picker-row-name {
+  letter-spacing: 0.01em;
 }
-
-.lang-menu button.active {
-  background: var(--color-primary, #2563eb);
-  color: #fff;
-  font-weight: 600;
+html[lang="my"] .tab-label,
+html[lang="my"] .page-eyebrow {
+  letter-spacing: 0.03em;
 }
 
 /* ============================================================================
