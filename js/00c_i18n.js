@@ -88,11 +88,11 @@ const I18N = {
     // 5. <html lang="..."> update
     document.documentElement.lang = this.current;
 
-    // 6. Language switch button ရဲ့ label/flag ကို update
+    // 6. Language switch button ရဲ့ label/"no flag" ကို update
     const label = document.getElementById('langLabel');
     const flag  = document.getElementById('langFlag');
     if (label) label.textContent = this.current === 'my' ? 'မြန်မာ' : 'EN';
-    if (flag)  flag.textContent  = this.current === 'my' ? '🇲🇲' : '🇬🇧';
+    
   },
 };
 
