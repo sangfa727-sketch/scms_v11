@@ -78,13 +78,34 @@ const I18N = {
       const key = el.getAttribute('data-i18n-aria');
       el.setAttribute('aria-label', this.t(key));
     });
+    // ═══════════════════════════════════════════════════════════
+// Language Switch UI Wiring — သင့် HTML ID တွေနဲ့ ကိုက်အောင်
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  I18N.init();
+
+  const switchBtn = document.getElementById('langSwitch');
+  if (!switchBtn) {
+    console.warn('[i18n] #langSwitch button not found');
+    return;
+  }
+
+  switchBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = I18N.current === 'en' ? 'my' : 'en';
+    I18N.setLang(next);
+  });
+});
 
     // 5. <html lang="..."> update
     document.documentElement.lang = this.current;
 
-    // 6. Language switch button ရဲ့ label ကို update
-    const label = document.getElementById('langSwitchLabel');
+        // 6. Language switch button ရဲ့ label/flag ကို update
+    const label = document.getElementById('langLabel');
+    const flag  = document.getElementById('langFlag');
     if (label) label.textContent = this.current === 'my' ? 'မြန်မာ' : 'EN';
+    if (flag)  flag.textContent  = this.current === 'my' ? '🇲🇲' : '🇬🇧';
   },
 };
 
