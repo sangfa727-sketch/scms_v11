@@ -104,27 +104,34 @@ async function _loadAndRenderAssessments() {
   const el = document.getElementById('gradesAssessmentList');
   if (!el) return;
 
+  const toolbar = `
+    <div class="attend-toolbar">
+      <button class="btn-pill-action ghost" onclick="openReportCard()">
+        📄 Report card
+      </button>
+    </div>`;
+
   if (!_gradesClass) {
-    el.innerHTML = `<div class="empty-state">No classes yet — add students first.</div>`;
+    el.innerHTML = toolbar + `<div class="empty-state">No classes yet — add students first.</div>`;
     return;
   }
 
-  el.innerHTML = skeletonCards(2);
+  el.innerHTML = toolbar + skeletonCards(2);
   try {
     _gradesAssessments = await API.getAssessments({
       class: _gradesClass, subject_id: _gradesSubjectId, term_id: _gradesTermId,
     });
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    el.innerHTML = toolbar + `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
     return;
   }
 
   if (!_gradesAssessments.length) {
-    el.innerHTML = `<div class="empty-state">No assessments yet for this class/subject/term — tap + to add one.</div>`;
+    el.innerHTML = toolbar + `<div class="empty-state">No assessments yet for this class/subject/term — tap + to add one.</div>`;
     return;
   }
 
-  el.innerHTML = _gradesAssessments.map(a => `
+  el.innerHTML = toolbar + _gradesAssessments.map(a => `
     <div class="list-card" onclick="openGradeEntry(${a.id})">
       <div class="card-row">
         <div class="card-info">
@@ -138,6 +145,69 @@ async function _loadAndRenderAssessments() {
     </div>
   `).join('');
 }
+
+/* ─── Report card (term-end weighted average per subject + overall) ────── */
+
+window.openReportCard = async function() {
+  if (!_gradesTermId) { showToast('Pick a term first'); return; }
+  if (!_gradesClass)  { showToast('Pick a class first'); return; }
+
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:640px;max-height:85vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">Report Card</h3>
+      <p class="modal-subtitle">${esc(_gradesClass)} · ${esc(_gradesTerms.find(t => t.id === _gradesTermId)?.term_name || '')}</p>
+      <div id="reportCardBody">${skeletonCards(2)}</div>
+      <button class="btn-secondary mt16" onclick="closeModal()">Close</button>
+    </div>
+  `);
+
+  const body = document.getElementById('reportCardBody');
+  let students;
+  try {
+    const res = await API.getReportCard(_gradesTermId, _gradesClass);
+    students = res?.students || [];
+  } catch (e) {
+    if (body) body.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    return;
+  }
+
+  if (!body) return;
+  if (!students.length) {
+    body.innerHTML = `<div class="empty-state">No graded assessments for this term/class yet.</div>`;
+    return;
+  }
+
+  const subjectNames = [...new Set(
+    students.flatMap(s => (s.subjects || []).map(sub => sub.subject_name))
+  )].sort();
+
+  const rows = students.map(s => {
+    const bySubject = Object.fromEntries((s.subjects || []).map(sub => [sub.subject_name, sub]));
+    const cells = subjectNames.map(name => {
+      const sub = bySubject[name];
+      return `<td>${sub ? `${sub.pct}% <span class="report-letter">${esc(sub.letter)}</span>` : '—'}</td>`;
+    }).join('');
+    const overall = s.overall_pct != null
+      ? `${s.overall_pct}% <span class="report-letter">${esc(s.overall_letter)}</span>`
+      : '—';
+    return `<tr><td class="report-name">${esc(s.name_en)}</td>${cells}<td class="report-overall">${overall}</td></tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            ${subjectNames.map(n => `<th>${esc(n)}</th>`).join('')}
+            <th>Overall</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+};
 
 /* ─── New assessment ─────────────────────────────────────────────── */
 
