@@ -90,7 +90,6 @@ const I18N = {
 
     // 6. Language switch button ရဲ့ label/"no flag" ကို update
     const label = document.getElementById('langLabel');
-    const flag  = document.getElementById('langFlag');
     if (label) label.textContent = this.current === 'my' ? 'မြန်မာ' : 'EN';
     
   },
