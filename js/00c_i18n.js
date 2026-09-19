@@ -78,25 +78,32 @@ const I18N = {
       const key = el.getAttribute('data-i18n-aria');
       el.setAttribute('aria-label', this.t(key));
     });
-    // ═══════════════════════════════════════════════════════════
-// Language Switch UI Wiring — သင့် HTML ID တွေနဲ့ ကိုက်အောင်
+ // ═══════════════════════════════════════════════════════════
+// Language Switch UI Wiring
 // ═══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+(function initI18n() {
   I18N.init();
 
-  const switchBtn = document.getElementById('langSwitch');
-  if (!switchBtn) {
-    console.warn('[i18n] #langSwitch button not found');
-    return;
+  function wireSwitch() {
+    const switchBtn = document.getElementById('langSwitch');
+    if (!switchBtn) {
+      console.warn('[i18n] #langSwitch button not found');
+      return;
+    }
+    switchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const next = I18N.current === 'en' ? 'my' : 'en';
+      I18N.setLang(next);
+    });
   }
 
-  switchBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const next = I18N.current === 'en' ? 'my' : 'en';
-    I18N.setLang(next);
-  });
-});
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireSwitch);
+  } else {
+    wireSwitch();
+  }
+})();
 
     // 5. <html lang="..."> update
     document.documentElement.lang = this.current;
