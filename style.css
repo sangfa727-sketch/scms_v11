@@ -1147,20 +1147,21 @@ a { color: inherit; }
 }
 
 
-/* ── Language Switch Button ── */
 .lang-switch {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 0;                 /* gap မလိုတော့ */
   height: 34px;
-  padding: 0 11px;
+  min-width: 50px;        /* "EN" နဲ့ "မြန်မာ" နှစ်ခုလုံး အဆင်ပြေအောင် */
+  padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: 9999px;
   background: var(--bg2);
   color: var(--text2);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
@@ -1181,21 +1182,17 @@ a { color: inherit; }
   outline-offset: 2px;
 }
 
-.lang-switch .lang-flag {
-  font-size: 14px;
-  line-height: 1;
-}
-
 .lang-switch .lang-label {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
+  line-height: 1;
 }
 
-/* Mobile — label ဖျောက်၊ flag ပဲ ပြ */
-@media (max-width: 480px) {
-  .lang-switch { padding: 0 9px; gap: 0; }
-  .lang-switch .lang-label { display: none; }
+/* မြန်မာစာ အတွက် နည်းနည်း ပိုကြီးဖို့ */
+html[lang="my"] .lang-switch .lang-label {
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 /* ── မြန်မာစာအတွက် font + line-height ── */
