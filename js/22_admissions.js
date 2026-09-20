@@ -271,7 +271,7 @@ window.openNewAdmissionModal = function() {
       <h3 class="modal-title">New applicant</h3>
 
       <div class="stu-photo-picker" onclick="document.getElementById('admPhotoInput').click()">
-        <div class="stu-photo-circle" id="admPhotoPreview">${avatarContent({})}</div>
+        <div class="stu-photo-circle" id="admPhotoPreview" style="background:${homeColorHex(null)}">${avatarContent({})}</div>
         <div class="stu-photo-edit-badge">📷</div>
       </div>
       <input type="file" id="admPhotoInput" accept="image/*" style="display:none" onchange="_onAdmPhotoPicked(this)">
@@ -293,7 +293,11 @@ window.openNewAdmissionModal = function() {
       </div>
 
       <label class="field-label">Desired class</label>
-      <input class="form-input" id="naClass" placeholder="e.g. Grade 3">
+      <button type="button" class="form-picker-trigger" id="naClassBtn" onclick="pickClassValue('naClass')">
+        <span class="form-picker-value" id="naClass_label">Select class</span>
+        <svg class="form-picker-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <input type="hidden" id="naClass" value="">
 
       <label class="field-label">Parent name</label>
       <input class="form-input" id="naParentName" placeholder="Optional">
@@ -436,7 +440,7 @@ function _admDetailHtml(a, student, invoice) {
   const photoHtml = avatarContent({ photo_url: a.applicant_photo_url, gender: a.gender, name_en: a.applicant_name_en });
 
   return `
-    <div class="stu-photo-circle" style="margin:0 auto 10px">${photoHtml}</div>
+    <div class="stu-photo-circle" style="margin:0 auto 10px;background:${homeColorHex(null)}">${photoHtml}</div>
     <h3 class="modal-title mb0" style="text-align:center">${esc(a.applicant_name_en)}</h3>
     <p style="text-align:center"><span class="adm-status-badge adm-status-${_admStatusSlug(a.status)}">${esc(a.status)}</span></p>
 
@@ -560,7 +564,7 @@ window._showEditAdmissionView = async function(id) {
     <h3 class="modal-title">Edit applicant</h3>
 
     <div class="stu-photo-picker" onclick="document.getElementById('admPhotoInput').click()">
-      <div class="stu-photo-circle" id="admPhotoPreview">${avatarContent({ photo_url: a.applicant_photo_url, gender: a.gender, name_en: a.applicant_name_en })}</div>
+      <div class="stu-photo-circle" id="admPhotoPreview" style="background:${homeColorHex(null)}">${avatarContent({ photo_url: a.applicant_photo_url, gender: a.gender, name_en: a.applicant_name_en })}</div>
       <div class="stu-photo-edit-badge">📷</div>
     </div>
     <input type="file" id="admPhotoInput" accept="image/*" style="display:none" onchange="_onAdmPhotoPicked(this)">
@@ -573,7 +577,11 @@ window._showEditAdmissionView = async function(id) {
     <label class="field-label">Date of birth</label>
     <input class="form-input" id="eaDob" type="date" value="${a.date_of_birth || ''}">
     <label class="field-label">Desired class</label>
-    <input class="form-input" id="eaClass" value="${esc(a.desired_class || '')}">
+    <button type="button" class="form-picker-trigger" id="eaClassBtn" onclick="pickClassValue('eaClass')">
+      <span class="form-picker-value" id="eaClass_label">${a.desired_class ? esc(a.desired_class) : 'Select class'}</span>
+      <svg class="form-picker-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <input type="hidden" id="eaClass" value="${esc(a.desired_class || '')}">
     <label class="field-label">Parent name</label>
     <input class="form-input" id="eaParentName" value="${esc(a.parent_name || '')}">
     <label class="field-label">Parent phone</label>

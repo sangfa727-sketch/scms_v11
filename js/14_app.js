@@ -564,7 +564,14 @@ window.openModal = function(html, onClose) {
 
   const layer = document.createElement('div');
   layer.className = 'modal-layer';
-  layer.innerHTML = html;
+  // Every modal sheet gets a small "✕" in its top-right corner, in
+  // addition to any Cancel button the form itself has — on a full-screen
+  // mobile sheet there's no visible backdrop to tap to dismiss, so this is
+  // often the only easy way to back out without finishing the form.
+  layer.innerHTML = html.replace(
+    /(<div class="modal-sheet"[^>]*>)/,
+    `$1<button type="button" class="modal-close-x" onclick="event.stopPropagation();closeModal()" aria-label="Close">✕</button>`
+  );
   layer.onclick = function(e) {
     if (e.target === layer) closeModal();
   };

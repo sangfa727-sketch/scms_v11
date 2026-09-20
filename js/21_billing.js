@@ -402,9 +402,10 @@ window._saveRecordPayment = async function(invoiceId) {
       method: document.querySelector('#rpMethodPills .pill.active')?.textContent.trim() || 'Cash',
       notes: document.getElementById('rpNotes').value.trim() || null,
     });
-    showToast('✓ Payment recorded');
     await _loadInvoiceDetail(invoiceId);
     await _loadAndRenderInvoices();
+    closeModal();
+    showToast('✓ Payment recorded');
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Save payment';
     showToast('Failed: ' + (e.message || 'error'));
@@ -519,9 +520,9 @@ window._saveNewFeeItem = async function() {
       is_recurring: true,
     });
     _billingFeeItems = await API.getFeeItems();
-    closeModal();
+    _renderFeeItemsList(); // refresh the manager sheet underneath, in place
+    closeModal();           // pop just this "Add fee item" layer
     showToast('✓ Fee item added');
-    openFeeItemsManager();
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Add';
     showToast('Failed: ' + (e.message || 'error'));
