@@ -2,8 +2,27 @@
  * SCMS v11 — 22_admissions.js
  * Admissions: prospective-student applications, tracked through a pipeline
  * (Applied → Interview Scheduled/Done → Accepted/Waitlisted/Rejected →
- * Enrolled or Withdrawn). "Enrolled" is only reachable via the
- * convert-to-student action, which creates a real `students` row.
+ * Enrolled or Withdrawn).
+ *
+ * "Enrolled" is reached via the convert-to-student action, which creates a
+ * real `students` row with status='Pending' — deliberately hidden from
+ * rpc_get_students (and so from the Students list) until the registration
+ * fee is billed and paid:
+ *
+ *   Accepted → [Enroll as student] → students row (Pending, has a real
+ *   student_id / "ID card") → [Create registration invoice] → parent pays
+ *   (Billing page) → [Activate] → status='Active' → now an official student,
+ *   visible in the Students list.
+ *
+ * The whole gate reuses the existing, unmodified billing RPCs
+ * (rpc_create_invoice / rpc_get_invoice_detail) — this file only remembers
+ * which invoice to watch (admissions.registration_invoice_id) and flips the
+ * student to Active once it's Paid.
+ *
+ * All detail/edit/interview/convert/billing views render into a SINGLE
+ * modal body (#admDetailBody) that gets its innerHTML swapped — never a
+ * second stacked openModal() call — so repeated view↔edit↔cancel cycles
+ * don't pile up orphaned modal layers.
  *
  * Web only for now — this is a new feature with no n8n/Telegram equivalent
  * yet, same as Grading & Assessment / Billing.
@@ -14,6 +33,8 @@
 let _admStatus     = 'All';
 let _admClass      = 'All';
 let _admissionsAll = [];
+let _admPendingPhotoFile   = null; // File picked in the New/Edit applicant form, uploaded on save
+let _admRemovePhotoRequested = false;
 
 const ADM_STATUSES = [
   'All', 'Applied', 'Interview Scheduled', 'Interview Done',
@@ -21,7 +42,7 @@ const ADM_STATUSES = [
 ];
 
 // Statuses reachable from each status via the pipeline buttons in the
-// detail view (Enrolled is excluded here — that only happens via convert).
+// detail view (Enrolled is excluded — that only happens via convert).
 const ADM_NEXT_STATUSES = {
   'Applied':              ['Interview Scheduled', 'Rejected', 'Withdrawn'],
   'Interview Scheduled':  ['Interview Done', 'Rejected', 'Withdrawn'],
@@ -144,10 +165,19 @@ function _admStatusSlug(s) {
 /* ─── New applicant ──────────────────────────────────────────────────── */
 
 window.openNewAdmissionModal = function() {
+  _admPendingPhotoFile = null;
+  _admRemovePhotoRequested = false;
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
       <div class="modal-handle"></div>
       <h3 class="modal-title">New applicant</h3>
+
+      <div class="stu-photo-picker" onclick="document.getElementById('admPhotoInput').click()">
+        <div class="stu-photo-circle" id="admPhotoPreview">${avatarContent({})}</div>
+        <div class="stu-photo-edit-badge">📷</div>
+      </div>
+      <input type="file" id="admPhotoInput" accept="image/*" style="display:none" onchange="_onAdmPhotoPicked(this)">
+      <button type="button" class="stu-photo-remove-link" id="admPhotoRemoveBtn" onclick="_removeAdmPhoto()" style="display:none">Remove photo</button>
 
       <label class="field-label">Name (English)</label>
       <input class="form-input" id="naNameEn" placeholder="Full name">
@@ -186,6 +216,35 @@ window.openNewAdmissionModal = function() {
   `);
 };
 
+window._onAdmPhotoPicked = function(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('Please pick an image file'); return; }
+  if (file.size > 3 * 1024 * 1024) { showToast('Photo must be under 3MB'); return; }
+
+  _admPendingPhotoFile = file;
+  _admRemovePhotoRequested = false;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const preview = document.getElementById('admPhotoPreview');
+    if (preview) preview.innerHTML = `<img src="${reader.result}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block">`;
+  };
+  const removeBtn = document.getElementById('admPhotoRemoveBtn');
+  if (removeBtn) removeBtn.style.display = '';
+  reader.readAsDataURL(file);
+};
+
+window._removeAdmPhoto = function() {
+  _admPendingPhotoFile = null;
+  _admRemovePhotoRequested = true;
+  const preview = document.getElementById('admPhotoPreview');
+  if (preview) preview.innerHTML = avatarContent({ gender: document.querySelector('#naGenderPills .pill.active')?.textContent.trim() });
+  const removeBtn = document.getElementById('admPhotoRemoveBtn');
+  if (removeBtn) removeBtn.style.display = 'none';
+  const input = document.getElementById('admPhotoInput');
+  if (input) input.value = '';
+};
+
 window._saveNewAdmission = async function() {
   const nameEn = document.getElementById('naNameEn').value.trim();
   if (!nameEn) { showToast('Enter the applicant\'s name'); return; }
@@ -196,7 +255,7 @@ window._saveNewAdmission = async function() {
   const btn = document.getElementById('naSaveBtn');
   btn.disabled = true; btn.textContent = 'Adding…';
   try {
-    await API.createAdmission({
+    const res = await API.createAdmission({
       applicant_name_en:    nameEn,
       applicant_name_local: document.getElementById('naNameLocal').value.trim() || null,
       date_of_birth:        document.getElementById('naDob').value || null,
@@ -208,6 +267,17 @@ window._saveNewAdmission = async function() {
       source:               document.getElementById('naSource').value.trim() || null,
       notes:                document.getElementById('naNotes').value.trim() || null,
     });
+
+    if (_admPendingPhotoFile && res.admission?.id) {
+      try {
+        const url = await API.uploadAdmissionPhoto(res.admission.id, _admPendingPhotoFile);
+        await API.setAdmissionPhoto(res.admission.id, url);
+      } catch (photoErr) {
+        showToast('Added, but photo upload failed: ' + (photoErr.message || 'error'));
+      }
+      _admPendingPhotoFile = null;
+    }
+
     closeModal();
     showToast('✓ Applicant added');
     await renderAdmissions();
@@ -217,7 +287,7 @@ window._saveNewAdmission = async function() {
   }
 };
 
-/* ─── Detail / pipeline / edit / convert ────────────────────────────────── */
+/* ─── Detail (single modal — all sub-views swap #admDetailBody in place) ── */
 
 window.openAdmissionDetail = function(id) {
   openModal(`
@@ -232,19 +302,41 @@ window.openAdmissionDetail = function(id) {
 async function _loadAdmissionDetail(id) {
   const el = document.getElementById('admDetailBody');
   if (!el) return;
+  el.innerHTML = skeletonCards(1);
   try {
     const res = await API.getAdmissionDetail(id);
-    el.innerHTML = _admDetailHtml(res.admission);
+    await _renderAdmDetailView(res.admission);
   } catch (e) {
     el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
   }
 }
 
-function _admDetailHtml(a) {
+async function _renderAdmDetailView(a) {
+  const el = document.getElementById('admDetailBody');
+  if (!el) return;
+
+  // If already converted, fetch the linked student (Pending or Active) and,
+  // if a registration invoice is linked, its current status — so the right
+  // billing-gate step shows.
+  let student = null, invoice = null;
+  if (a.converted_student_id) {
+    try { student = (await API.getStudentById(a.converted_student_id)).student; } catch (e) { /* ignore */ }
+  }
+  if (a.registration_invoice_id) {
+    try { invoice = (await API.getInvoiceDetail(a.registration_invoice_id)).invoice; } catch (e) { /* ignore */ }
+  }
+
+  el.innerHTML = _admDetailHtml(a, student, invoice);
+}
+
+function _admDetailHtml(a, student, invoice) {
   const nextStatuses = ADM_NEXT_STATUSES[a.status] || [];
+  const photoHtml = avatarContent({ photo_url: a.applicant_photo_url, gender: a.gender, name_en: a.applicant_name_en });
+
   return `
-    <h3 class="modal-title">${esc(a.applicant_name_en)}</h3>
-    <span class="adm-status-badge adm-status-${_admStatusSlug(a.status)}">${esc(a.status)}</span>
+    <div class="stu-photo-circle" style="margin:0 auto 10px">${photoHtml}</div>
+    <h3 class="modal-title mb0" style="text-align:center">${esc(a.applicant_name_en)}</h3>
+    <p style="text-align:center"><span class="adm-status-badge adm-status-${_admStatusSlug(a.status)}">${esc(a.status)}</span></p>
 
     <div class="billing-detail-items">
       <div class="billing-detail-row"><span>Local name</span><span>${esc(a.applicant_name_local || '—')}</span></div>
@@ -259,7 +351,6 @@ function _admDetailHtml(a) {
       <div class="billing-detail-row"><span>Source</span><span>${esc(a.source || '—')}</span></div>
     </div>
     ${a.notes ? `<p class="billing-notes">${esc(a.notes)}</p>` : ''}
-    ${a.converted_student_id ? `<p class="billing-notes">Enrolled as student ${esc(a.converted_student_id)}.</p>` : ''}
 
     ${nextStatuses.length ? `
       <div class="billing-section-title mt16">Move to</div>
@@ -268,16 +359,49 @@ function _admDetailHtml(a) {
       </div>
     ` : ''}
 
-    ${a.status === 'Accepted' ? `<button class="btn-primary mt16" onclick="_openConvertAdmission(${a.id}, '${esc((a.desired_class || '').replace(/'/g, "\\'"))}')">Enroll as student</button>` : ''}
+    ${a.status === 'Accepted' && !a.converted_student_id ? `
+      <button class="btn-primary mt16" onclick="_showConvertAdmissionView(${a.id}, '${esc((a.desired_class || '').replace(/'/g, "\\'"))}')">Enroll as student</button>
+    ` : ''}
 
-    <button class="btn-secondary mt16" onclick="_openEditAdmission(${a.id})">Edit details</button>
+    ${student ? _admEnrollmentSectionHtml(a, student, invoice) : ''}
+
+    <button class="btn-secondary mt16" onclick="_showEditAdmissionView(${a.id})">Edit details</button>
     <button class="btn-secondary" onclick="_confirmDeleteAdmission(${a.id})">Delete applicant</button>
   `;
 }
 
+function _admEnrollmentSectionHtml(a, student, invoice) {
+  if (student.status === 'Active') {
+    return `
+      <div class="billing-section-title mt16">Enrollment</div>
+      <p class="billing-notes">✓ Official student — ID <strong>${esc(student.student_id)}</strong>, class ${esc(student.class || '—')}. Visible in the Students list.</p>`;
+  }
+
+  // Pending — not yet official.
+  let body = `
+    <div class="billing-section-title mt16">Enrollment</div>
+    <p class="billing-notes">Student record created (ID <strong>${esc(student.student_id)}</strong>) but marked <em>Pending</em> — hidden from the Students list until the registration fee is paid.</p>`;
+
+  if (!invoice) {
+    body += `<button class="btn-primary" onclick="_showRegistrationInvoiceView(${a.id}, '${esc(student.student_id)}')">Create registration invoice</button>`;
+  } else {
+    const balance = Number(invoice.total_amount) - Number(invoice.paid_amount);
+    if (invoice.status === 'Paid') {
+      body += `
+        <p class="billing-notes">Registration invoice ${esc(invoice.invoice_number || '')} — <strong>Paid</strong>.</p>
+        <button class="btn-primary" onclick="_activatePendingStudent(${a.id}, '${esc(student.student_id)}')">Activate — make official student</button>`;
+    } else {
+      body += `
+        <p class="billing-notes">Registration invoice ${esc(invoice.invoice_number || '')} — ${esc(invoice.status)}, balance ${esc(String(balance))}. Record the payment on the Billing page, then come back here to activate.</p>
+        <button class="btn-secondary" onclick="closeModal();goToPage('billing')">Go to Billing</button>`;
+    }
+  }
+  return body;
+}
+
 window._moveAdmissionStatus = async function(id, status) {
   if (status === 'Interview Scheduled') {
-    _promptInterviewDate(id);
+    _showInterviewDateView(id);
     return;
   }
   try {
@@ -290,17 +414,16 @@ window._moveAdmissionStatus = async function(id, status) {
   }
 };
 
-function _promptInterviewDate(id) {
-  openModal(`
-    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
-      <div class="modal-handle"></div>
-      <h3 class="modal-title">Schedule interview</h3>
-      <label class="field-label">Interview date</label>
-      <input class="form-input" id="admInterviewDate" type="date" value="${new Date().toISOString().slice(0, 10)}">
-      <button class="btn-primary mt16" onclick="_saveInterviewDate(${id})">Save</button>
-      <button class="btn-secondary" onclick="openAdmissionDetail(${id})">Cancel</button>
-    </div>
-  `);
+function _showInterviewDateView(id) {
+  const el = document.getElementById('admDetailBody');
+  if (!el) return;
+  el.innerHTML = `
+    <h3 class="modal-title">Schedule interview</h3>
+    <label class="field-label">Interview date</label>
+    <input class="form-input" id="admInterviewDate" type="date" value="${new Date().toISOString().slice(0, 10)}">
+    <button class="btn-primary mt16" onclick="_saveInterviewDate(${id})">Save</button>
+    <button class="btn-secondary" onclick="_loadAdmissionDetail(${id})">Cancel</button>
+  `;
 }
 
 window._saveInterviewDate = async function(id) {
@@ -308,49 +431,61 @@ window._saveInterviewDate = async function(id) {
   try {
     await API.updateAdmissionStatus(id, 'Interview Scheduled', { interview_date: date });
     showToast('✓ Interview scheduled');
-    openAdmissionDetail(id);
+    await _loadAdmissionDetail(id);
     await renderAdmissions();
   } catch (e) {
     showToast('Failed: ' + (e.message || 'error'));
   }
 };
 
-window._openEditAdmission = async function(id) {
+window._showEditAdmissionView = async function(id) {
+  const el = document.getElementById('admDetailBody');
+  if (!el) return;
+  el.innerHTML = skeletonCards(1);
+
   let a;
   try {
     a = (await API.getAdmissionDetail(id)).admission;
   } catch (e) {
-    showToast('Failed: ' + (e.message || 'error'));
+    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
     return;
   }
-  openModal(`
-    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
-      <div class="modal-handle"></div>
-      <h3 class="modal-title">Edit applicant</h3>
 
-      <label class="field-label">Name (English)</label>
-      <input class="form-input" id="eaNameEn" value="${esc(a.applicant_name_en)}">
-      <label class="field-label">Name (local)</label>
-      <input class="form-input" id="eaNameLocal" value="${esc(a.applicant_name_local || '')}">
-      <label class="field-label">Date of birth</label>
-      <input class="form-input" id="eaDob" type="date" value="${a.date_of_birth || ''}">
-      <label class="field-label">Desired class</label>
-      <input class="form-input" id="eaClass" value="${esc(a.desired_class || '')}">
-      <label class="field-label">Parent name</label>
-      <input class="form-input" id="eaParentName" value="${esc(a.parent_name || '')}">
-      <label class="field-label">Parent phone</label>
-      <input class="form-input" id="eaParentPhone" value="${esc(a.parent_phone || '')}">
-      <label class="field-label">Parent email</label>
-      <input class="form-input" id="eaParentEmail" value="${esc(a.parent_email || '')}">
-      <label class="field-label">Source</label>
-      <input class="form-input" id="eaSource" value="${esc(a.source || '')}">
-      <label class="field-label">Notes</label>
-      <input class="form-input" id="eaNotes" value="${esc(a.notes || '')}">
+  _admPendingPhotoFile = null;
+  _admRemovePhotoRequested = false;
 
-      <button class="btn-primary mt16" id="eaSaveBtn" onclick="_saveEditAdmission(${id})">Save changes</button>
-      <button class="btn-secondary" onclick="openAdmissionDetail(${id})">Cancel</button>
+  el.innerHTML = `
+    <h3 class="modal-title">Edit applicant</h3>
+
+    <div class="stu-photo-picker" onclick="document.getElementById('admPhotoInput').click()">
+      <div class="stu-photo-circle" id="admPhotoPreview">${avatarContent({ photo_url: a.applicant_photo_url, gender: a.gender, name_en: a.applicant_name_en })}</div>
+      <div class="stu-photo-edit-badge">📷</div>
     </div>
-  `);
+    <input type="file" id="admPhotoInput" accept="image/*" style="display:none" onchange="_onAdmPhotoPicked(this)">
+    <button type="button" class="stu-photo-remove-link" id="admPhotoRemoveBtn" onclick="_removeAdmPhoto()" style="${a.applicant_photo_url ? '' : 'display:none'}">Remove photo</button>
+
+    <label class="field-label">Name (English)</label>
+    <input class="form-input" id="eaNameEn" value="${esc(a.applicant_name_en)}">
+    <label class="field-label">Name (local)</label>
+    <input class="form-input" id="eaNameLocal" value="${esc(a.applicant_name_local || '')}">
+    <label class="field-label">Date of birth</label>
+    <input class="form-input" id="eaDob" type="date" value="${a.date_of_birth || ''}">
+    <label class="field-label">Desired class</label>
+    <input class="form-input" id="eaClass" value="${esc(a.desired_class || '')}">
+    <label class="field-label">Parent name</label>
+    <input class="form-input" id="eaParentName" value="${esc(a.parent_name || '')}">
+    <label class="field-label">Parent phone</label>
+    <input class="form-input" id="eaParentPhone" value="${esc(a.parent_phone || '')}">
+    <label class="field-label">Parent email</label>
+    <input class="form-input" id="eaParentEmail" value="${esc(a.parent_email || '')}">
+    <label class="field-label">Source</label>
+    <input class="form-input" id="eaSource" value="${esc(a.source || '')}">
+    <label class="field-label">Notes</label>
+    <input class="form-input" id="eaNotes" value="${esc(a.notes || '')}">
+
+    <button class="btn-primary mt16" id="eaSaveBtn" onclick="_saveEditAdmission(${id})">Save changes</button>
+    <button class="btn-secondary" onclick="_loadAdmissionDetail(${id})">Cancel</button>
+  `;
 };
 
 window._saveEditAdmission = async function(id) {
@@ -373,8 +508,22 @@ window._saveEditAdmission = async function(id) {
       source:               document.getElementById('eaSource').value.trim() || null,
       notes:                document.getElementById('eaNotes').value.trim() || null,
     });
+
+    if (_admPendingPhotoFile) {
+      try {
+        const url = await API.uploadAdmissionPhoto(id, _admPendingPhotoFile);
+        await API.setAdmissionPhoto(id, url);
+      } catch (photoErr) {
+        showToast('Saved, but photo upload failed: ' + (photoErr.message || 'error'));
+      }
+      _admPendingPhotoFile = null;
+    } else if (_admRemovePhotoRequested) {
+      try { await API.setAdmissionPhoto(id, null); } catch (photoErr) { /* non-fatal */ }
+      _admRemovePhotoRequested = false;
+    }
+
     showToast('✓ Saved');
-    openAdmissionDetail(id);
+    await _loadAdmissionDetail(id);
     await renderAdmissions();
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Save changes';
@@ -382,18 +531,19 @@ window._saveEditAdmission = async function(id) {
   }
 };
 
-window._openConvertAdmission = function(id, desiredClass) {
-  openModal(`
-    <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
-      <div class="modal-handle"></div>
-      <h3 class="modal-title">Enroll as student</h3>
-      <p class="billing-notes">Creates a new student record from this applicant's details.</p>
-      <label class="field-label">Class</label>
-      <input class="form-input" id="convClass" value="${esc(desiredClass || '')}" placeholder="e.g. Grade 3">
-      <button class="btn-primary mt16" id="convSaveBtn" onclick="_saveConvertAdmission(${id})">Enroll</button>
-      <button class="btn-secondary" onclick="openAdmissionDetail(${id})">Cancel</button>
-    </div>
-  `);
+/* ─── Convert to student (Pending) ──────────────────────────────────────── */
+
+window._showConvertAdmissionView = function(id, desiredClass) {
+  const el = document.getElementById('admDetailBody');
+  if (!el) return;
+  el.innerHTML = `
+    <h3 class="modal-title">Enroll as student</h3>
+    <p class="billing-notes">Creates a student record (Pending) from this applicant's details. It stays hidden from the Students list until the registration fee is paid and you activate it.</p>
+    <label class="field-label">Class</label>
+    <input class="form-input" id="convClass" value="${esc(desiredClass || '')}" placeholder="e.g. Grade 3">
+    <button class="btn-primary mt16" id="convSaveBtn" onclick="_saveConvertAdmission(${id})">Enroll</button>
+    <button class="btn-secondary" onclick="_loadAdmissionDetail(${id})">Cancel</button>
+  `;
 };
 
 window._saveConvertAdmission = async function(id) {
@@ -403,19 +553,70 @@ window._saveConvertAdmission = async function(id) {
   const btn = document.getElementById('convSaveBtn');
   btn.disabled = true; btn.textContent = 'Enrolling…';
   try {
-    const res = await API.convertAdmissionToStudent(id, { class: cls });
-    closeModal();
-    showToast(`✓ Enrolled as ${res.student.student_id}`);
-    if (typeof API.getStudents === 'function' && window.APP) {
-      window.APP.students = await API.getStudents().catch(() => window.APP.students);
-      if (typeof renderStudents === 'function') renderStudents();
-    }
+    const res = await API.convertAdmissionToStudent(id, { class: cls, status: 'Pending' });
+    showToast(`✓ Student record created — ${res.student.student_id} (Pending)`);
+    await _loadAdmissionDetail(id);
     await renderAdmissions();
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Enroll';
     showToast('Failed: ' + (e.message || 'error'));
   }
 };
+
+/* ─── Registration invoice + activation ─────────────────────────────────── */
+
+window._showRegistrationInvoiceView = function(id, studentId) {
+  const el = document.getElementById('admDetailBody');
+  if (!el) return;
+  el.innerHTML = `
+    <h3 class="modal-title">Registration invoice</h3>
+    <label class="field-label">Amount</label>
+    <input class="form-input" id="riAmount" type="number" min="0" value="0">
+    <label class="field-label">Due date</label>
+    <input class="form-input" id="riDueDate" type="date">
+    <button class="btn-primary mt16" id="riSaveBtn" onclick="_saveRegistrationInvoice(${id}, '${esc(studentId)}')">Create invoice</button>
+    <button class="btn-secondary" onclick="_loadAdmissionDetail(${id})">Cancel</button>
+  `;
+};
+
+window._saveRegistrationInvoice = async function(id, studentId) {
+  const amount = Number(document.getElementById('riAmount').value);
+  if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+
+  const btn = document.getElementById('riSaveBtn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  try {
+    const invRes = await API.createInvoice({
+      student_id: studentId,
+      due_date:   document.getElementById('riDueDate').value || null,
+      notes:      'Registration fee',
+      items:      [{ fee_item_id: null, description: 'Registration fee', amount }],
+    });
+    await API.linkAdmissionInvoice(id, invRes.invoice.id);
+    showToast('✓ Registration invoice created');
+    await _loadAdmissionDetail(id);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Create invoice';
+    showToast('Failed: ' + (e.message || 'error'));
+  }
+};
+
+window._activatePendingStudent = async function(id, studentId) {
+  try {
+    await API.activateStudent(studentId);
+    showToast(`✓ ${studentId} is now an official student`);
+    if (typeof API.getStudents === 'function' && window.APP) {
+      window.APP.students = await API.getStudents().catch(() => window.APP.students);
+      if (typeof renderStudents === 'function') renderStudents();
+    }
+    await _loadAdmissionDetail(id);
+    await renderAdmissions();
+  } catch (e) {
+    showToast('Failed: ' + (e.message || 'error'));
+  }
+};
+
+/* ─── Delete ─────────────────────────────────────────────────────────────── */
 
 window._confirmDeleteAdmission = function(id) {
   showConfirm(

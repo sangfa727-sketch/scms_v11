@@ -777,6 +777,58 @@ const API = {
     return _webRpc('rpc_convert_admission_to_student', {
       p_session_token: getWebSession()?.session_token,
       p_id: id, p_class: data.class || null, p_home_color: data.home_color || null,
+      p_status: data.status || 'Pending',
+    });
+  },
+
+  async uploadAdmissionPhoto(admissionId, file) {
+    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${window.APP.school_id}/admissions/${admissionId}.${ext}`;
+    const resp = await fetch(
+      `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/student-photos/${path}`,
+      {
+        method:  'POST',
+        headers: {
+          'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+          'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+          'Content-Type':  file.type || 'image/jpeg',
+          'x-upsert':      'true',
+        },
+        body: file,
+      }
+    );
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => '');
+      throw new Error(`Photo upload failed (${resp.status}): ${t.slice(0, 200)}`);
+    }
+    return `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/public/student-photos/${path}?t=${Date.now()}`;
+  },
+
+  async setAdmissionPhoto(id, photoUrl) {
+    return _webRpc('rpc_set_admission_photo', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_photo_url: photoUrl,
+    });
+  },
+
+  async linkAdmissionInvoice(id, invoiceId) {
+    return _webRpc('rpc_link_admission_invoice', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_invoice_id: invoiceId,
+    });
+  },
+
+  async activateStudent(studentId) {
+    return _webRpc('rpc_activate_student', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId,
+    });
+  },
+
+  async getStudentById(studentId) {
+    return _webRpc('rpc_get_student_by_id', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId,
     });
   },
 
