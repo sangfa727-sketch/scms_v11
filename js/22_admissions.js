@@ -44,7 +44,7 @@ const ADM_STATUSES = [
 // Statuses reachable from each status via the pipeline buttons in the
 // detail view (Enrolled is excluded — that only happens via convert).
 const ADM_NEXT_STATUSES = {
-  'Applied':              ['Interview Scheduled', 'Rejected', 'Withdrawn'],
+  'Applied':              ['Interview Scheduled', 'Accepted', 'Rejected', 'Withdrawn'],
   'Interview Scheduled':  ['Interview Done', 'Rejected', 'Withdrawn'],
   'Interview Done':       ['Accepted', 'Waitlisted', 'Rejected', 'Withdrawn'],
   'Waitlisted':           ['Accepted', 'Rejected', 'Withdrawn'],
@@ -144,19 +144,29 @@ function _renderAdmissionsSummary() {
     </div>`;
 }
 
+let _admSelected = new Set();
+
 function _renderAdmissionsList() {
   const el = document.getElementById('admissionsList');
   if (!el) return;
 
   const rows = _filteredAdmissions();
+
+  // Drop selections that fell out of view (filtered out / bulk-acted-on already).
+  const visibleIds = new Set(rows.map(a => a.id));
+  Array.from(_admSelected).forEach(id => { if (!visibleIds.has(id)) _admSelected.delete(id); });
+
   if (!rows.length) {
     el.innerHTML = `<div class="empty-state">No applicants yet — tap + to add one.</div>`;
     return;
   }
 
-  el.innerHTML = rows.map(a => `
+  el.innerHTML = _admSelectionBarHtml(rows) + rows.map(a => `
     <div class="list-card" onclick="openAdmissionDetail(${a.id})">
       <div class="card-row">
+        <label class="adm-select-checkbox" onclick="event.stopPropagation()">
+          <input type="checkbox" ${_admSelected.has(a.id) ? 'checked' : ''} onchange="_toggleAdmSelect(${a.id}, this.checked)">
+        </label>
         <div class="card-info">
           <div class="card-name">${esc(a.applicant_name_en)} ${a.desired_class ? `<span class="type-tag">${esc(a.desired_class)}</span>` : ''}</div>
           <div class="card-sub">${esc(a.parent_name || 'No parent name')} · Applied ${esc(fmtDate(a.application_date))}</div>
@@ -168,6 +178,83 @@ function _renderAdmissionsList() {
     </div>
   `).join('');
 }
+
+// Bulk-selection toolbar, shown above the list only once something is
+// checked. Statuses offered are the ones every selected applicant can
+// reach in common ("Move to Accepted" only appears if ALL selected can go
+// there); "Enroll" appears only when every selected item is Accepted and
+// not already converted — each is enrolled with ITS OWN desired_class, so
+// a teacher accepting/enrolling a whole batch of walk-ins doesn't have to
+// open each applicant individually.
+function _admSelectionBarHtml(rows) {
+  const n = _admSelected.size;
+  if (!n) return '';
+  const selectedRows = rows.filter(a => _admSelected.has(a.id));
+
+  const statusSets = selectedRows.map(a => new Set((ADM_NEXT_STATUSES[a.status] || []).filter(s => s !== 'Interview Scheduled')));
+  const common = statusSets.length
+    ? [...statusSets[0]].filter(s => statusSets.every(set => set.has(s)))
+    : [];
+  const canBulkEnroll = selectedRows.length > 0 && selectedRows.every(a => a.status === 'Accepted' && !a.converted_student_id);
+
+  return `
+    <div class="adm-selection-bar">
+      <strong>${n} selected</strong>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${common.map(s => `<button type="button" class="pill" onclick="_bulkMoveAdmissions('${esc(s)}')">${esc(s)}</button>`).join('')}
+        ${canBulkEnroll ? `<button type="button" class="pill" onclick="_bulkEnrollAdmissions()">Enroll (own class)</button>` : ''}
+        <button type="button" class="pill" onclick="_clearAdmSelection()">Clear</button>
+      </div>
+    </div>`;
+}
+
+window._toggleAdmSelect = function(id, checked) {
+  if (checked) _admSelected.add(id); else _admSelected.delete(id);
+  _renderAdmissionsList();
+};
+
+window._clearAdmSelection = function() {
+  _admSelected.clear();
+  _renderAdmissionsList();
+};
+
+window._bulkMoveAdmissions = async function(status) {
+  const ids = Array.from(_admSelected);
+  if (!ids.length) return;
+  showToast(`Moving ${ids.length} to ${status}…`);
+  let ok = 0, fail = 0;
+  for (const id of ids) {
+    try { await API.updateAdmissionStatus(id, status); ok++; } catch (e) { fail++; }
+  }
+  _admSelected.clear();
+  showToast(`✓ ${ok} moved to ${status}${fail ? `, ${fail} failed` : ''}`);
+  await renderAdmissions();
+};
+
+window._bulkEnrollAdmissions = async function() {
+  const ids = Array.from(_admSelected);
+  if (!ids.length) return;
+
+  const toEnroll = ids.filter(id => {
+    const a = _admissionsAll.find(x => x.id === id);
+    return a && a.desired_class;
+  });
+  const skipped = ids.length - toEnroll.length;
+  if (!toEnroll.length) { showToast('None of the selected applicants have a desired class set'); return; }
+
+  showToast(`Enrolling ${toEnroll.length}…${skipped ? ` (${skipped} skipped — no class)` : ''}`);
+  let ok = 0, fail = 0;
+  for (const id of toEnroll) {
+    const a = _admissionsAll.find(x => x.id === id);
+    try {
+      await API.convertAdmissionToStudent(id, { class: a.desired_class, status: 'Pending' });
+      ok++;
+    } catch (e) { fail++; }
+  }
+  _admSelected.clear();
+  showToast(`✓ ${ok} enrolled (Pending)${fail ? `, ${fail} failed` : ''}`);
+  await renderAdmissions();
+};
 
 function _admStatusSlug(s) {
   return String(s).toLowerCase().replace(/\s+/g, '-');
@@ -605,8 +692,20 @@ window._saveRegistrationInvoice = async function(id, studentId) {
   const btn = document.getElementById('riSaveBtn');
   btn.disabled = true; btn.textContent = 'Creating…';
   try {
+    // Default to the current term, same as the Billing page's own new-invoice
+    // flow — Billing's invoice list filters by term (defaulting to the
+    // current one), so an invoice created with no term_id would silently
+    // never show up there.
+    let termId = null;
+    try {
+      const terms = await API.getTerms();
+      const current = (terms || []).find(t => t.is_current) || (terms || [])[0];
+      termId = current?.id || null;
+    } catch (e) { /* no terms configured — leave unset */ }
+
     const invRes = await API.createInvoice({
       student_id: studentId,
+      term_id:    termId,
       due_date:   document.getElementById('riDueDate').value || null,
       notes:      'Registration fee',
       items:      [{ fee_item_id: null, description: 'Registration fee', amount }],
