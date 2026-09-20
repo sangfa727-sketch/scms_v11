@@ -3697,3 +3697,144 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   font-weight: 700;
   color: var(--muted);
 }
+/* ── Billing page ─────────────────────────────────────────────────────── */
+.billing-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 10px;
+}
+.billing-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+.billing-summary-cell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.billing-summary-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.billing-summary-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.billing-summary-value.danger { color: var(--red); }
+
+.billing-status-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.billing-status-unpaid    { background: rgba(217,119,6,0.14);  color: var(--amber); }
+.billing-status-partial   { background: rgba(8,145,178,0.14);  color: var(--blue);  }
+.billing-status-paid      { background: rgba(5,150,105,0.14);  color: var(--green); }
+.billing-status-overdue   { background: rgba(220,38,38,0.14);  color: var(--red);   }
+.billing-status-cancelled { background: var(--border);         color: var(--muted); }
+
+/* ── Admissions status badges (reuses billing-status-badge sizing) ──────── */
+.adm-status-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.adm-status-applied              { background: rgba(8,145,178,0.14);   color: var(--blue);   }
+.adm-status-interview-scheduled  { background: rgba(124,58,237,0.14);  color: var(--purple); }
+.adm-status-interview-done       { background: rgba(124,58,237,0.14);  color: var(--purple); }
+.adm-status-accepted             { background: rgba(5,150,105,0.14);   color: var(--green);  }
+.adm-status-waitlisted           { background: rgba(217,119,6,0.14);   color: var(--amber);  }
+.adm-status-rejected             { background: rgba(220,38,38,0.14);   color: var(--red);    }
+.adm-status-enrolled             { background: rgba(5,150,105,0.22);   color: var(--green);  }
+.adm-status-withdrawn            { background: var(--border);          color: var(--muted);  }
+
+.billing-student-btn {
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+.billing-student-btn.picked { font-weight: 600; }
+
+.billing-line-item {
+  display: grid;
+  grid-template-columns: 1fr 90px 32px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.billing-amount-input { text-align: right; }
+.billing-total-row {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 6px 2px 4px;
+}
+
+.billing-detail-items { margin-top: 8px; }
+.billing-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+.billing-detail-row.total {
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: none;
+  margin-top: 4px;
+}
+.billing-detail-row.balance {
+  font-weight: 700;
+  color: var(--text);
+}
+.billing-detail-row.balance.danger { color: var(--red); }
+.billing-notes {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 8px;
+  font-style: italic;
+}
+.billing-payments-section { margin-top: 16px; }
+.billing-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.billing-payment-row {
+  display: grid;
+  grid-template-columns: 1fr auto 32px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text2);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.billing-payments-empty {
+  font-size: 12.5px;
+  color: var(--muted);
+  padding: 6px 0;
+}
