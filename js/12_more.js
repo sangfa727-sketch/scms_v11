@@ -61,6 +61,14 @@ function renderMore() {
         <span class="more-icon">🎓</span>
         <span>Grades</span>
       </button>
+      <button class="more-tile" onclick="goToPage('billing')">
+        <span class="more-icon">💵</span>
+        <span>Billing</span>
+      </button>
+      <button class="more-tile" onclick="goToPage('admissions')">
+        <span class="more-icon">📝</span>
+        <span>Admissions</span>
+      </button>
       <button class="more-tile" onclick="goToPage('parents')">
         <span class="more-icon">📨</span>
         <span>Parent messages</span>

@@ -21,6 +21,8 @@ const SIDEBAR_ITEMS = [
   { id: 'daily',     icon: '📋', label: 'Daily Reports', hideInTWA: false },
   { id: 'hw',        icon: '📚', label: 'Homework',   hideInTWA: false },
   { id: 'grades',    icon: '🎓', label: 'Grades',     hideInTWA: false },
+  { id: 'billing',   icon: '💵', label: 'Billing',    hideInTWA: false },
+  { id: 'admissions', icon: '📝', label: 'Admissions', hideInTWA: false },
   { id: 'parents',   icon: '💬', label: 'Parent Messages', hideInTWA: false },
   { id: 'incidents', icon: '⚡', label: 'Incidents',  hideInTWA: false },
   { id: 'timetable', icon: '📅', label: 'Timetable',  hideInTWA: false },

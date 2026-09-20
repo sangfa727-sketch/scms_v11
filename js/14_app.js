@@ -281,6 +281,8 @@ async function initApp() {
     if (typeof renderTimetable  === 'function') renderTimetable();
     if (typeof renderSummary    === 'function') renderSummary();
     if (typeof renderGrades     === 'function') renderGrades();
+    if (typeof renderBilling    === 'function') renderBilling();
+    if (typeof renderAdmissions === 'function') renderAdmissions();
     if (typeof renderMore       === 'function') renderMore();
     if (typeof renderSidebar    === 'function') renderSidebar();
     if (typeof _applyLogoToHeader === 'function') _applyLogoToHeader();
@@ -442,6 +444,8 @@ const FAB_PAGES = {
   incidents: { title: 'Log incident',       action: () => openIncidentModal() },
   parents:   { title: 'Message parent',     action: () => openParentCommModal() },
   grades:    { title: 'New assessment',     action: () => openNewAssessmentModal() },
+  billing:   { title: 'New invoice',        action: () => openNewInvoiceModal() },
+  admissions:{ title: 'Add applicant',      action: () => openNewAdmissionModal() },
   timetable: { title: 'Add timetable entry',action: () => openAddTimetable() },
 };
 
