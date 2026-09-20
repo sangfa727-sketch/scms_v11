@@ -398,6 +398,9 @@ window.goToPage = function(pageId) {
     if (typeof startChatPolling === 'function') startChatPolling();
   }
   if (pageId === 'more' && typeof renderMore === 'function') renderMore();
+  if (pageId === 'billing' && typeof renderBilling === 'function') renderBilling();
+  if (pageId === 'admissions' && typeof renderAdmissions === 'function') renderAdmissions();
+  if (pageId === 'grades' && typeof renderGrades === 'function') renderGrades();
 
   // Update sidebar highlight
   document.querySelectorAll('.sidebar-item').forEach(b =>

@@ -540,7 +540,11 @@ window._showConvertAdmissionView = function(id, desiredClass) {
     <h3 class="modal-title">Enroll as student</h3>
     <p class="billing-notes">Creates a student record (Pending) from this applicant's details. It stays hidden from the Students list until the registration fee is paid and you activate it.</p>
     <label class="field-label">Class</label>
-    <input class="form-input" id="convClass" value="${esc(desiredClass || '')}" placeholder="e.g. Grade 3">
+    <button type="button" class="form-picker-trigger" id="convClassBtn" onclick="pickClassValue('convClass')">
+      <span class="form-picker-value" id="convClass_label">${desiredClass ? esc(desiredClass) : 'Select class'}</span>
+      <svg class="form-picker-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <input type="hidden" id="convClass" value="${esc(desiredClass || '')}">
     <button class="btn-primary mt16" id="convSaveBtn" onclick="_saveConvertAdmission(${id})">Enroll</button>
     <button class="btn-secondary" onclick="_loadAdmissionDetail(${id})">Cancel</button>
   `;
