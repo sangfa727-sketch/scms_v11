@@ -3765,6 +3765,29 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .adm-status-enrolled             { background: rgba(5,150,105,0.22);   color: var(--green);  }
 .adm-status-withdrawn            { background: var(--border);          color: var(--muted);  }
 
+.adm-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.adm-select-checkbox {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  flex: 0 0 auto;
+}
+.adm-select-checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
 .billing-student-btn {
   text-align: left;
   cursor: pointer;
