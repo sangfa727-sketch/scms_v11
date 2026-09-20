@@ -206,6 +206,36 @@
       <div id="gradesAssessmentList"></div>
     </section>
 
+    <!-- BILLING -->
+    <section class="page" id="page-billing">
+      <div class="page-header">
+        <div class="page-eyebrow">Fees</div>
+        <h1 class="page-title"><em>Billing</em></h1>
+        <p class="page-subtitle">Invoices and payments per student.</p>
+      </div>
+      <div id="billingSummary"></div>
+      <div class="billing-filter-row">
+        <div id="billingTermPicker"></div>
+        <button class="btn-pill-action ghost" onclick="openFeeItemsManager()">Fee items</button>
+      </div>
+      <div class="chips-row" id="billingClassPicker"></div>
+      <div class="chips-row" id="billingStatusPicker"></div>
+      <div id="billingInvoiceList"></div>
+    </section>
+
+    <!-- ADMISSIONS -->
+    <section class="page" id="page-admissions">
+      <div class="page-header">
+        <div class="page-eyebrow">Enrollment</div>
+        <h1 class="page-title"><em>Admissions</em></h1>
+        <p class="page-subtitle">Track applicants from inquiry through enrollment.</p>
+      </div>
+      <div id="admissionsSummary"></div>
+      <div class="chips-row" id="admissionsStatusPicker"></div>
+      <div class="chips-row" id="admissionsClassPicker"></div>
+      <div id="admissionsList"></div>
+    </section>
+
     <!-- PARENT COMMS -->
     <section class="page" id="page-parents">
       <div class="page-header">
@@ -359,6 +389,8 @@
 <script src="js/17_sidebar.js"></script>
 <script src="js/18_help.js"></script>
 <script src="js/20_grades.js"></script>
+<script src="js/21_billing.js"></script>
+<script src="js/22_admissions.js"></script>
 <script src="js/14_app.js"></script>
 </body>
 </html>
