@@ -841,6 +841,7 @@ a { color: inherit; }
   }
 }
 .modal-sheet {
+  position: relative;
   width: 100%;
   background: var(--surface);
   border-radius: 20px 20px 0 0;
@@ -850,6 +851,25 @@ a { color: inherit; }
   -webkit-overflow-scrolling: touch;
   animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
 }
+.modal-close-x {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg3);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+.modal-close-x:hover { background: var(--border); color: var(--text); }
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
