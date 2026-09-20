@@ -54,14 +54,25 @@ const ADM_NEXT_STATUSES = {
   'Enrolled':             [],
 };
 
+let _admissionsLoadedOnce = false;
+
 async function renderAdmissions() {
   const listEl = document.getElementById('admissionsList');
-  if (listEl) listEl.innerHTML = skeletonCards(2);
+  if (_admissionsLoadedOnce) {
+    // Already have data from a previous visit — show it instantly (no
+    // skeleton flash) while refreshing quietly in the background.
+    _renderAdmissionsFilters();
+    _renderAdmissionsSummary();
+    _renderAdmissionsList();
+  } else if (listEl) {
+    listEl.innerHTML = skeletonCards(2);
+  }
 
   try {
     _admissionsAll = await API.getAdmissions();
+    _admissionsLoadedOnce = true;
   } catch (e) {
-    if (listEl) listEl.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    if (!_admissionsLoadedOnce && listEl) listEl.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
     return;
   }
 
@@ -302,7 +313,10 @@ window.openAdmissionDetail = function(id) {
 async function _loadAdmissionDetail(id) {
   const el = document.getElementById('admDetailBody');
   if (!el) return;
-  el.innerHTML = skeletonCards(1);
+  // Don't wipe to a skeleton here — this runs both on first open (the modal
+  // already shows a skeleton until this resolves) and as a quiet refresh
+  // after an action (Cancel, Save, status change), where clearing existing
+  // content first just causes a visible blank-box flash for no reason.
   try {
     const res = await API.getAdmissionDetail(id);
     await _renderAdmDetailView(res.admission);
@@ -316,15 +330,16 @@ async function _renderAdmDetailView(a) {
   if (!el) return;
 
   // If already converted, fetch the linked student (Pending or Active) and,
-  // if a registration invoice is linked, its current status — so the right
-  // billing-gate step shows.
-  let student = null, invoice = null;
-  if (a.converted_student_id) {
-    try { student = (await API.getStudentById(a.converted_student_id)).student; } catch (e) { /* ignore */ }
-  }
-  if (a.registration_invoice_id) {
-    try { invoice = (await API.getInvoiceDetail(a.registration_invoice_id)).invoice; } catch (e) { /* ignore */ }
-  }
+  // if a registration invoice is linked, its current status — in parallel,
+  // so the billing-gate step shows without two sequential round trips.
+  const [student, invoice] = await Promise.all([
+    a.converted_student_id
+      ? API.getStudentById(a.converted_student_id).then(r => r.student).catch(() => null)
+      : Promise.resolve(null),
+    a.registration_invoice_id
+      ? API.getInvoiceDetail(a.registration_invoice_id).then(r => r.invoice).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   el.innerHTML = _admDetailHtml(a, student, invoice);
 }
