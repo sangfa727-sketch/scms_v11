@@ -173,11 +173,45 @@ function _renderAdmissionsList() {
         </div>
         <div class="card-actions">
           <span class="adm-status-badge adm-status-${_admStatusSlug(a.status)}">${esc(a.status)}</span>
+          ${_admQuickMoveHtml(a)}
         </div>
       </div>
     </div>
   `).join('');
 }
+
+// A small "Move to ▾" dropdown in the card's own corner, so common status
+// changes (Accept/Reject/Withdraw/etc.) don't require opening the full
+// detail sheet. "Interview Scheduled" is left out here — it needs a date,
+// so that one still goes through the detail view.
+function _admQuickMoveHtml(a) {
+  const options = (ADM_NEXT_STATUSES[a.status] || []).filter(s => s !== 'Interview Scheduled');
+  if (!options.length) return '';
+  return `
+    <details class="adm-move-menu" onclick="event.stopPropagation()" ontoggle="_closeOtherAdmMoveMenus(this)">
+      <summary>Move to ▾</summary>
+      <div class="adm-move-options">
+        ${options.map(s => `<button type="button" onclick="_quickMoveAdmission(${a.id}, '${esc(s)}', this)">${esc(s)}</button>`).join('')}
+      </div>
+    </details>`;
+}
+
+function _closeOtherAdmMoveMenus(openedEl) {
+  if (!openedEl.open) return;
+  document.querySelectorAll('.adm-move-menu[open]').forEach(d => { if (d !== openedEl) d.removeAttribute('open'); });
+}
+
+window._quickMoveAdmission = async function(id, status, btn) {
+  const details = btn.closest('details');
+  if (details) details.removeAttribute('open');
+  try {
+    await API.updateAdmissionStatus(id, status);
+    showToast(`✓ Moved to ${status}`);
+    await renderAdmissions();
+  } catch (e) {
+    showToast('Failed: ' + (e.message || 'error'));
+  }
+};
 
 // Bulk-selection toolbar, shown above the list only once something is
 // checked. Statuses offered are the ones every selected applicant can
