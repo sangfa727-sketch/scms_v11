@@ -514,7 +514,8 @@ function _admEnrollmentSectionHtml(a, student, invoice) {
   if (student.status === 'Active') {
     return `
       <div class="billing-section-title mt16">Enrollment</div>
-      <p class="billing-notes">✓ Official student — ID <strong>${esc(student.student_id)}</strong>, class ${esc(student.class || '—')}. Visible in the Students list.</p>`;
+      <p class="billing-notes">✓ Official student — ID <strong>${esc(student.student_id)}</strong>, class ${esc(student.class || '—')}. Visible in the Students list.</p>
+      <button class="btn-secondary" onclick="showStudentIdCard('${esc(student.student_id)}')">🪪 Student ID Card</button>`;
   }
 
   // Pending — not yet official.
@@ -713,23 +714,99 @@ window._saveConvertAdmission = async function(id) {
 
 /* ─── Registration invoice + activation ─────────────────────────────────── */
 
-window._showRegistrationInvoiceView = function(id, studentId) {
+let _admInvoiceItems     = [];
+let _admFeeItemsCatalog  = [];
+
+// Same catalog-picker + multi-line-item editor Billing's own "New Invoice"
+// uses (not a flat single-amount box) — so registering a student can bill
+// Registration + Uniform + Books etc. all at once, from the same Fee Items
+// catalog configured in Billing, rather than typing one number.
+window._showRegistrationInvoiceView = async function(id, studentId) {
   const el = document.getElementById('admDetailBody');
   if (!el) return;
+  el.innerHTML = skeletonCards(1);
+
+  try { _admFeeItemsCatalog = await API.getFeeItems(); } catch (e) { _admFeeItemsCatalog = []; }
+  _admInvoiceItems = [{ fee_item_id: null, description: 'Registration fee', amount: 0 }];
+
   el.innerHTML = `
     <h3 class="modal-title">Registration invoice</h3>
-    <label class="field-label">Amount</label>
-    <input class="form-input" id="riAmount" type="number" min="0" value="0">
+    <label class="field-label">Line items</label>
+    <div id="riItemsList"></div>
+    <button type="button" class="btn-pill-action ghost" onclick="_addAdmInvoiceLineItem()">+ Add line item</button>
+    <div class="billing-total-row" id="riTotalRow">Total: 0</div>
     <label class="field-label">Due date</label>
     <input class="form-input" id="riDueDate" type="date">
     <button class="btn-primary mt16" id="riSaveBtn" onclick="_saveRegistrationInvoice(${id}, '${esc(studentId)}')">Create invoice</button>
     <button class="btn-secondary" onclick="_loadAdmissionDetail(${id})">Cancel</button>
   `;
+  _renderAdmInvoiceItemsList();
+};
+
+function _renderAdmInvoiceItemsList() {
+  const el = document.getElementById('riItemsList');
+  if (!el) return;
+
+  const catalogRow = _admFeeItemsCatalog.length
+    ? `<div class="attend-class-select-wrap mb8">
+         <select class="attend-class-select" onchange="_pickAdmCatalogItem(this)">
+           <option value="">+ Add from catalog…</option>
+           ${_admFeeItemsCatalog.map(f => `<option value="${f.id}">${esc(f.name)} (${esc(String(f.default_amount))})</option>`).join('')}
+         </select>
+       </div>`
+    : '';
+
+  el.innerHTML = catalogRow + _admInvoiceItems.map((it, idx) => `
+    <div class="billing-line-item" data-idx="${idx}">
+      <input class="form-input" placeholder="Description" value="${esc(it.description)}"
+        oninput="_updateAdmInvoiceLineItem(${idx},'description',this.value)">
+      <input class="form-input billing-amount-input" type="number" min="0" value="${esc(String(it.amount))}"
+        oninput="_updateAdmInvoiceLineItem(${idx},'amount',this.value)">
+      <button type="button" class="icon-btn-mini danger" onclick="_removeAdmInvoiceLineItem(${idx})" title="Remove">🗑</button>
+    </div>
+  `).join('');
+
+  _renderAdmInvoiceTotal();
+}
+
+window._addAdmInvoiceLineItem = function(feeItem = null) {
+  _admInvoiceItems.push({
+    fee_item_id: feeItem?.id || null,
+    description: feeItem?.name || '',
+    amount:      feeItem?.default_amount ?? 0,
+  });
+  _renderAdmInvoiceItemsList();
+};
+
+window._removeAdmInvoiceLineItem = function(idx) {
+  _admInvoiceItems.splice(idx, 1);
+  _renderAdmInvoiceItemsList();
+};
+
+window._updateAdmInvoiceLineItem = function(idx, field, val) {
+  if (!_admInvoiceItems[idx]) return;
+  _admInvoiceItems[idx][field] = field === 'amount' ? (Number(val) || 0) : val;
+  _renderAdmInvoiceTotal();
+};
+
+function _renderAdmInvoiceTotal() {
+  const row = document.getElementById('riTotalRow');
+  if (!row) return;
+  const total = _admInvoiceItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
+  row.textContent = `Total: ${total}`;
+}
+
+window._pickAdmCatalogItem = function(sel) {
+  const id = Number(sel.value);
+  sel.value = '';
+  if (!id) return;
+  const item = _admFeeItemsCatalog.find(f => f.id === id);
+  if (item) window._addAdmInvoiceLineItem(item);
 };
 
 window._saveRegistrationInvoice = async function(id, studentId) {
-  const amount = Number(document.getElementById('riAmount').value);
-  if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+  const items = _admInvoiceItems.filter(it => it.description && it.description.trim() && Number(it.amount) > 0);
+  if (!items.length) { showToast('Add at least one line item with an amount'); return; }
 
   const btn = document.getElementById('riSaveBtn');
   btn.disabled = true; btn.textContent = 'Creating…';
@@ -749,8 +826,8 @@ window._saveRegistrationInvoice = async function(id, studentId) {
       student_id: studentId,
       term_id:    termId,
       due_date:   document.getElementById('riDueDate').value || null,
-      notes:      'Registration fee',
-      items:      [{ fee_item_id: null, description: 'Registration fee', amount }],
+      notes:      'Registration',
+      items,
     });
     await API.linkAdmissionInvoice(id, invRes.invoice.id);
     showToast('✓ Registration invoice created');

@@ -227,6 +227,7 @@ window.openStudentDetail = function(studentId) {
       <button class="btn-primary mt16" onclick="openEditStudentModal('${esc(s.student_id)}')">
         Edit student info
       </button>
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentIdCard('${esc(s.student_id)}')">🪪 Student ID Card</button>` : ''}
       <button class="btn-secondary" onclick="closeModal()">Close</button>
     </div>`;
 
@@ -236,6 +237,54 @@ window.openStudentDetail = function(studentId) {
 function _detailRow(label, value) {
   return `<div class="detail-row"><span class="detail-lbl">${esc(label)}</span><span class="detail-val">${value}</span></div>`;
 }
+
+/* ─── Student ID Card (Parent Portal QR) ────────────────────────────────
+ * Any Active student can get one — the QR encodes a link to parent.html
+ * that resolves to this student and lets their parent sign in with the
+ * Google account matching parent_email on file. */
+window.showStudentIdCard = async function(studentId) {
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">Student ID Card</h3>
+      <div id="idCardBody">${skeletonCards(1)}</div>
+    </div>
+  `);
+
+  let res;
+  try {
+    res = await API.getOrCreateStudentQr(studentId);
+  } catch (e) {
+    document.getElementById('idCardBody').innerHTML =
+      `<div class="empty-state">Couldn't generate a card: ${esc(e.message || 'error')}. The student must be Active.</div>`;
+    return;
+  }
+
+  const s = res.student;
+  const portalUrl = new URL('parent.html?t=' + encodeURIComponent(s.qr_token), location.href).href;
+  const homeHex = s.home_color ? homeColorHex(s.home_color) : '#1A1A18';
+
+  document.getElementById('idCardBody').innerHTML = `
+    <div class="id-card" id="idCardPrintArea">
+      <div class="id-card-avatar" style="background:${homeHex}">${avatarContent(s)}</div>
+      <div class="id-card-name">${esc(s.name_en)}</div>
+      <div class="id-card-sub">${esc(s.class || '')} · ${esc(s.student_id)}</div>
+      <div class="id-card-qr" id="idCardQr"></div>
+      <div class="id-card-hint">Scan to sign in to the Parent Portal</div>
+    </div>
+    <button class="btn-primary mt16" onclick="window.print()">🖨 Print card</button>
+    <button class="btn-secondary" onclick="closeModal()">Close</button>
+  `;
+
+  if (window.QRCode) {
+    new QRCode(document.getElementById('idCardQr'), {
+      text: portalUrl, width: 176, height: 176,
+      colorDark: '#1A1A18', colorLight: '#ffffff',
+    });
+  } else {
+    document.getElementById('idCardQr').innerHTML = `<p class="muted" style="font-size:12px">QR library failed to load — link: <br><a href="${esc(portalUrl)}">${esc(portalUrl)}</a></p>`;
+  }
+};
 
 // ─── Add student modal (with new fields) ──────────────────────────────────
 
