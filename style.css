@@ -886,6 +886,23 @@ a { color: inherit; }
   #studentList .list-card {
     margin: 0;
   }
+  #admissionsList, #billingInvoiceList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+    padding: 0 16px 16px;
+    align-items: start;
+  }
+  #admissionsList .list-card, #billingInvoiceList .list-card {
+    margin: 0;
+  }
+  /* These are full-width banners, not cards — span every column even
+     though they're direct children of the now-grid list container. */
+  #admissionsList .adm-selection-bar,
+  #admissionsList .empty-state,
+  #billingInvoiceList .empty-state {
+    grid-column: 1 / -1;
+  }
 }
 .modal-handle {
   width: 40px; height: 4px;
@@ -3807,6 +3824,51 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   width: 18px;
   height: 18px;
 }
+
+/* ── Per-card "Move to" quick-action dropdown (Admissions) ──────────────── */
+.adm-move-menu { position: relative; }
+.adm-move-menu summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.adm-move-menu summary::-webkit-details-marker { display: none; }
+.adm-move-menu summary::marker { content: ""; }
+.adm-move-menu summary:hover { background: var(--border); }
+.adm-move-menu[open] summary { background: var(--border); color: var(--text); }
+.adm-move-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+  padding: 4px;
+  min-width: 150px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+}
+.adm-move-options button {
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+.adm-move-options button:hover { background: var(--bg3); }
 
 .billing-student-btn {
   text-align: left;
