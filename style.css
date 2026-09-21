@@ -3864,6 +3864,32 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   }
 }
 
+/* ── Health Records ───────────────────────────────────────────────────── */
+.health-alert {
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+.health-alert div + div { margin-top: 4px; }
+.row-with-delete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--border);
+}
+.row-with-delete:last-of-type { border-bottom: none; }
+.muted-note {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
 /* ── Per-card "Move to" quick-action dropdown (Admissions) ──────────────── */
 .adm-move-menu { position: relative; }
 .adm-move-menu summary {
