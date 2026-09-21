@@ -26,11 +26,14 @@ window.showHealthRecord = function(studentId) {
   _loadHealthRecord(studentId);
 };
 
+let _healthProfileCache = {};
+
 async function _loadHealthRecord(studentId) {
   const el = document.getElementById('healthRecordBody');
   if (!el) return;
   try {
     const res = await API.getHealthProfile(studentId);
+    _healthProfileCache = res.profile || {};
     _renderHealthRecordView(studentId, res.profile, res.vaccinations, res.visits);
   } catch (e) {
     el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
@@ -59,7 +62,7 @@ function _renderHealthRecordView(studentId, profile, vaccinations, visits) {
       <div class="billing-detail-row"><span>Doctor</span><span>${esc(profile.doctor_name || '—')}${profile.doctor_phone ? ' · ' + esc(profile.doctor_phone) : ''}</span></div>
     </div>
     ${profile.notes ? `<p class="billing-notes">${esc(profile.notes)}</p>` : ''}
-    <button class="btn-secondary" onclick="_showEditHealthProfile('${esc(studentId)}', ${_escJson(profile)})">Edit health profile</button>
+    <button class="btn-secondary" onclick="_showEditHealthProfile('${esc(studentId)}')">Edit health profile</button>
 
     <div class="billing-section-title mt16">Vaccinations</div>
     ${vaccinations.length ? vaccinations.map(v => `
@@ -89,15 +92,10 @@ function _renderHealthRecordView(studentId, profile, vaccinations, visits) {
   `;
 }
 
-// JSON-embed helper for passing the profile object into an onclick handler.
-function _escJson(obj) {
-  return `'${JSON.stringify(obj || {}).replace(/'/g, "&#39;")}'`;
-}
-
 /* ─── Edit profile ───────────────────────────────────────────────────────── */
 
-window._showEditHealthProfile = function(studentId, profileJson) {
-  const p = typeof profileJson === 'string' ? JSON.parse(profileJson) : (profileJson || {});
+window._showEditHealthProfile = function(studentId) {
+  const p = _healthProfileCache || {};
   const el = document.getElementById('healthRecordBody');
   if (!el) return;
 
