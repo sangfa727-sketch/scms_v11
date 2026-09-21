@@ -839,6 +839,13 @@ const API = {
     });
   },
 
+  async regenerateStudentQr(studentId) {
+    return _webRpc('rpc_regenerate_student_qr', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId,
+    });
+  },
+
   // ─── STAFF CHAT (native app only — hidden in TWA) ────────────────────────
   // Reads: direct Supabase query on `chat_messages` table.
   // Writes: TWA `chat_send` action (backend must add this route — see README).

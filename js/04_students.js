@@ -154,7 +154,10 @@ function _renderStudentList() {
               ${s.home_color ? `<span class="home-dot" style="background:${homeHex}" title="Home: ${esc(homeColorName(s.home_color))}"></span>` : ''}
             </div>
           </div>
-          <span class="att-pill" style="--pill-color:${attColor}" title="${esc(attLabel)}">${esc(attCode)}</span>
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <span class="att-pill" style="--pill-color:${attColor}" title="${esc(attLabel)}">${esc(attCode)}</span>
+            <button type="button" class="icon-btn-mini" onclick="showStudentIdCard('${esc(s.student_id)}')" title="Student ID Card">🪪</button>
+          </div>
         </div>
         ${s.parent_name ? `<div class="card-parent">👤 ${esc(s.parent_name)}${s.parent_phone ? ' · ' + esc(s.parent_phone) : ''}${s.parent_tg_id ? ' · <span class="tg-linked">✓ TG linked</span>' : ''}</div>` : ''}
       </div>`;
@@ -250,40 +253,77 @@ window.showStudentIdCard = async function(studentId) {
       <div id="idCardBody">${skeletonCards(1)}</div>
     </div>
   `);
+  await _loadIdCard(studentId);
+};
 
+async function _loadIdCard(studentId) {
+  const el = document.getElementById('idCardBody');
+  if (!el) return;
   let res;
   try {
     res = await API.getOrCreateStudentQr(studentId);
   } catch (e) {
-    document.getElementById('idCardBody').innerHTML =
-      `<div class="empty-state">Couldn't generate a card: ${esc(e.message || 'error')}. The student must be Active.</div>`;
+    el.innerHTML = `<div class="empty-state">Couldn't generate a card: ${esc(e.message || 'error')}. The student must be Active.</div>`;
     return;
   }
+  _renderIdCardBody(res.student);
+}
 
-  const s = res.student;
+function _renderIdCardBody(s) {
+  const el = document.getElementById('idCardBody');
+  if (!el) return;
+
+  // The QR encodes a random, unguessable token (not the plain STU-... ID) —
+  // scanning or photographing it only gets someone to the "sign in with the
+  // matching parent Gmail" screen; rpc_parent_google_login still checks the
+  // signed-in Google account's email against students.parent_email on file,
+  // server-side, before it ever issues a session. Card lost/stolen? Use
+  // "Issue a new code" below — the old QR stops working immediately.
   const portalUrl = new URL('parent.html?t=' + encodeURIComponent(s.qr_token), location.href).href;
   const homeHex = s.home_color ? homeColorHex(s.home_color) : '#1A1A18';
 
-  document.getElementById('idCardBody').innerHTML = `
+  el.innerHTML = `
     <div class="id-card" id="idCardPrintArea">
-      <div class="id-card-avatar" style="background:${homeHex}">${avatarContent(s)}</div>
-      <div class="id-card-name">${esc(s.name_en)}</div>
-      <div class="id-card-sub">${esc(s.class || '')} · ${esc(s.student_id)}</div>
+      <div class="id-card-photo" style="background:${homeHex}">${avatarContent(s)}</div>
+      <div class="id-card-info">
+        <div class="id-card-school">${esc(window.APP.school_name || '')}</div>
+        <div class="id-card-name">${esc(s.name_en)}</div>
+        <div class="id-card-sub">${esc(s.class || '')}</div>
+        <div class="id-card-id">${esc(s.student_id)}</div>
+      </div>
       <div class="id-card-qr" id="idCardQr"></div>
-      <div class="id-card-hint">Scan to sign in to the Parent Portal</div>
     </div>
+    <p class="muted" style="font-size:12px;text-align:center;margin:10px 0 0">Parent scans this to sign in to the Parent Portal.</p>
     <button class="btn-primary mt16" onclick="window.print()">🖨 Print card</button>
+    <button class="btn-secondary" onclick="_confirmRegenerateQr('${esc(s.student_id)}')">🔄 Card lost — issue a new code</button>
     <button class="btn-secondary" onclick="closeModal()">Close</button>
   `;
 
   if (window.QRCode) {
     new QRCode(document.getElementById('idCardQr'), {
-      text: portalUrl, width: 176, height: 176,
+      text: portalUrl, width: 92, height: 92,
       colorDark: '#1A1A18', colorLight: '#ffffff',
     });
   } else {
-    document.getElementById('idCardQr').innerHTML = `<p class="muted" style="font-size:12px">QR library failed to load — link: <br><a href="${esc(portalUrl)}">${esc(portalUrl)}</a></p>`;
+    document.getElementById('idCardQr').innerHTML = `<a href="${esc(portalUrl)}" style="font-size:10px">${esc(portalUrl)}</a>`;
   }
+}
+
+window._confirmRegenerateQr = function(studentId) {
+  showConfirm(
+    '🔄 Issue a new code?',
+    "The old card's QR code will stop working immediately — reprint before handing out the new one. Any parent already signed in stays signed in.",
+    'Issue new code',
+    async () => {
+      try {
+        const res = await API.regenerateStudentQr(studentId);
+        showToast('✓ New code issued');
+        _renderIdCardBody(res.student);
+      } catch (e) {
+        showToast('Failed: ' + (e.message || 'error'));
+      }
+    }
+  );
 };
 
 // ─── Add student modal (with new fields) ──────────────────────────────────
