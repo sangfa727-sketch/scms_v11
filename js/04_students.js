@@ -231,6 +231,7 @@ window.openStudentDetail = function(studentId) {
         Edit student info
       </button>
       ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentIdCard('${esc(s.student_id)}')">🪪 Student ID Card</button>` : ''}
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showHealthRecord('${esc(s.student_id)}')">🏥 Health Record</button>` : ''}
       <button class="btn-secondary" onclick="closeModal()">Close</button>
     </div>`;
 
