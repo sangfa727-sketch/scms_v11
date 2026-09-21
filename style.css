@@ -3825,6 +3825,33 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   height: 18px;
 }
 
+/* ── Student ID Card (Parent Portal QR) ──────────────────────────────────── */
+.id-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  background: var(--surface);
+}
+.id-card-avatar {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 24px; font-weight: 700;
+  overflow: hidden;
+}
+.id-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.id-card-name { font-size: 17px; font-weight: 700; }
+.id-card-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.id-card-qr { display: flex; justify-content: center; margin: 8px 0; }
+.id-card-hint { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+@media print {
+  body * { visibility: hidden; }
+  #idCardPrintArea, #idCardPrintArea * { visibility: visible; }
+  #idCardPrintArea { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); }
+}
+
 /* ── Per-card "Move to" quick-action dropdown (Admissions) ──────────────── */
 .adm-move-menu { position: relative; }
 .adm-move-menu summary {

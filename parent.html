@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Parent Portal</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF7; --bg2: #F2F1ED; --bg3: #E8E7E1; --surface: #FFFFFF;
+    --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.15);
+    --text: #1A1A18; --text2: #4A4A45; --muted: #8A8A82;
+    --accent: #1A1A18; --green: #059669; --red: #DC2626; --blue: #0891B2; --amber: #D97706;
+    --radius: 14px; --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: 'Inter Tight', 'Noto Sans Myanmar', sans-serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 24px 18px 60px; min-height: 100vh; }
+  h1, .brand { font-family: 'Fraunces', serif; font-style: italic; font-weight: 600; }
+  .brand { font-size: 22px; margin: 0 0 28px; text-align: center; color: var(--text2); }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px; }
+  .center { text-align: center; }
+  .avatar { width: 84px; height: 84px; border-radius: 50%; overflow: hidden; margin: 0 auto 14px;
+    background: #8A8A82; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 30px; font-weight: 700; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .student-name { font-size: 19px; font-weight: 700; margin: 0 0 2px; }
+  .student-sub { color: var(--text2); font-size: 14px; margin: 0 0 18px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 13px; border-radius: 999px; border: none; font-weight: 700;
+    font-size: 15px; cursor: pointer; font-family: inherit; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: var(--bg3); color: var(--text); margin-top: 8px; }
+  #gBtn { display: flex; justify-content: center; margin-top: 6px; }
+  .error-box { background: rgba(220,38,38,0.08); color: var(--red); border-radius: 10px;
+    padding: 12px 14px; font-size: 13.5px; margin-top: 12px; }
+  .skeleton { background: linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 37%,var(--bg3) 63%);
+    background-size: 400% 100%; animation: sk 1.4s ease infinite; border-radius: 8px; height: 14px; margin: 8px 0; }
+  @keyframes sk { 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { flex: 1; text-align: center; padding: 9px 4px; border-radius: 999px; font-size: 13px;
+    font-weight: 700; background: var(--bg3); color: var(--text2); cursor: pointer; }
+  .tab.active { background: var(--accent); color: #fff; }
+  .panel { display: none; } .panel.active { display: block; }
+
+  .stat-row { display: flex; gap: 8px; margin-bottom: 4px; }
+  .stat { flex: 1; background: var(--bg2); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat b { display: block; font-size: 18px; }
+  .stat span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0;
+    border-bottom: 0.5px solid var(--border); font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .row .r-sub { color: var(--muted); font-size: 12px; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .b-present, .b-paid   { background: rgba(5,150,105,0.14); color: var(--green); }
+  .b-absent, .b-overdue { background: rgba(220,38,38,0.14); color: var(--red); }
+  .b-late, .b-partial   { background: rgba(217,119,6,0.14); color: var(--amber); }
+  .b-unpaid              { background: rgba(8,145,178,0.14); color: var(--blue); }
+  .empty { text-align: center; color: var(--muted); font-size: 13.5px; padding: 20px 0; }
+  .signout { text-align: center; margin-top: 18px; }
+  .signout a { color: var(--muted); font-size: 12.5px; text-decoration: underline; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Parent Portal</div>
+  <div id="app"><div class="card center"><div class="skeleton" style="width:60%;margin:0 auto"></div><div class="skeleton" style="width:40%;margin:8px auto"></div></div></div>
+</div>
+
+<script>
+'use strict';
+const SUPABASE_URL   = 'https://rszgbryucqwmrdbsgwbb.supabase.co';
+const SUPABASE_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzemdicnl1Y3F3bXJkYnNnd2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzNjcsImV4cCI6MjA4NjQwNTM2N30.uN2cpmL48H3ZEJlZADh6b06bwecANo1mzIwPSBZRI5g';
+const GOOGLE_CLIENT_ID = '71086878167-t6q46hrv5j5n46h9nfmeuk8sdoftb5lt.apps.googleusercontent.com';
+const PARENT_LOGIN_URL = SUPABASE_URL + '/functions/v1/parent-google-login';
+
+const qs = new URLSearchParams(location.search);
+const qrToken = qs.get('t') || qs.get('token') || '';
+const appEl = document.getElementById('app');
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function avatar(student) {
+  if (student && student.photo_url) return `<img src="${esc(student.photo_url)}" alt="">`;
+  const initial = ((student && (student.name_en || student.name_local)) || '?')[0] || '?';
+  return esc(initial);
+}
+function sessionKey(t) { return 'scms_parent_session_' + t; }
+
+async function rpc(fn, params) {
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
+    body: JSON.stringify(params),
+  });
+  const data = await resp.json().catch(() => null);
+  if (!resp.ok || !data || data.ok === false) {
+    const err = new Error((data && (data.message || data.error)) || 'request_failed');
+    err.code = data && data.error;
+    throw err;
+  }
+  return data;
+}
+
+async function boot() {
+  if (!qrToken) {
+    appEl.innerHTML = `<div class="card center">
+      <p>This page opens from the QR code on your child's Student ID Card.</p>
+      <p class="muted">Ask the school office if you don't have one yet.</p>
+    </div>`;
+    return;
+  }
+
+  // Already signed in on this device for this exact QR/student?
+  const savedToken = localStorage.getItem(sessionKey(qrToken));
+  if (savedToken) {
+    try { await showDashboard(savedToken); return; }
+    catch (e) { localStorage.removeItem(sessionKey(qrToken)); }
+  }
+
+  await showLogin();
+}
+
+async function showLogin() {
+  appEl.innerHTML = `<div class="card center"><div class="skeleton" style="width:70%;margin:0 auto"></div></div>`;
+  let student;
+  try {
+    const res = await rpc('rpc_qr_resolve', { p_qr_token: qrToken });
+    student = res.student;
+  } catch (e) {
+    appEl.innerHTML = `<div class="card center">
+      <p>This QR code isn't valid, or the student isn't active yet.</p>
+      <p class="muted">Please contact the school office.</p>
+    </div>`;
+    return;
+  }
+
+  appEl.innerHTML = `
+    <div class="card center">
+      <div class="avatar">${avatar(student)}</div>
+      <div class="student-name">${esc(student.name_en)}</div>
+      <div class="student-sub">${esc(student.class || '')} · ${esc(student.school_name || '')}</div>
+      <p class="muted">Sign in with the Google account you gave the school (${esc(student.name_en)}'s parent email) to view attendance, grades and billing.</p>
+      <div id="gBtn"></div>
+      <div id="loginError"></div>
+    </div>`;
+
+  if (!window.google?.accounts?.id) {
+    document.getElementById('loginError').innerHTML = `<div class="error-box">Google Sign-In failed to load. Check your connection and reload.</div>`;
+    return;
+  }
+
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: async (resp) => {
+      const errEl = document.getElementById('loginError');
+      errEl.innerHTML = `<p class="muted" style="margin-top:10px">Signing in…</p>`;
+      try {
+        const apiResp = await fetch(PARENT_LOGIN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id_token: resp.credential, qr_token: qrToken, device_ua: navigator.userAgent }),
+        });
+        const data = await apiResp.json();
+        if (!data.ok) {
+          errEl.innerHTML = data.error === 'email_mismatch'
+            ? `<div class="error-box">That Google account doesn't match the parent email the school has on file for ${esc(student.name_en)}. Please sign in with the correct Gmail, or ask the school office to update it.</div>`
+            : `<div class="error-box">Sign-in failed (${esc(data.error || 'unknown error')}). Please try again.</div>`;
+          return;
+        }
+        localStorage.setItem(sessionKey(qrToken), data.session_token);
+        await showDashboard(data.session_token);
+      } catch (e) {
+        errEl.innerHTML = `<div class="error-box">Sign-in failed. Please try again.</div>`;
+      }
+    },
+  });
+  window.google.accounts.id.renderButton(document.getElementById('gBtn'), { theme: 'filled_black', size: 'large', shape: 'pill', width: 280 });
+}
+
+async function showDashboard(sessionToken) {
+  appEl.innerHTML = `<div class="card center"><div class="skeleton" style="width:60%;margin:0 auto"></div><div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:80%"></div></div>`;
+
+  const res = await rpc('rpc_parent_get_dashboard', { p_session_token: sessionToken });
+  const { student, attendance, grades, invoices } = res;
+
+  const presentCount = attendance.filter(a => a.status === 'Present').length;
+  const absentCount  = attendance.filter(a => a.status === 'Absent').length;
+  const lateCount    = attendance.filter(a => a.status === 'Late').length;
+
+  appEl.innerHTML = `
+    <div class="card center">
+      <div class="avatar">${avatar(student)}</div>
+      <div class="student-name">${esc(student.name_en)}</div>
+      <div class="student-sub">${esc(student.class || '')} · ID ${esc(student.student_id)}</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="attendance">Attendance</div>
+      <div class="tab" data-tab="grades">Grades</div>
+      <div class="tab" data-tab="billing">Billing</div>
+    </div>
+
+    <div class="panel active" id="panel-attendance">
+      <div class="card">
+        <div class="stat-row">
+          <div class="stat"><b style="color:var(--green)">${presentCount}</b><span>Present</span></div>
+          <div class="stat"><b style="color:var(--amber)">${lateCount}</b><span>Late</span></div>
+          <div class="stat"><b style="color:var(--red)">${absentCount}</b><span>Absent</span></div>
+        </div>
+      </div>
+      <div class="card">
+        ${attendance.length ? attendance.map(a => `
+          <div class="row">
+            <span>${esc(fmtDate(a.date))}</span>
+            <span class="badge b-${esc((a.status || '').toLowerCase())}">${esc(a.status)}</span>
+          </div>`).join('') : `<div class="empty">No attendance records yet.</div>`}
+      </div>
+    </div>
+
+    <div class="panel" id="panel-grades">
+      <div class="card">
+        ${grades.length ? grades.map(g => `
+          <div class="row">
+            <span>${esc(g.subject)} <span class="r-sub">— ${esc(g.assessment)}</span></span>
+            <span><b>${g.percentage != null ? esc(String(g.percentage)) + '%' : '—'}</b> ${g.letter_grade ? esc(g.letter_grade) : ''}</span>
+          </div>`).join('') : `<div class="empty">No grades recorded yet.</div>`}
+      </div>
+    </div>
+
+    <div class="panel" id="panel-billing">
+      <div class="card">
+        ${invoices.length ? invoices.map(inv => `
+          <div class="row">
+            <span>${esc(inv.invoice_number || ('Invoice #' + inv.id))} <span class="r-sub">${esc(fmtDate(inv.due_date))}</span></span>
+            <span class="badge b-${esc((inv.status || '').toLowerCase())}">${esc(inv.status)} · ${esc(String(inv.total_amount))}</span>
+          </div>`).join('') : `<div class="empty">No invoices yet.</div>`}
+      </div>
+    </div>
+
+    <div class="signout"><a id="signOutLink">Sign out of this device</a></div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    };
+  });
+  document.getElementById('signOutLink').onclick = () => {
+    localStorage.removeItem(sessionKey(qrToken));
+    showLogin();
+  };
+}
+
+boot();
+</script>
+</body>
+</html>
