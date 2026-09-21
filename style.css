@@ -876,31 +876,26 @@ a { color: inherit; }
 }
 
 @media (min-width: 900px) {
-  #studentList {
+  #studentList, #admissionsList, #billingInvoiceList, #dailyList {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 12px;
     padding: 0 16px 16px;
     align-items: start;
   }
-  #studentList .list-card {
+  #studentList .list-card,
+  #admissionsList .list-card,
+  #billingInvoiceList .list-card,
+  #dailyList .list-card {
     margin: 0;
   }
-  #admissionsList, #billingInvoiceList {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 12px;
-    padding: 0 16px 16px;
-    align-items: start;
-  }
-  #admissionsList .list-card, #billingInvoiceList .list-card {
-    margin: 0;
-  }
-  /* These are full-width banners, not cards — span every column even
-     though they're direct children of the now-grid list container. */
-  #admissionsList .adm-selection-bar,
-  #admissionsList .empty-state,
-  #billingInvoiceList .empty-state {
+  /* Anything in these lists that isn't a card — filter chips banners,
+     empty states, the Admissions bulk-selection bar — spans every column
+     instead of being squeezed into a single grid cell. */
+  #studentList > *:not(.list-card),
+  #admissionsList > *:not(.list-card),
+  #billingInvoiceList > *:not(.list-card),
+  #dailyList > *:not(.list-card) {
     grid-column: 1 / -1;
   }
 }
@@ -3826,30 +3821,47 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 }
 
 /* ── Student ID Card (Parent Portal QR) ──────────────────────────────────── */
+/* On-screen preview, scaled up from the CR80 card ratio (3.375in x 2.125in,
+   same as a standard plastic ID/ATM card) for legibility; print CSS below
+   shrinks it back down to the exact physical size. */
 .id-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 24px 20px;
-  text-align: center;
+  padding: 18px;
   background: var(--surface);
+  aspect-ratio: 3.375 / 2.125;
+  max-width: 380px;
+  margin: 0 auto;
 }
-.id-card-avatar {
-  width: 72px; height: 72px;
+.id-card-photo {
+  flex: 0 0 auto;
+  width: 68px; height: 68px;
   border-radius: 50%;
-  margin: 0 auto 10px;
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 24px; font-weight: 700;
+  color: #fff; font-size: 22px; font-weight: 700;
   overflow: hidden;
 }
-.id-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.id-card-name { font-size: 17px; font-weight: 700; }
-.id-card-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
-.id-card-qr { display: flex; justify-content: center; margin: 8px 0; }
-.id-card-hint { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+.id-card-photo img { width: 100%; height: 100%; object-fit: cover; }
+.id-card-info { flex: 1; min-width: 0; }
+.id-card-school { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.id-card-name { font-size: 16px; font-weight: 700; line-height: 1.25; margin-top: 2px; }
+.id-card-sub { font-size: 12.5px; color: var(--text2); }
+.id-card-id { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+.id-card-qr { flex: 0 0 auto; }
 @media print {
+  @page { size: 3.375in 2.125in; margin: 0; }
   body * { visibility: hidden; }
   #idCardPrintArea, #idCardPrintArea * { visibility: visible; }
-  #idCardPrintArea { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); }
+  #idCardPrintArea {
+    position: fixed; top: 0; left: 0;
+    width: 3.375in; height: 2.125in;
+    max-width: none; aspect-ratio: auto;
+    border-radius: 0; border: none; padding: 0.15in;
+    margin: 0;
+  }
 }
 
 /* ── Per-card "Move to" quick-action dropdown (Admissions) ──────────────── */
