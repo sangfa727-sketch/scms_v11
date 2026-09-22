@@ -3851,6 +3851,9 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .id-card-sub { font-size: 12.5px; color: var(--text2); }
 .id-card-id { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 4px; }
 .id-card-qr { flex: 0 0 auto; }
+.id-card-link-row { display: flex; gap: 6px; align-items: center; margin: 8px 0 0; }
+.id-card-link-row input { flex: 1; font-size: 11px; padding: 8px 10px; }
+.id-card-link-row button { flex: 0 0 auto; white-space: nowrap; }
 @media print {
   @page { size: 3.375in 2.125in; margin: 0; }
   body * { visibility: hidden; }

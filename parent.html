@@ -142,9 +142,22 @@ async function showLogin() {
     const res = await rpc('rpc_qr_resolve', { p_qr_token: qrToken });
     student = res.student;
   } catch (e) {
+    // Distinguish "the server said this token is invalid/inactive" (data
+    // reached the API, e.code is set) from a network/CORS/offline failure
+    // (fetch itself never completed, e.code is undefined) — same user
+    // message either way, but the detail (visible on tap) makes it obvious
+    // which one it was if this needs debugging later.
+    const isServerRefusal = !!e.code;
     appEl.innerHTML = `<div class="card center">
-      <p>This QR code isn't valid, or the student isn't active yet.</p>
-      <p class="muted">Please contact the school office.</p>
+      <p>${isServerRefusal
+        ? "This QR code isn't valid, or the student isn't active yet."
+        : "Couldn't reach the server. Check your connection and try again."}</p>
+      <p class="muted">Please contact the school office if this continues.</p>
+      <button class="btn-secondary" onclick="showLogin()">Try again</button>
+      <details style="margin-top:14px;text-align:left">
+        <summary class="muted" style="cursor:pointer;font-size:11px">Technical detail</summary>
+        <p class="muted" style="font-size:11px;word-break:break-all">${esc(e.code || e.message || 'unknown error')}</p>
+      </details>
     </div>`;
     return;
   }
