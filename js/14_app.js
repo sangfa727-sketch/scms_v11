@@ -400,6 +400,8 @@ window.goToPage = function(pageId) {
   if (pageId === 'more' && typeof renderMore === 'function') renderMore();
   if (pageId === 'billing' && typeof renderBilling === 'function') renderBilling();
   if (pageId === 'admissions' && typeof renderAdmissions === 'function') renderAdmissions();
+  if (pageId === 'library' && typeof renderLibrary === 'function') renderLibrary();
+  if (pageId === 'transport' && typeof renderTransport === 'function') renderTransport();
   if (pageId === 'grades' && typeof renderGrades === 'function') renderGrades();
 
   // Update sidebar highlight
@@ -449,6 +451,8 @@ const FAB_PAGES = {
   grades:    { title: 'New assessment',     action: () => openNewAssessmentModal() },
   billing:   { title: 'New invoice',        action: () => openNewInvoiceModal() },
   admissions:{ title: 'Add applicant',      action: () => openNewAdmissionModal() },
+  library:   { title: 'Add book',           action: () => openNewBookModal() },
+  transport: { title: 'Add route',          action: () => openNewRouteModal() },
   timetable: { title: 'Add timetable entry',action: () => openAddTimetable() },
 };
 

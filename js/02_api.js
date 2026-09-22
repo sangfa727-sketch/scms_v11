@@ -900,6 +900,104 @@ const API = {
     return _webRpc('rpc_delete_health_visit', { p_session_token: getWebSession()?.session_token, p_id: id });
   },
 
+  // ─── LIBRARY ────────────────────────────────────────────────────────────
+
+  async getBooks() {
+    const res = await _webRpc('rpc_get_books', { p_session_token: getWebSession()?.session_token });
+    return res.rows;
+  },
+
+  async addBook(data) {
+    return _webRpc('rpc_add_book', {
+      p_session_token: getWebSession()?.session_token,
+      p_title: data.title, p_author: data.author || null, p_isbn: data.isbn || null,
+      p_category: data.category || null, p_total_copies: data.total_copies ?? 1,
+      p_notes: data.notes || null,
+    });
+  },
+
+  async updateBook(id, data) {
+    return _webRpc('rpc_update_book', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_title: data.title || null, p_author: data.author ?? null, p_isbn: data.isbn ?? null,
+      p_category: data.category ?? null, p_total_copies: data.total_copies ?? null, p_notes: data.notes ?? null,
+    });
+  },
+
+  async deleteBook(id) {
+    return _webRpc('rpc_delete_book', { p_session_token: getWebSession()?.session_token, p_id: id });
+  },
+
+  async getBookCheckouts(bookId) {
+    const res = await _webRpc('rpc_get_book_checkouts', { p_session_token: getWebSession()?.session_token, p_book_id: bookId });
+    return res.rows;
+  },
+
+  async checkoutBook(bookId, studentId, dueDate, notes) {
+    return _webRpc('rpc_checkout_book', {
+      p_session_token: getWebSession()?.session_token,
+      p_book_id: bookId, p_student_id: studentId, p_due_date: dueDate || null, p_notes: notes || null,
+    });
+  },
+
+  async returnBook(checkoutId) {
+    return _webRpc('rpc_return_book', { p_session_token: getWebSession()?.session_token, p_checkout_id: checkoutId });
+  },
+
+  async getStudentCheckouts(studentId) {
+    const res = await _webRpc('rpc_get_student_checkouts', { p_session_token: getWebSession()?.session_token, p_student_id: studentId });
+    return res.rows;
+  },
+
+  // ─── TRANSPORT ──────────────────────────────────────────────────────────
+
+  async getRoutes() {
+    const res = await _webRpc('rpc_get_routes', { p_session_token: getWebSession()?.session_token });
+    return res.rows;
+  },
+
+  async addRoute(data) {
+    return _webRpc('rpc_add_route', {
+      p_session_token: getWebSession()?.session_token,
+      p_route_name: data.route_name, p_driver_name: data.driver_name || null,
+      p_driver_phone: data.driver_phone || null, p_vehicle_info: data.vehicle_info || null,
+      p_notes: data.notes || null,
+    });
+  },
+
+  async updateRoute(id, data) {
+    return _webRpc('rpc_update_route', {
+      p_session_token: getWebSession()?.session_token,
+      p_id: id, p_route_name: data.route_name || null, p_driver_name: data.driver_name ?? null,
+      p_driver_phone: data.driver_phone ?? null, p_vehicle_info: data.vehicle_info ?? null, p_notes: data.notes ?? null,
+    });
+  },
+
+  async deleteRoute(id) {
+    return _webRpc('rpc_delete_route', { p_session_token: getWebSession()?.session_token, p_id: id });
+  },
+
+  async getRouteDetail(routeId) {
+    return _webRpc('rpc_get_route_detail', { p_session_token: getWebSession()?.session_token, p_route_id: routeId });
+  },
+
+  async assignStudentTransport(studentId, data) {
+    return _webRpc('rpc_assign_student_transport', {
+      p_session_token: getWebSession()?.session_token,
+      p_student_id: studentId, p_route_id: data.route_id,
+      p_pickup_stop: data.pickup_stop || null, p_pickup_time: data.pickup_time || null,
+      p_dropoff_time: data.dropoff_time || null, p_notes: data.notes || null,
+    });
+  },
+
+  async removeStudentTransport(studentId) {
+    return _webRpc('rpc_remove_student_transport', { p_session_token: getWebSession()?.session_token, p_student_id: studentId });
+  },
+
+  async getStudentTransport(studentId) {
+    return _webRpc('rpc_get_student_transport', { p_session_token: getWebSession()?.session_token, p_student_id: studentId });
+  },
+
   // ─── STAFF CHAT (native app only — hidden in TWA) ────────────────────────
   // Reads: direct Supabase query on `chat_messages` table.
   // Writes: TWA `chat_send` action (backend must add this route — see README).

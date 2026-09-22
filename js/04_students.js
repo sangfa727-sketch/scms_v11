@@ -232,6 +232,8 @@ window.openStudentDetail = function(studentId) {
       </button>
       ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentIdCard('${esc(s.student_id)}')">🪪 Student ID Card</button>` : ''}
       ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showHealthRecord('${esc(s.student_id)}')">🏥 Health Record</button>` : ''}
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentLibrary('${esc(s.student_id)}')">📚 Library checkouts</button>` : ''}
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentTransport('${esc(s.student_id)}')">🚌 Transport</button>` : ''}
       <button class="btn-secondary" onclick="closeModal()">Close</button>
     </div>`;
 
@@ -325,6 +327,80 @@ window._confirmRegenerateQr = function(studentId) {
       }
     }
   );
+};
+
+/* ─── Quick per-student Library / Transport panels ──────────────────────── */
+
+window.showStudentLibrary = async function(studentId) {
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">Library checkouts</h3>
+      <div id="stuLibBody">${skeletonCards(1)}</div>
+    </div>
+  `);
+  const el = document.getElementById('stuLibBody');
+  try {
+    const rows = await API.getStudentCheckouts(studentId);
+    if (!rows.length) {
+      el.innerHTML = `<div class="empty-state">No checkouts yet.</div>`;
+      return;
+    }
+    el.innerHTML = rows.map(c => `
+      <div class="row-with-delete">
+        <span>${esc(c.title)} <span class="muted-note">since ${esc(fmtDate(c.checked_out_date))}</span></span>
+        ${c.returned_date
+          ? `<span class="muted-note">Returned ${esc(fmtDate(c.returned_date))}</span>`
+          : `<button class="btn-pill-action ghost" onclick="_returnBookFromStudent(${c.id}, '${esc(studentId)}')">Return</button>`}
+      </div>
+    `).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+  }
+};
+
+window._returnBookFromStudent = async function(checkoutId, studentId) {
+  try {
+    await API.returnBook(checkoutId);
+    showToast('✓ Returned');
+    if (typeof _libraryLoadedOnce !== 'undefined') _libraryLoadedOnce = false; // force a fresh fetch next Library visit
+    showStudentLibrary(studentId);
+  } catch (e) {
+    showToast('Failed: ' + (e.message || 'error'));
+  }
+};
+
+window.showStudentTransport = async function(studentId) {
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">Transport</h3>
+      <div id="stuTransportBody">${skeletonCards(1)}</div>
+    </div>
+  `);
+  const el = document.getElementById('stuTransportBody');
+  try {
+    const res = await API.getStudentTransport(studentId);
+    const a = res.assignment;
+    if (!a || !a.route_id) {
+      el.innerHTML = `
+        <div class="empty-state">No route assigned yet.</div>
+        <button class="btn-secondary mt16" onclick="closeModal();goToPage('transport')">Go to Transport</button>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="billing-detail-items">
+        <div class="billing-detail-row"><span>Route</span><span>${esc(a.route_name || '—')}</span></div>
+        <div class="billing-detail-row"><span>Driver</span><span>${esc(a.driver_name || '—')}</span></div>
+        <div class="billing-detail-row"><span>Phone</span><span>${esc(a.driver_phone || '—')}</span></div>
+        <div class="billing-detail-row"><span>Pickup stop</span><span>${esc(a.pickup_stop || '—')}</span></div>
+        <div class="billing-detail-row"><span>Pickup time</span><span>${esc(a.pickup_time ? a.pickup_time.slice(0,5) : '—')}</span></div>
+        <div class="billing-detail-row"><span>Drop-off time</span><span>${esc(a.dropoff_time ? a.dropoff_time.slice(0,5) : '—')}</span></div>
+      </div>
+      <button class="btn-secondary mt16" onclick="closeModal();goToPage('transport')">Manage in Transport</button>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+  }
 };
 
 // ─── Add student modal (with new fields) ──────────────────────────────────

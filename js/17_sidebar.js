@@ -23,6 +23,8 @@ const SIDEBAR_ITEMS = [
   { id: 'grades',    icon: '🎓', label: 'Grades',     hideInTWA: false },
   { id: 'billing',   icon: '💵', label: 'Billing',    hideInTWA: false },
   { id: 'admissions', icon: '📝', label: 'Admissions', hideInTWA: false },
+  { id: 'library',    icon: '📚', label: 'Library',    hideInTWA: false },
+  { id: 'transport',  icon: '🚌', label: 'Transport',  hideInTWA: false },
   { id: 'parents',   icon: '💬', label: 'Parent Messages', hideInTWA: false },
   { id: 'incidents', icon: '⚡', label: 'Incidents',  hideInTWA: false },
   { id: 'timetable', icon: '📅', label: 'Timetable',  hideInTWA: false },
