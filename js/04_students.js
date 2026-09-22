@@ -297,6 +297,11 @@ function _renderIdCardBody(s) {
       <div class="id-card-qr" id="idCardQr"></div>
     </div>
     <p class="muted" style="font-size:12px;text-align:center;margin:10px 0 0">Parent scans this to sign in to the Parent Portal.</p>
+    <div class="id-card-link-row">
+      <input class="form-input" id="idCardLinkInput" value="${esc(portalUrl)}" readonly onclick="this.select()">
+      <button type="button" class="btn-pill-action ghost" onclick="_copyIdCardLink()">Copy link</button>
+    </div>
+    <p class="muted" style="font-size:11px;text-align:center">Useful to test the link yourself, or send it directly if a parent can't scan.</p>
     <button class="btn-primary mt16" onclick="window.print()">🖨 Print card</button>
     <button class="btn-secondary" onclick="_confirmRegenerateQr('${esc(s.student_id)}')">🔄 Card lost — issue a new code</button>
     <button class="btn-secondary" onclick="closeModal()">Close</button>
@@ -311,6 +316,16 @@ function _renderIdCardBody(s) {
     document.getElementById('idCardQr').innerHTML = `<a href="${esc(portalUrl)}" style="font-size:10px">${esc(portalUrl)}</a>`;
   }
 }
+
+window._copyIdCardLink = function() {
+  const input = document.getElementById('idCardLinkInput');
+  if (!input) return;
+  input.select();
+  navigator.clipboard?.writeText(input.value).then(
+    () => showToast('✓ Link copied'),
+    () => { document.execCommand('copy'); showToast('✓ Link copied'); }
+  );
+};
 
 window._confirmRegenerateQr = function(studentId) {
   showConfirm(
