@@ -310,10 +310,7 @@ window._cgRemove = async function (listKey, value) {
 
 async function _cgSave(listKey, updated) {
   try {
-    const res = await twaPost('update_school_config', {
-      school_id: window.APP.school_id,
-      patch: { [listKey]: updated },
-    });
+    const res = await API.updateSchoolConfig({ [listKey]: updated });
     if (res && (res.ok === true || res.success === true)) {
       window.APP.config = window.APP.config || {};
       window.APP.config[listKey] = updated;

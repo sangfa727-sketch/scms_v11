@@ -189,10 +189,10 @@ const API = {
   },
 
     /** Upload a student's photo to Supabase Storage and return its public URL.
-   *  Path convention: <school_id>/<student_id>.<ext> — re-upload overwrites. */
+   *  Path: <school_id>/<student_id>-<uid>.<ext> — unique per upload, never overwrites. */
   async uploadStudentPhoto(studentId, file) {
     const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `${window.APP.school_id}/${studentId}.${ext}`;
+    const path = `${window.APP.school_id}/${studentId}-${Date.now().toString(36)}.${ext}`;
     const resp = await fetch(
       `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/student-photos/${path}`,
       {
@@ -201,7 +201,6 @@ const API = {
           'apikey':        SCMS_CONFIG.SUPABASE_ANON,
           'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
           'Content-Type':  file.type || 'image/jpeg',
-          'x-upsert':      'true',
         },
         body: file,
       }
@@ -329,13 +328,14 @@ const API = {
   // teachers.photo_url), so bootstrap stays small.
 
   /** Upload an image Blob to school-assets, return its public URL.
-   *  kind: 'logo' | 'cover' | 'teacher'. Re-upload overwrites (x-upsert). */
+   *  kind: 'logo' | 'cover' | 'teacher'. Every upload gets a unique path — never overwrites. */
   async uploadSchoolAsset(kind, blob) {
     const ext = blob.type === 'image/png' ? 'png' : 'jpg';
     const school = window.APP.school_id;
     let path;
-    if (kind === 'teacher') path = `${school}/teachers/${window.APP.teacher_id}.${ext}`;
-    else                    path = `${school}/${kind}.${ext}`;
+    const uid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    if (kind === 'teacher') path = `${school}/teachers/${window.APP.teacher_id}-${uid}.${ext}`;
+    else                    path = `${school}/${kind}-${uid}.${ext}`;
     const resp = await fetch(
       `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/school-assets/${path}`,
       {
@@ -344,7 +344,6 @@ const API = {
           'apikey':        SCMS_CONFIG.SUPABASE_ANON,
           'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
           'Content-Type':  blob.type,
-          'x-upsert':      'true',
         },
         body: blob,
       }
@@ -821,7 +820,7 @@ const API = {
 
   async uploadAdmissionPhoto(admissionId, file) {
     const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `${window.APP.school_id}/admissions/${admissionId}.${ext}`;
+    const path = `${window.APP.school_id}/admissions/${admissionId}-${Date.now().toString(36)}.${ext}`;
     const resp = await fetch(
       `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/student-photos/${path}`,
       {
@@ -830,7 +829,6 @@ const API = {
           'apikey':        SCMS_CONFIG.SUPABASE_ANON,
           'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
           'Content-Type':  file.type || 'image/jpeg',
-          'x-upsert':      'true',
         },
         body: file,
       }
@@ -1037,25 +1035,15 @@ const API = {
   },
 
   // ─── STAFF CHAT (native app only — hidden in TWA) ────────────────────────
-  // Reads: direct Supabase query on `chat_messages` table.
-  // Writes: TWA `chat_send` action (backend must add this route — see README).
+  // Reads/writes go through session-checked RPCs (rpc_get_chat_messages / rpc_send_chat_message).
 
   async getChatMessages(channel = 'staff', limit = 50) {
-    const url = `${SCMS_CONFIG.SUPABASE_URL}/rest/v1/chat_messages`
-              + `?school_id=eq.${encodeURIComponent(window.APP.school_id)}`
-              + `&channel=eq.${encodeURIComponent(channel)}`
-              + `&order=created_at.desc&limit=${Number(limit) || 50}`;
     try {
-      const resp = await fetch(url, {
-        headers: {
-          'apikey':        SCMS_CONFIG.SUPABASE_ANON,
-          'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
-        },
+      const res = await _webRpc('rpc_get_chat_messages', {
+        p_session_token: getWebSession()?.session_token,
+        p_channel: channel, p_limit: Number(limit) || 50,
       });
-      if (!resp.ok) return [];
-      const rows = await resp.json();
-      // Return oldest-first so the UI can append normally
-      return Array.isArray(rows) ? rows.reverse() : [];
+      return Array.isArray(res.rows) ? res.rows : [];   // oldest first
     } catch (err) {
       console.warn('[chat] read failed', err);
       return [];
@@ -1063,14 +1051,10 @@ const API = {
   },
 
   async sendChatMessage(channel, text) {
-    return twaPost('chat_send', {
-      channel,
-      text,
-      // Server fills these in too, but echoing them helps if the route is a
-      // thin Supabase passthrough.
-      teacher_id:   window.APP.teacher_id,
-      teacher_name: window.APP.teacher_name,
-      created_at:   new Date().toISOString(),
+    // school/teacher identity comes from the session on the server
+    return _webRpc('rpc_send_chat_message', {
+      p_session_token: getWebSession()?.session_token,
+      p_channel: channel, p_text: text,
     });
   },
 

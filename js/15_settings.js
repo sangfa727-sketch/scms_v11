@@ -91,9 +91,10 @@ window.openTeacherManager = async function() {
 
   // Load teachers from the same school
   try {
-    const teachers = await sbQuery('teachers',
-      `school_id=eq.${window.APP.school_id}&select=teacher_id,teacher_name,role,status,email,last_web_login_at&order=created_at`);
-    _renderTeacherList(teachers || []);
+    const res = await _webRpc('rpc_admin_list_teachers', {
+      p_session_token: getWebSession()?.session_token,
+    });
+    _renderTeacherList(res.rows || []);
   } catch (e) {
     document.getElementById('teacherList').innerHTML =
       '<div class="form-error">Failed to load teachers</div>';

@@ -903,10 +903,7 @@ window._vpDeleteFromList = async function(listKey, value) {
   cfg[listKey] = updated;
   showToast('Saving…');
   try {
-    await twaPost('update_school_config', {
-      school_id: window.APP.school_id,
-      patch: { [listKey]: updated },
-    });
+    await API.updateSchoolConfig({ [listKey]: updated });
     showToast('Removed');
     closeModal();
   } catch (e) {
@@ -921,10 +918,7 @@ async function _persistConfigList(listKey, newValue) {
   cur.push(newValue);
   cfg[listKey] = cur;
   try {
-    await twaPost('update_school_config', {
-      school_id: window.APP.school_id,
-      patch: { [listKey]: cur },
-    });
+    await API.updateSchoolConfig({ [listKey]: cur });
   } catch (e) {
     console.warn('[config] save failed', e);
   }
