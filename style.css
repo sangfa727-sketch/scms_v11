@@ -4088,3 +4088,8 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .brand-status { margin-top: 12px; font-size: 13px; color: var(--text2); text-align: center; }
 .brand-status.ok  { color: #10B981; }
 .brand-status.err { color: #EF4444; }
+
+.more-tile-modules {
+  background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(99,102,241,0.10)) !important;
+  border-color: rgba(99,102,241,0.30) !important;
+}
