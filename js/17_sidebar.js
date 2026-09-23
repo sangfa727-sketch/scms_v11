@@ -43,7 +43,12 @@ function renderSidebar() {
     return;
   }
 
-  const items = SIDEBAR_ITEMS.filter(it => !it.hideInTWA || !isTWA());
+  // Optional modules are shown only if ticked in More → School Modules
+  const enabledMods = (typeof getSidebarModuleIds === 'function') ? getSidebarModuleIds() : null;
+  const isModule = id => (typeof MODULE_ITEMS !== 'undefined') && MODULE_ITEMS.some(m => m.id === id);
+  const items = SIDEBAR_ITEMS
+    .filter(it => !it.hideInTWA || !isTWA())
+    .filter(it => !enabledMods || !isModule(it.id) || enabledMods.includes(it.id));
 
   const A = window.APP;
   const cfg = A.config || {};
@@ -122,6 +127,10 @@ window.closeSidebar = function() {
   document.getElementById('sidebarBackdrop').classList.remove('open');
   window.APP.sidebarOpen = false;
 };
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && window.APP && window.APP.sidebarOpen) closeSidebar();
+});
 
 window.toggleSidebar = function() {
   if (window.APP.sidebarOpen) closeSidebar(); else openSidebar();

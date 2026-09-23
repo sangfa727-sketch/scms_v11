@@ -104,6 +104,18 @@ function renderMore() {
       </button>
     </div>` : ''}
 
+    <div class="more-section-title">Display</div>
+    <div class="more-info-card">
+      <label class="pref-row">
+        <span class="pref-text">
+          <span class="pref-title">Bottom navigation bar</span>
+          <span class="pref-sub">Students · Attend · Daily · HW · More — desktop only (phones always show it)</span>
+        </span>
+        <input type="checkbox" class="pref-switch" ${_desktopTabBarOn() ? 'checked' : ''}
+          onchange="toggleDesktopTabBar(this.checked)">
+      </label>
+    </div>
+
     <div class="more-section-title">About</div>
     <div class="more-info-card">
       <div class="info-row"><span>School ID</span><code>${esc(window.APP.school_id || '—')}</code></div>
@@ -139,25 +151,79 @@ const MODULE_ITEMS = [
   { id: 'summary',    icon: '📊', label: 'Monthly summary' },
 ];
 
+/** Module ids shown in the sidebar (default: all until the user saves a choice). */
+window.getSidebarModuleIds = function () {
+  const saved = window.APP.ui_prefs && window.APP.ui_prefs.sidebar_modules;
+  return Array.isArray(saved) ? saved : MODULE_ITEMS.map(m => m.id);
+};
+
+let _modulesDraft = null;   // Set of ids ticked in the open sheet (not saved yet)
+
 window.openModulesMenu = function () {
+  _modulesDraft = new Set(getSidebarModuleIds());
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <h3 class="modal-title">🗂️ School Modules</h3>
+      <p class="modal-subtitle">Tap a card to open it. Tick ☑ the ones you want in the sidebar menu, then Save.</p>
       <div class="more-grid" style="padding:8px 0 4px">
         ${MODULE_ITEMS.map(m => `
-        <button class="more-tile" onclick="modulesGo('${m.id}')">
+        <div class="more-tile module-card" role="button" tabindex="0" onclick="modulesGo('${m.id}')">
+          <label class="module-check" onclick="event.stopPropagation()" title="Show in sidebar">
+            <input type="checkbox" ${_modulesDraft.has(m.id) ? 'checked' : ''}
+              onchange="_modulesToggle('${m.id}', this.checked)">
+            <span class="module-check-box"></span>
+          </label>
           <span class="more-icon">${m.icon}</span>
           <span>${esc(m.label)}</span>
-        </button>`).join('')}
+        </div>`).join('')}
       </div>
+      <button class="btn-primary" style="margin-top:14px" id="btnSaveModules" onclick="saveSidebarModules()">Save sidebar menu</button>
     </div>`);
+};
+
+window._modulesToggle = function (id, on) {
+  if (!_modulesDraft) return;
+  if (on) _modulesDraft.add(id); else _modulesDraft.delete(id);
+};
+
+window.saveSidebarModules = async function () {
+  if (window.APP.platform !== 'web') { showToast('Please sign in on the web app to save this'); return; }
+  const btn = document.getElementById('btnSaveModules');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    const ids = MODULE_ITEMS.map(m => m.id).filter(id => _modulesDraft.has(id));  // keep canonical order
+    const res = await API.setMyUiPrefs({ sidebar_modules: ids });
+    window.APP.ui_prefs = (res && res.ui_prefs) || { ...(window.APP.ui_prefs || {}), sidebar_modules: ids };
+    try { renderSidebar(); } catch (e) {}
+    showToast('Sidebar menu saved');
+    closeModal();
+  } catch (err) {
+    console.error('[modules] save failed', err);
+    showToast('Could not save — ' + (err.message || 'try again'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Save sidebar menu'; }
+  }
 };
 
 window.modulesGo = function (pageId) {
   closeModal();
   setTimeout(() => goToPage(pageId), 150);
 };
+
+/* Desktop bottom tab bar: on by default, can be switched off (device-local). */
+const _TABBAR_KEY = 'scms_desktop_tabbar';
+function _desktopTabBarOn() {
+  try { return localStorage.getItem(_TABBAR_KEY) !== 'off'; } catch (e) { return true; }
+}
+function _applyDesktopTabBar() {
+  document.documentElement.classList.toggle('tabbar-off', !_desktopTabBarOn());
+}
+window.toggleDesktopTabBar = function (on) {
+  try { localStorage.setItem(_TABBAR_KEY, on ? 'on' : 'off'); } catch (e) {}
+  _applyDesktopTabBar();
+  showToast(on ? 'Bottom bar enabled on desktop' : 'Bottom bar hidden on desktop');
+};
+_applyDesktopTabBar();
 
 window.confirmSignOut = function () {
   const wrap = document.createElement('div');

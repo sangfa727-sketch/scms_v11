@@ -363,6 +363,14 @@ const API = {
     });
   },
 
+  /** Own UI preferences (e.g. { sidebar_modules: ['grades','billing'] }). */
+  async setMyUiPrefs(patch) {
+    return _webRpc('rpc_set_my_ui_prefs', {
+      p_session_token: getWebSession()?.session_token,
+      p_patch: patch,
+    });
+  },
+
   /** Sets the CURRENT teacher's own profile photo. */
   async setTeacherPhoto(photoUrl) {
     return _webRpc('rpc_set_teacher_photo', {

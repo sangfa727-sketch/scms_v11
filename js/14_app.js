@@ -155,6 +155,7 @@ async function initApp() {
             classes:      Array.isArray(webData.classes) ? webData.classes.join(',') : '',
             telegram_id:  webData.telegram_id || null,
             photo_url:    webData.teacher_photo_url || '',
+            ui_prefs:     webData.ui_prefs || {},
           },
           config:        webData.school_config || {},
           // The lists below will be filled by a follow-up fetch
@@ -210,6 +211,7 @@ async function initApp() {
     window.APP.school_logo    = sc.school_logo || (bootstrapData.config && bootstrapData.config.school_logo) || '';
     window.APP.school_cover   = sc.school_cover || (bootstrapData.config && bootstrapData.config.school_cover) || '';
     window.APP.teacher_photo_url = u.photo_url || '';
+    window.APP.ui_prefs       = u.ui_prefs || {};
     window.APP.teacher_id     = u.teacher_id || '';
     window.APP.teacher_name   = u.teacher_name || tgUser?.first_name || '';
     window.APP.teacher_role   = u.role || '';
