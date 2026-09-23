@@ -58,41 +58,9 @@ function renderMore() {
         <span class="more-icon">📖</span>
         <span>အသုံးပြုနည်း</span>
       </button>
-      <button class="more-tile" onclick="goToPage('incidents')">
-        <span class="more-icon">⚡</span>
-        <span>Incidents</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('grades')">
-        <span class="more-icon">🎓</span>
-        <span>Grades</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('billing')">
-        <span class="more-icon">💵</span>
-        <span>Billing</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('admissions')">
-        <span class="more-icon">📝</span>
-        <span>Admissions</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('library')">
-        <span class="more-icon">📚</span>
-        <span>Library</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('transport')">
-        <span class="more-icon">🚌</span>
-        <span>Transport</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('parents')">
-        <span class="more-icon">📨</span>
-        <span>Parent messages</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('timetable')">
-        <span class="more-icon">🗓️</span>
-        <span>Timetable</span>
-      </button>
-      <button class="more-tile" onclick="goToPage('summary')">
-        <span class="more-icon">📊</span>
-        <span>Monthly summary</span>
+      <button class="more-tile more-tile-modules" onclick="openModulesMenu()">
+        <span class="more-icon">🗂️</span>
+        <span>School Modules</span>
       </button>
       ${showChat ? `
       <button class="more-tile" onclick="goToPage('chat')">
@@ -124,7 +92,7 @@ function renderMore() {
         <span class="more-row-label">School settings</span>
         <span class="more-row-chevron">›</span>
       </button>
-      <button class="more-row" onclick="showToast('Teacher management — coming soon')">
+      <button class="more-row" onclick="openTeacherManager()">
         <span class="more-row-icon">👥</span>
         <span class="more-row-label">Manage teachers</span>
         <span class="more-row-chevron">›</span>
@@ -157,6 +125,39 @@ function renderMore() {
     <div style="height: 40px;"></div>
   `;
 }
+
+/* All feature modules live under one "School Modules" tile (Browse section). */
+const MODULE_ITEMS = [
+  { id: 'incidents',  icon: '⚡',  label: 'Incidents' },
+  { id: 'grades',     icon: '🎓', label: 'Grades' },
+  { id: 'billing',    icon: '💵', label: 'Billing' },
+  { id: 'admissions', icon: '📝', label: 'Admissions' },
+  { id: 'library',    icon: '📚', label: 'Library' },
+  { id: 'transport',  icon: '🚌', label: 'Transport' },
+  { id: 'parents',    icon: '📨', label: 'Parent messages' },
+  { id: 'timetable',  icon: '🗓️', label: 'Timetable' },
+  { id: 'summary',    icon: '📊', label: 'Monthly summary' },
+];
+
+window.openModulesMenu = function () {
+  openModal(`
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <h3 class="modal-title">🗂️ School Modules</h3>
+      <div class="more-grid" style="padding:8px 0 4px">
+        ${MODULE_ITEMS.map(m => `
+        <button class="more-tile" onclick="modulesGo('${m.id}')">
+          <span class="more-icon">${m.icon}</span>
+          <span>${esc(m.label)}</span>
+        </button>`).join('')}
+      </div>
+    </div>`);
+};
+
+window.modulesGo = function (pageId) {
+  closeModal();
+  setTimeout(() => goToPage(pageId), 150);
+};
 
 window.confirmSignOut = function () {
   const wrap = document.createElement('div');
