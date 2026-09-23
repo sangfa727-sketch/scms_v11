@@ -4011,3 +4011,80 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   color: var(--muted);
   padding: 6px 0;
 }
+
+
+/* ── Branding: cover photo, logo, profile photos (26_branding.js) ── */
+.sidebar-header { padding: 0 !important; }
+.sidebar-cover {
+  position: relative;
+  height: 112px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+  background-size: cover; background-position: center;
+}
+.sidebar-cover.has-cover::after {            /* keep edit button legible on any photo */
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.10), rgba(0,0,0,0.25));
+  pointer-events: none;
+}
+.sidebar-cover-edit {
+  position: absolute; right: 10px; top: 10px; z-index: 2;
+  border: 0; border-radius: 999px; padding: 5px 10px;
+  font-size: 11.5px; font-weight: 600; cursor: pointer;
+  background: rgba(0,0,0,0.45); color: #fff;
+  backdrop-filter: blur(4px);
+}
+.sidebar-school-row-top {
+  margin: -28px 0 0 !important;              /* logo overlaps the cover's bottom edge */
+  padding: 0 18px 12px !important;
+  border-bottom: 0 !important;
+  align-items: flex-end !important;
+  position: relative; z-index: 1;
+}
+.sidebar-logo-wrap { position: relative; flex-shrink: 0; }
+.sidebar-school-logo, .sidebar-school-mark {
+  width: 56px !important; height: 56px !important;
+  border-radius: 14px !important;
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  object-fit: cover; background: var(--surface);
+}
+.sidebar-school-mark {
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg);
+  font-size: 22px !important;
+}
+.sidebar-logo-edit {
+  position: absolute; right: -6px; bottom: -6px;
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface);
+  background: var(--accent); color: var(--bg); font-size: 10px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.sidebar-school-row-top .sidebar-school-name { padding-bottom: 4px; font-size: 15px; }
+.sidebar-profile { padding: 4px 18px 16px; }
+.sidebar-avatar { position: relative; overflow: hidden; }
+.sidebar-avatar.editable { cursor: pointer; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.avatar-cam {
+  position: absolute; right: 0; bottom: 0;
+  font-size: 10px; line-height: 1;
+  background: rgba(0,0,0,0.55); border-radius: 8px 0 0 0; padding: 3px 4px;
+}
+.profile-avatar { position: relative; overflow: hidden; }
+.profile-avatar-btn { cursor: pointer; }
+
+/* modal preview frames */
+.brand-preview {
+  margin: 8px auto 14px; overflow: hidden; background: var(--bg2);
+  border: 1px solid var(--border);
+}
+.brand-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.brand-preview-square { width: 120px; height: 120px; border-radius: 20px; }
+.brand-preview-round  { width: 120px; height: 120px; border-radius: 50%; }
+.brand-preview-wide   { width: 100%; aspect-ratio: 3 / 1; border-radius: 14px; }
+.brand-preview-placeholder {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg);
+  font-weight: 800; font-size: 40px;
+}
+.brand-status { margin-top: 12px; font-size: 13px; color: var(--text2); text-align: center; }
+.brand-status.ok  { color: #10B981; }
+.brand-status.err { color: #EF4444; }
