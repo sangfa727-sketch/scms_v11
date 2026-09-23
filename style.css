@@ -1338,7 +1338,8 @@ html[data-platform="web"] .tab-btn-chat {
   opacity: 0; pointer-events: none;
   transition: opacity 0.2s;
 }
-.sidebar-backdrop.show {
+.sidebar-backdrop.show,
+.sidebar-backdrop.open {                 /* JS toggles .open — tapping outside now closes the sidebar */
   opacity: 1; pointer-events: auto;
 }
 
@@ -4092,4 +4093,45 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .more-tile-modules {
   background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(99,102,241,0.10)) !important;
   border-color: rgba(99,102,241,0.30) !important;
+}
+
+/* ── School Modules sheet: sidebar tick boxes ───────────────────── */
+.module-card { position: relative; cursor: pointer; }
+.module-check { position: absolute; top: 8px; right: 8px; display: block; width: 24px; height: 24px; cursor: pointer; }
+.module-check input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.module-check-box {
+  display: block; width: 22px; height: 22px; border-radius: 7px;
+  border: 1.5px solid var(--border2, var(--border)); background: var(--bg);
+  transition: background 0.12s, border-color 0.12s;
+}
+.module-check input:checked + .module-check-box {
+  background: var(--accent, var(--text)); border-color: var(--accent, var(--text));
+}
+.module-check input:checked + .module-check-box::after {
+  content: '✓'; display: block; text-align: center; line-height: 20px;
+  font-size: 14px; font-weight: 800; color: var(--bg);
+}
+.module-check input:focus-visible + .module-check-box { outline: 2px solid var(--accent, var(--text)); outline-offset: 2px; }
+
+/* ── Display prefs row (More page) ──────────────────────────────── */
+.pref-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+.pref-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pref-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.pref-sub { font-size: 12px; color: var(--muted); }
+.pref-switch {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0;
+  width: 44px; height: 26px; border-radius: 999px; position: relative; cursor: pointer;
+  background: var(--border2, #cbd5e1); transition: background 0.15s;
+}
+.pref-switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.15s;
+}
+.pref-switch:checked { background: var(--accent, var(--text)); }
+.pref-switch:checked::after { transform: translateX(18px); }
+
+/* ── Desktop: optional bottom tab bar ───────────────────────────── */
+@media (min-width: 900px) {
+  html.tabbar-off { --tab-h: 0px; }
+  html.tabbar-off .tab-bar { display: none; }
 }
