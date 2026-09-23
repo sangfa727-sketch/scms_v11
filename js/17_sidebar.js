@@ -45,23 +45,44 @@ function renderSidebar() {
 
   const items = SIDEBAR_ITEMS.filter(it => !it.hideInTWA || !isTWA());
 
-  const schoolLogo = window.APP.school_logo || (window.APP.config && window.APP.config.school_logo) || '';
-  const schoolName = window.APP.school_name || 'SCMS';
+  const A = window.APP;
+  const cfg = A.config || {};
+  const schoolLogo  = A.school_logo  || cfg.school_logo  || '';
+  const schoolCover = A.school_cover || cfg.school_cover || '';
+  const schoolName  = A.school_name || 'SCMS';
+  const isAdmin = !!A.is_admin && A.platform === 'web';
+  const canEditOwn = A.platform === 'web';
+
   const schoolBadge = schoolLogo
-    ? `<img src="${esc(schoolLogo)}" alt="" class="sidebar-school-logo">`
+    ? `<img src="${esc(schoolLogo)}" alt="" class="sidebar-school-logo"
+         onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'sidebar-school-mark',textContent:'${esc(schoolName[0] || 'S')}'}))">`
     : `<span class="sidebar-school-mark">${esc(schoolName[0] || 'S')}</span>`;
+
+  const coverStyle = schoolCover ? `style="background-image:url('${esc(schoolCover)}')"` : '';
+  const avatarInner = A.teacher_photo_url
+    ? `<img src="${esc(A.teacher_photo_url)}" alt="" class="avatar-img">`
+    : esc((A.teacher_name || '?')[0]);
 
   sidebar.innerHTML = `
     <div class="sidebar-header">
+      <div class="sidebar-cover ${schoolCover ? 'has-cover' : ''}" ${coverStyle}>
+        ${isAdmin ? `<button class="sidebar-cover-edit" onclick="openSchoolCoverModal()" aria-label="Change cover photo">📷 Cover</button>` : ''}
+      </div>
       <div class="sidebar-school-row sidebar-school-row-top">
-        ${schoolBadge}
+        <div class="sidebar-logo-wrap">
+          ${schoolBadge}
+          ${isAdmin ? `<button class="sidebar-logo-edit" onclick="openSchoolLogoModal()" aria-label="Change school logo">📷</button>` : ''}
+        </div>
         <span class="sidebar-school-name">${esc(schoolName)}</span>
       </div>
       <div class="sidebar-profile">
-        <div class="sidebar-avatar">${esc((window.APP.teacher_name || '?')[0])}</div>
+        <div class="sidebar-avatar ${canEditOwn ? 'editable' : ''}" ${canEditOwn ? 'onclick="openMyPhotoModal()" role="button" aria-label="Change my profile photo"' : ''}>
+          ${avatarInner}
+          ${canEditOwn ? '<span class="avatar-cam">📷</span>' : ''}
+        </div>
         <div class="sidebar-profile-info">
-          <div class="sidebar-name">${esc(window.APP.teacher_name || '—')}</div>
-          <div class="sidebar-role">${esc(window.APP.teacher_role || '—')}</div>
+          <div class="sidebar-name">${esc(A.teacher_name || '—')}</div>
+          <div class="sidebar-role">${esc(A.teacher_role || '—')}</div>
         </div>
       </div>
     </div>

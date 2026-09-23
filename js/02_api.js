@@ -323,14 +323,52 @@ const API = {
     };
   },
 
-  /** Update the school logo.
-   *  Reuses the existing `update_school_config` TWA route — backend stores
-   *  the data URL inside `schools.config_json.school_logo` (or wherever your
-   *  rpc_update_school_config writes patches). */
-  async updateSchoolLogo(logoDataUrl) {
-    return twaPost('update_school_config', {
-      school_id: window.APP.school_id,
-      patch: { school_logo: logoDataUrl || null },
+  // ─── BRANDING & PROFILE PHOTOS (web only — direct Supabase, no n8n) ──────
+  // Images are stored in the public `school-assets` bucket; only the URL is
+  // kept in the DB (schools.config_json.school_logo / school_cover and
+  // teachers.photo_url), so bootstrap stays small.
+
+  /** Upload an image Blob to school-assets, return its public URL.
+   *  kind: 'logo' | 'cover' | 'teacher'. Re-upload overwrites (x-upsert). */
+  async uploadSchoolAsset(kind, blob) {
+    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+    const school = window.APP.school_id;
+    let path;
+    if (kind === 'teacher') path = `${school}/teachers/${window.APP.teacher_id}.${ext}`;
+    else                    path = `${school}/${kind}.${ext}`;
+    const resp = await fetch(
+      `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/school-assets/${path}`,
+      {
+        method:  'POST',
+        headers: {
+          'apikey':        SCMS_CONFIG.SUPABASE_ANON,
+          'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
+          'Content-Type':  blob.type,
+          'x-upsert':      'true',
+        },
+        body: blob,
+      }
+    );
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => '');
+      throw new Error(`Upload failed (${resp.status}): ${t.slice(0, 200)}`);
+    }
+    return `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/public/school-assets/${path}?t=${Date.now()}`;
+  },
+
+  /** patch: { school_logo?: url|null, school_cover?: url|null } — admin only (server-enforced). */
+  async setSchoolBranding(patch) {
+    return _webRpc('rpc_set_school_branding', {
+      p_session_token: getWebSession()?.session_token,
+      p_patch: patch,
+    });
+  },
+
+  /** Sets the CURRENT teacher's own profile photo. */
+  async setTeacherPhoto(photoUrl) {
+    return _webRpc('rpc_set_teacher_photo', {
+      p_session_token: getWebSession()?.session_token,
+      p_photo_url: photoUrl,
     });
   },
 

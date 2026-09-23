@@ -39,7 +39,12 @@ function renderMore() {
     </div>
 
     <div class="profile-card">
-      <div class="profile-avatar">${esc((window.APP.teacher_name || '?')[0])}</div>
+      <div class="profile-avatar profile-avatar-btn" onclick="openMyPhotoModal()" title="Change my photo" role="button" aria-label="Change my profile photo">
+        ${window.APP.teacher_photo_url
+          ? `<img src="${esc(window.APP.teacher_photo_url)}" alt="" class="avatar-img">`
+          : esc((window.APP.teacher_name || '?')[0])}
+        <span class="avatar-cam">📷</span>
+      </div>
       <div class="profile-info">
         <div class="profile-name">${esc(window.APP.teacher_name || '—')}</div>
         <div class="profile-role">${esc(window.APP.teacher_role || '—')}</div>
@@ -102,6 +107,11 @@ function renderMore() {
       <button class="more-row" onclick="openSchoolLogoModal()">
         <span class="more-row-icon">🖼️</span>
         <span class="more-row-label">School logo</span>
+        <span class="more-row-chevron">›</span>
+      </button>
+      <button class="more-row" onclick="openSchoolCoverModal()">
+        <span class="more-row-icon">🌄</span>
+        <span class="more-row-label">Cover photo</span>
         <span class="more-row-chevron">›</span>
       </button>
       <button class="more-row" onclick="openManageClassesModal()">
@@ -175,185 +185,7 @@ window._doSignOutConfirmed = function () {
   if (typeof signOut === 'function') signOut();
 };
 
-/* ─────────────────────────────────────────────────────────────────
-   School logo upload modal (admin)
-   ───────────────────────────────────────────────────────────────── */
-
-window.openSchoolLogoModal = function () {
-  if (!window.APP.is_admin) {
-    showToast('Only admins can change the school logo');
-    return;
-  }
-  const current = window.APP.school_logo || (window.APP.config && window.APP.config.school_logo) || '';
-  const schoolName = window.APP.school_name || 'School';
-
-  const html = `
-    <div class="modal-sheet" onclick="event.stopPropagation()">
-      <div class="modal-handle"></div>
-      <h3 class="modal-title">School logo</h3>
-      <p class="modal-subtitle">Shown in the app header, daily reports, and parent messages.</p>
-
-      <div class="logo-preview-block">
-        <div class="logo-preview-frame" id="logoPreviewFrame">
-          ${current
-            ? `<img id="logoPreviewImg" src="${esc(current)}" alt="Current logo">`
-            : `<div class="logo-preview-placeholder">${esc(schoolName[0] || 'S')}</div>`}
-        </div>
-        <div class="logo-preview-meta">
-          <div class="logo-preview-name">${esc(schoolName)}</div>
-          <div class="logo-preview-hint" id="logoHint">
-            ${current ? 'Current logo' : 'No logo yet — upload one below'}
-          </div>
-        </div>
-      </div>
-
-      <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp" style="display:none">
-
-      <div class="logo-actions">
-        <button class="btn-secondary" id="btnPickLogo">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          Choose image
-        </button>
-        ${current ? `
-        <button class="btn-danger" id="btnRemoveLogo">Remove</button>` : ''}
-      </div>
-
-      <div class="info-tip" style="margin-top:14px">
-        <span class="info-tip-icon">💡</span>
-        <div>
-          <strong>Tips:</strong> use a square image, PNG with transparent background works best.
-          Max <strong>1 MB</strong> — it will be auto-resized to 256×256.
-        </div>
-      </div>
-
-      <div id="logoUploadStatus" style="display:none" class="link-status">
-        <div class="link-status-dot"></div>
-        <span id="logoUploadStatusText">Uploading…</span>
-      </div>
-
-      <div class="modal-actions" style="margin-top:18px">
-        <button class="btn-secondary" onclick="closeModal()">Done</button>
-      </div>
-    </div>`;
-  openModal(html);
-
-  // Wire up
-  const picker = document.getElementById('logoFileInput');
-  document.getElementById('btnPickLogo').onclick = () => picker.click();
-  picker.onchange = (e) => _handleLogoPicked(e.target.files && e.target.files[0]);
-
-  const removeBtn = document.getElementById('btnRemoveLogo');
-  if (removeBtn) {
-    removeBtn.onclick = async () => {
-      if (!confirm('Remove the school logo?')) return;
-      await _saveLogo('');
-    };
-  }
-};
-
-async function _handleLogoPicked(file) {
-  if (!file) return;
-  if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
-    showToast('Please choose a PNG, JPG, or WebP image');
-    return;
-  }
-  if (file.size > 1024 * 1024) {
-    showToast('Image is too large (max 1 MB)');
-    return;
-  }
-  try {
-    const dataUrl = await _resizeImageToDataUrl(file, 256, 256, 0.92);
-    // Update local preview immediately
-    const frame = document.getElementById('logoPreviewFrame');
-    if (frame) {
-      frame.innerHTML = `<img id="logoPreviewImg" src="${dataUrl}" alt="New logo">`;
-    }
-    const hint = document.getElementById('logoHint');
-    if (hint) hint.textContent = 'Preview — saving…';
-
-    await _saveLogo(dataUrl);
-  } catch (err) {
-    console.error('[logo] resize failed', err);
-    showToast('Could not read that image');
-  }
-}
-
-async function _saveLogo(dataUrl) {
-  const statusEl = document.getElementById('logoUploadStatus');
-  const statusText = document.getElementById('logoUploadStatusText');
-  if (statusEl) {
-    statusEl.style.display = 'flex';
-    statusEl.classList.remove('linked');
-  }
-  if (statusText) statusText.textContent = dataUrl ? 'Saving logo…' : 'Removing logo…';
-
-  try {
-    // Use the existing TWA `update_school_config` action — backend writes the
-    // patch into the school's config record. See README for the schema change.
-    const res = await twaPost('update_school_config', {
-      school_id: window.APP.school_id,
-      patch: { school_logo: dataUrl || null },
-    });
-    if (res && (res.ok === true || res.success === true)) {
-      // Update local cache
-      window.APP.school_logo = dataUrl || '';
-      if (window.APP.config) window.APP.config.school_logo = dataUrl || '';
-
-      if (statusEl) statusEl.classList.add('linked');
-      if (statusText) statusText.textContent = dataUrl ? 'Logo updated ✓' : 'Logo removed ✓';
-      showToast(dataUrl ? 'School logo updated' : 'School logo removed');
-
-      // Refresh views
-      try { renderMore(); } catch (e) {}
-      try { _applyLogoToHeader(); } catch (e) {}
-    } else {
-      throw new Error((res && (res.error || res.message)) || 'Server rejected the upload');
-    }
-  } catch (err) {
-    console.error('[logo] save failed', err);
-    if (statusEl) statusEl.style.display = 'none';
-    showToast('Could not save logo — ' + (err.message || 'try again'));
-  }
-}
-
-/**
- * Resize an image to fit within maxW × maxH, return a data URL.
- * Keeps PNG/WebP transparency; saves JPEG as JPEG for smaller size.
- */
-function _resizeImageToDataUrl(file, maxW, maxH, quality) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('read failed'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('decode failed'));
-      img.onload = () => {
-        let { width, height } = img;
-        const ratio = Math.min(maxW / width, maxH / height, 1);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const isTransparent = /png|webp/i.test(file.type);
-        const out = isTransparent
-          ? canvas.toDataURL('image/png')
-          : canvas.toDataURL('image/jpeg', quality);
-        resolve(out);
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
+/* School logo / cover / profile-photo modals now live in 26_branding.js */
 
 /**
  * Insert/update the small logo in the header (next to school name).
