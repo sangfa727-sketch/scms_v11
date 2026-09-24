@@ -51,7 +51,7 @@ window.openStudentPicker = function(opts = {}) {
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
         </span>
-        <input type="text" id="pickerSearchInput" placeholder="Search name, ID, class…" autocomplete="off">
+        <input type="text" id="pickerSearchInput" placeholder="${esc(t('picker.searchPh'))}" autocomplete="off">
         <button class="clear-btn" id="pickerClearBtn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
@@ -63,7 +63,7 @@ window.openStudentPicker = function(opts = {}) {
 
       <div class="picker-list" id="pickerList"></div>
 
-      <button class="btn-secondary mt16" onclick="closeModal()">Cancel</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.cancel')}</button>
     </div>`;
 
   openModal(html);

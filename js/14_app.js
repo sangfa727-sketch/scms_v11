@@ -52,10 +52,10 @@ async function initApp() {
     document.documentElement.setAttribute('data-platform', window.APP.platform);
 
     setStatus(
-      window.APP.platform === 'twa' ? 'Opening Telegram…' :
-      window.APP.platform === 'native' ? 'Starting…' :
-      'Loading preview…',
-      'School Class Management System'
+      window.APP.platform === 'twa' ? t('boot.openingTg') :
+      window.APP.platform === 'native' ? t('boot.starting') :
+      t('boot.preview'),
+      t('boot.title')
     );
 
     // ── Step 2: Telegram WebApp init (TWA only) ──────────────────────────
@@ -118,7 +118,7 @@ async function initApp() {
     }
 
     // ── Step 3: Bootstrap via n8n ────────────────────────────────────────
-    setStatus('Authenticating…', telegram_id ? `User: ${tgUser?.first_name || ''}` : 'Loading…');
+    setStatus(t('boot.auth'), telegram_id ? t('boot.user', { name: tgUser?.first_name || '' }) : t('msg.loading'));
 
     let bootstrapData = null;
     let bootstrapError = null;
@@ -191,17 +191,17 @@ async function initApp() {
           errParts.push('Likely cause: the n8n workflow is not Active, the URL is wrong, or CORS is blocking the request.');
         }
       }
-      showError('Connection failed', errParts.join('\n'));
+      showError(t('err.connFailed'), errParts.join('\n'));
       return;
     }
 
     if (!bootstrapData.ok) {
-      showError('Authentication failed', bootstrapData.error || 'Your account is not registered in this school.');
+      showError(t('err.authFailed'), bootstrapData.error || t('err.notRegistered'));
       return;
     }
 
     // ── Step 4: Populate APP context ─────────────────────────────────────
-    setStatus('Loading school data…', bootstrapData.schoolConfig?.school_name || '');
+    setStatus(t('boot.loadingSchool'), bootstrapData.schoolConfig?.school_name || '');
 
     const sc = bootstrapData.schoolConfig || {};
     const u  = bootstrapData.user || {};
@@ -276,7 +276,7 @@ async function initApp() {
     document.getElementById('connDot').classList.add('online');
 
     // ── Step 7: Render modules ───────────────────────────────────────────
-    setStatus('Building dashboard…', '');
+    setStatus(t('boot.building'), '');
 
     if (typeof renderStudents   === 'function') renderStudents();
     if (typeof renderAttendance === 'function') renderAttendance();
@@ -302,16 +302,16 @@ async function initApp() {
 
     // Refresh button
     document.getElementById('btnRefresh').addEventListener('click', async () => {
-      showToast('Refreshing…');
+      showToast(t('toast.refreshing'));
       try {
         await API.refreshAll();
         if (typeof renderStudents  === 'function') renderStudents();
         if (typeof renderAttendance === 'function') renderAttendance();
         if (typeof renderDaily     === 'function') renderDaily();
         if (typeof renderHomework  === 'function') renderHomework();
-        showToast('✓ Data updated');
+        showToast(t('toast.updated'));
       } catch (e) {
-        showToast('Refresh failed — check connection');
+        showToast(t('toast.refreshFailed'));
       }
     });
 
@@ -341,7 +341,7 @@ async function initApp() {
 
   } catch (err) {
     console.error('App init error:', err);
-    showError('Startup error', err.message || 'Unknown error. Please reload.');
+    showError(t('err.startup'), err.message || t('err.unknown'));
   }
 }
 
@@ -361,8 +361,8 @@ window.bootAfterLogin = function () {
           <span class="boot-logo-text">CMS</span>
         </div>
         <div class="boot-spinner"><div class="spin-ring"></div></div>
-        <div class="boot-status" id="bootStatus">Signing you in…</div>
-        <div class="boot-sub" id="bootSub">Loading your school</div>
+        <div class="boot-status" id="bootStatus">${t('boot.signingIn')}</div>
+        <div class="boot-sub" id="bootSub">${t('boot.loadingYourSchool')}</div>
       </div>`;
   }
   initApp();
@@ -600,7 +600,7 @@ window.openModal = function(html, onClose) {
   // often the only easy way to back out without finishing the form.
   layer.innerHTML = html.replace(
     /(<div class="modal-sheet"[^>]*>)/,
-    `$1<button type="button" class="modal-close-x" onclick="event.stopPropagation();closeModal()" aria-label="Close">✕</button>`
+    `$1<button type="button" class="modal-close-x" onclick="event.stopPropagation();closeModal()" aria-label="${t('common.close')}">✕</button>`
   );
   layer.onclick = function(e) {
     if (e.target === layer) closeModal();
@@ -637,7 +637,7 @@ window.showConfirm = function (title, message, confirmLabel, onConfirm, opts = {
       <h3 class="modal-title">${esc(title)}</h3>
       <p class="modal-subtitle">${esc(message)}</p>
       <button class="${danger ? 'btn-danger solid' : 'btn-primary'} mt16" id="_genericConfirmBtn">${esc(confirmLabel)}</button>
-      <button class="btn-secondary mt8" id="_genericConfirmCancel">Cancel</button>
+      <button class="btn-secondary mt8" id="_genericConfirmCancel">${t('common.cancel')}</button>
     </div>`;
   wrap.onclick = window._closeGenericConfirm;
   document.body.appendChild(wrap);

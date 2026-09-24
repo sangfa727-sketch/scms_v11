@@ -16,21 +16,21 @@
 'use strict';
 
 const SIDEBAR_ITEMS = [
-  { id: 'students',  icon: '👥', label: 'Students',   hideInTWA: false },
-  { id: 'attend',    icon: '✓',  label: 'Attendance', hideInTWA: false },
-  { id: 'daily',     icon: '📋', label: 'Daily Reports', hideInTWA: false },
-  { id: 'hw',        icon: '📚', label: 'Homework',   hideInTWA: false },
-  { id: 'grades',    icon: '🎓', label: 'Grades',     hideInTWA: false },
-  { id: 'billing',   icon: '💵', label: 'Billing',    hideInTWA: false },
-  { id: 'admissions', icon: '📝', label: 'Admissions', hideInTWA: false },
-  { id: 'library',    icon: '📚', label: 'Library',    hideInTWA: false },
-  { id: 'transport',  icon: '🚌', label: 'Transport',  hideInTWA: false },
-  { id: 'parents',   icon: '💬', label: 'Parent Messages', hideInTWA: false },
-  { id: 'incidents', icon: '⚡', label: 'Incidents',  hideInTWA: false },
-  { id: 'timetable', icon: '📅', label: 'Timetable',  hideInTWA: false },
-  { id: 'summary',   icon: '📊', label: 'Monthly Summary', hideInTWA: false },
+  { id: 'students',  icon: '👥', key: 'sb.students',   hideInTWA: false },
+  { id: 'attend',    icon: '✓',  key: 'sb.attend', hideInTWA: false },
+  { id: 'daily',     icon: '📋', key: 'sb.daily', hideInTWA: false },
+  { id: 'hw',        icon: '📚', key: 'sb.hw',   hideInTWA: false },
+  { id: 'grades',    icon: '🎓', key: 'module.grades',     hideInTWA: false },
+  { id: 'billing',   icon: '💵', key: 'module.billing',    hideInTWA: false },
+  { id: 'admissions', icon: '📝', key: 'module.admissions', hideInTWA: false },
+  { id: 'library',    icon: '📚', key: 'module.library',    hideInTWA: false },
+  { id: 'transport',  icon: '🚌', key: 'module.transport',  hideInTWA: false },
+  { id: 'parents',   icon: '💬', key: 'module.parents', hideInTWA: false },
+  { id: 'incidents', icon: '⚡', key: 'module.incidents',  hideInTWA: false },
+  { id: 'timetable', icon: '📅', key: 'module.timetable',  hideInTWA: false },
+  { id: 'summary',   icon: '📊', key: 'module.summary', hideInTWA: false },
   // Items below are NATIVE-ONLY — hidden inside Telegram
-  { id: 'chat',      icon: '🗨️', label: 'Staff Chat', hideInTWA: true  },
+  { id: 'chat',      icon: '🗨️', key: 'sb.chat', hideInTWA: true  },
 ];
 
 function renderSidebar() {
@@ -67,11 +67,11 @@ function renderSidebar() {
   sidebar.innerHTML = `
     <div class="sidebar-header">
       <div class="sidebar-cover ${schoolCover ? 'has-cover' : ''}" ${coverStyle}>
-        ${isAdmin ? `<button class="sidebar-cover-edit" onclick="openSchoolCoverModal()" aria-label="Change cover photo">📷 Cover</button>` : ''}
+        ${isAdmin ? `<button class="sidebar-cover-edit" onclick="openSchoolCoverModal()" aria-label="${esc(t('sb.changeCover'))}">${t('sb.cover')}</button>` : ''}
         <div class="sidebar-school-row sidebar-school-row-top">
           <div class="sidebar-logo-wrap">
             ${schoolBadge}
-            ${isAdmin ? `<button class="sidebar-logo-edit" onclick="openSchoolLogoModal()" aria-label="Change school logo">📷</button>` : ''}
+            ${isAdmin ? `<button class="sidebar-logo-edit" onclick="openSchoolLogoModal()" aria-label="${esc(t('sb.changeLogo'))}">📷</button>` : ''}
           </div>
           <span class="sidebar-school-name">${esc(schoolName)}</span>
         </div>
@@ -83,18 +83,18 @@ function renderSidebar() {
         <button class="sidebar-item ${window.APP.currentPage === it.id ? 'active' : ''}"
           data-page="${esc(it.id)}" onclick="sidebarGo('${esc(it.id)}')">
           <span class="sidebar-icon">${it.icon}</span>
-          <span class="sidebar-label">${esc(it.label)}</span>
+          <span class="sidebar-label">${esc(t(it.key))}</span>
         </button>`).join('')}
     </nav>
 
     <div class="sidebar-footer">
       <button class="sidebar-item" onclick="sidebarGo('more')">
         <span class="sidebar-icon">⚙️</span>
-        <span class="sidebar-label">Settings & More</span>
+        <span class="sidebar-label">${t('sb.settings')}</span>
       </button>
       <button class="sidebar-item sidebar-signout" onclick="closeSidebar(); confirmSignOut()">
         <span class="sidebar-icon">🚪</span>
-        <span class="sidebar-label">Sign out</span>
+        <span class="sidebar-label">${t('sb.signout')}</span>
       </button>
       <div class="sidebar-version">v${esc(SCMS_CONFIG.VERSION)} · ${esc(window.APP.platform)}</div>
     </div>`;

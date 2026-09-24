@@ -51,7 +51,7 @@ function renderChat() {
       </div>
 
       <form class="chat-composer" id="chatComposer" onsubmit="return sendChat(event)">
-        <textarea id="chatInput" placeholder="Message your team…" rows="1"
+        <textarea id="chatInput" placeholder="${esc(t('chat.ph'))}" rows="1"
                   oninput="_autoGrowChatInput(this)"
                   onkeydown="_chatKeydown(event)"></textarea>
         <button type="submit" class="chat-send-btn" id="chatSendBtn">
@@ -87,8 +87,8 @@ async function _loadChatMessages() {
       stream.innerHTML = `
         <div class="chat-error">
           <div>💬</div>
-          <div>Couldn't load messages</div>
-          <button class="btn-secondary" style="margin-top:12px; width:auto; padding:0 20px;" onclick="renderChat()">Try again</button>
+          <div>${t('chat.loadFailed')}</div>
+          <button class="btn-secondary" style="margin-top:12px; width:auto; padding:0 20px;" onclick="renderChat()">${t('chat.retry')}</button>
         </div>`;
     }
   }
@@ -102,8 +102,8 @@ function _renderChatStream(messages) {
     stream.innerHTML = `
       <div class="chat-empty">
         <div class="chat-empty-icon">💬</div>
-        <div class="chat-empty-title">No messages yet</div>
-        <div class="chat-empty-sub">Say hi to start the conversation</div>
+        <div class="chat-empty-title">${t('chat.emptyTitle')}</div>
+        <div class="chat-empty-sub">${t('chat.emptySub')}</div>
       </div>`;
     return;
   }
@@ -201,7 +201,7 @@ window.sendChat = async function(ev) {
     optimistic.failed = true;
     delete optimistic.pending;
     _renderChatStream(window.APP.chatMessages);
-    showToast('Failed to send — check your connection');
+    showToast(t('chat.sendFailed'));
   } finally {
     btn.disabled = false;
     input.disabled = false;

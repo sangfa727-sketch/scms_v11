@@ -70,6 +70,11 @@ const I18N = {
       el.textContent = this.t(key);
     });
 
+    // 1b. Rich text (allows <em>/<b> in the translation — strings are ours, never user input)
+    root.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = this.t(el.getAttribute('data-i18n-html'));
+    });
+
     // 2. Placeholder
     root.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');

@@ -228,10 +228,10 @@ window.openAddSubjectPrompt = function(onAdded) {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:340px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Add subject</h3>
-      <input class="form-input" id="newSubjectInput" placeholder="e.g. Myanmar, Art, PE" autofocus>
-      <button class="btn-primary mt16" id="addSubjectBtn" onclick="_confirmAddSubject()">Add</button>
-      <button class="btn-secondary mt8" onclick="closeModal()">Cancel</button>
+      <h3 class="modal-title">${t('subject.add')}</h3>
+      <input class="form-input" id="newSubjectInput" placeholder="${esc(t('subject.ph'))}" autofocus>
+      <button class="btn-primary mt16" id="addSubjectBtn" onclick="_confirmAddSubject()">${t('common.add')}</button>
+      <button class="btn-secondary mt8" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
@@ -239,15 +239,15 @@ window.openAddSubjectPrompt = function(onAdded) {
 window._confirmAddSubject = async function() {
   const input = document.getElementById('newSubjectInput');
   const name = (input?.value || '').trim();
-  if (!name) { showToast('Enter a subject name'); return; }
+  if (!name) { showToast(t('subject.enter')); return; }
 
   const btn = document.getElementById('addSubjectBtn');
-  btn.disabled = true; btn.textContent = 'Adding…';
+  btn.disabled = true; btn.textContent = t('subject.adding');
   try {
     const res = await API.addSubject(name, null, null);
     await _ensureSubjectsLoaded(true);
     closeModal();
-    showToast('✓ Subject added');
+    showToast(t('subject.added'));
     if (typeof window._pendingSubjectAddCallback === 'function') {
       window._pendingSubjectAddCallback(res.subject);
     }
