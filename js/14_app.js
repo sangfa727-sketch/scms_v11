@@ -432,14 +432,24 @@ window.addEventListener('languageChanged', () => {
     if (typeof renderLanding === 'function') renderLanding();
     return;
   }
+  if (!window.APP || !Array.isArray(window.APP.students)) return;   // app not loaded yet
   const safe = (fn) => { try { if (typeof fn === 'function') fn(); } catch (e) { console.warn('[i18n] re-render failed', e); } };
+
   safe(window.renderSidebar);
-  const page = window.APP && window.APP.currentPage;
-  if (page === 'students')   safe(window.renderStudents);
-  if (page === 'attendance') safe(window.renderAttendance);
-  if (page === 'more')       safe(window.renderMore);
-  if (page === 'billing')    safe(window.renderBilling);
-  if (page === 'admissions') safe(window.renderAdmissions);
+
+  // Pages that are built once at boot from local data: rebuild ALL of them, not just the
+  // visible one — otherwise switching language leaves stale text (the previous language)
+  // on every page you are not currently looking at.
+  [ 'renderStudents', 'renderAttendance', 'renderDaily', 'renderHomework',
+    'renderComms', 'renderIncidents', 'renderTimetable', 'renderSummary' ]
+    .forEach(name => safe(window[name]));
+
+  // Lazily rendered pages (they fetch data when opened): only refresh the one on screen.
+  const lazy = { more: 'renderMore', billing: 'renderBilling', admissions: 'renderAdmissions',
+                 library: 'renderLibrary', transport: 'renderTransport', grades: 'renderGrades',
+                 chat: 'renderChat' };
+  const fn = lazy[window.APP.currentPage];
+  if (fn) safe(window[fn]);
 });
 
 // ─── TAB BAR ────────────────────────────────────────────────────────────────

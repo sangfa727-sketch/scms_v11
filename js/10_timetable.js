@@ -21,7 +21,7 @@ function _renderDayTabs() {
 
   el.innerHTML = DAYS.map(d => `
     <button class="day-tab ${d === _ttDay ? 'active' : ''} ${d === today ? 'today' : ''}"
-      data-day="${d}" onclick="selectTtDay('${d}')">${esc(tv('dayShort', d))}</button>
+      data-day="${d}" onclick="selectTtDay('${d}')">${d.slice(0,3)}</button>
   `).join('');
 }
 
@@ -48,7 +48,7 @@ function _renderTtList() {
     .sort((a, b) => (a.period || 0) - (b.period || 0));
 
   if (!entries.length) {
-    el.innerHTML = emptyState('📅', t('tt.noClasses', { day: tv('day', _ttDay) }), t('tt.adminManages'));
+    el.innerHTML = emptyState('📅', t('tt.noClasses', { day: _ttDay }), t('tt.adminManages'));
     return;
   }
 
@@ -69,7 +69,7 @@ function _renderTtList() {
   ).join('');
 
   const sub = document.getElementById('timetableSubtitle');
-  if (sub) sub.textContent = t(entries.length === 1 ? 'tt.period1' : 'tt.periods', { n: entries.length, day: tv('day', _ttDay) });
+  if (sub) sub.textContent = t(entries.length === 1 ? 'tt.period1' : 'tt.periods', { n: entries.length, day: _ttDay });
 }
 
 /* ─── Add / Edit / Delete ──────────────────────────────────────── */
@@ -100,7 +100,7 @@ function _openTimetableForm({ mode, entry }) {
 
       <label class="field-label">${t('tt.day')}</label>
       <select class="form-input" id="ttDay">
-        ${DAYS.map(d => `<option value="${esc(d)}" ${d===e.day?'selected':''}>${esc(tv('day', d))}</option>`).join('')}
+        ${DAYS.map(d => `<option ${d===e.day?'selected':''}>${esc(d)}</option>`).join('')}
       </select>
 
       <div class="form-row">
