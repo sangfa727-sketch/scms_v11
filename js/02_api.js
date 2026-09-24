@@ -191,8 +191,10 @@ const API = {
     /** Upload a student's photo to Supabase Storage and return its public URL.
    *  Path: <school_id>/<student_id>-<uid>.<ext> — unique per upload, never overwrites. */
   async uploadStudentPhoto(studentId, file) {
-    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `${window.APP.school_id}/${studentId}-${Date.now().toString(36)}.${ext}`;
+    // Phone photos are often HEIC or > 3 MB, which the bucket rejects — always
+    // resize to a small square JPEG first.
+    const blob = await _prepStudentPhoto(file);
+    const path = `${window.APP.school_id}/${studentId}-${Date.now().toString(36)}.jpg`;
     const resp = await fetch(
       `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/student-photos/${path}`,
       {
@@ -200,9 +202,9 @@ const API = {
         headers: {
           'apikey':        SCMS_CONFIG.SUPABASE_ANON,
           'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
-          'Content-Type':  file.type || 'image/jpeg',
+          'Content-Type':  'image/jpeg',
         },
-        body: file,
+        body: blob,
       }
     );
     if (!resp.ok) {
@@ -827,8 +829,8 @@ const API = {
   },
 
   async uploadAdmissionPhoto(admissionId, file) {
-    const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `${window.APP.school_id}/admissions/${admissionId}-${Date.now().toString(36)}.${ext}`;
+    const blob = await _prepStudentPhoto(file);
+    const path = `${window.APP.school_id}/admissions/${admissionId}-${Date.now().toString(36)}.jpg`;
     const resp = await fetch(
       `${SCMS_CONFIG.SUPABASE_URL}/storage/v1/object/student-photos/${path}`,
       {
@@ -836,9 +838,9 @@ const API = {
         headers: {
           'apikey':        SCMS_CONFIG.SUPABASE_ANON,
           'Authorization': `Bearer ${SCMS_CONFIG.SUPABASE_ANON}`,
-          'Content-Type':  file.type || 'image/jpeg',
+          'Content-Type':  'image/jpeg',
         },
-        body: file,
+        body: blob,
       }
     );
     if (!resp.ok) {
@@ -1093,3 +1095,13 @@ const API = {
 };
 
 window.API = API;
+
+
+/** Resize/compress any picked image to a ≤640px square JPEG (typically 30–90 KB). */
+async function _prepStudentPhoto(file) {
+  try {
+    return await _brandImageToBlob(file, { maxW: 640, maxH: 640, crop: true, keepAlpha: false });
+  } catch (e) {
+    throw new Error('Could not read that image — please choose a JPG or PNG');
+  }
+}

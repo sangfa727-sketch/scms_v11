@@ -72,13 +72,13 @@ function renderSidebar() {
     <div class="sidebar-header">
       <div class="sidebar-cover ${schoolCover ? 'has-cover' : ''}" ${coverStyle}>
         ${isAdmin ? `<button class="sidebar-cover-edit" onclick="openSchoolCoverModal()" aria-label="Change cover photo">📷 Cover</button>` : ''}
-      </div>
-      <div class="sidebar-school-row sidebar-school-row-top">
-        <div class="sidebar-logo-wrap">
-          ${schoolBadge}
-          ${isAdmin ? `<button class="sidebar-logo-edit" onclick="openSchoolLogoModal()" aria-label="Change school logo">📷</button>` : ''}
+        <div class="sidebar-school-row sidebar-school-row-top">
+          <div class="sidebar-logo-wrap">
+            ${schoolBadge}
+            ${isAdmin ? `<button class="sidebar-logo-edit" onclick="openSchoolLogoModal()" aria-label="Change school logo">📷</button>` : ''}
+          </div>
+          <span class="sidebar-school-name">${esc(schoolName)}</span>
         </div>
-        <span class="sidebar-school-name">${esc(schoolName)}</span>
       </div>
       <div class="sidebar-profile">
         <div class="sidebar-avatar ${canEditOwn ? 'editable' : ''}" ${canEditOwn ? 'onclick="openMyPhotoModal()" role="button" aria-label="Change my profile photo"' : ''}>

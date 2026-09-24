@@ -356,7 +356,7 @@ window._onAdmPhotoPicked = function(input) {
   const file = input.files?.[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) { showToast('Please pick an image file'); return; }
-  if (file.size > 3 * 1024 * 1024) { showToast('Photo must be under 3MB'); return; }
+  if (file.size > 20 * 1024 * 1024) { showToast('Photo is too large (max 20 MB)'); return; }
 
   _admPendingPhotoFile = file;
   _admRemovePhotoRequested = false;
