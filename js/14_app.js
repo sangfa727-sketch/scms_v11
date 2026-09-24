@@ -422,6 +422,26 @@ window.goToPage = function(pageId) {
   }
 };
 
+// ─── LANGUAGE SWITCH → re-render JS-generated text ──────────────────────────
+// Static [data-i18n] nodes are handled by I18N.apply(); everything built in JS
+// with t() has to be rebuilt, so re-render the landing screen / sidebar / the
+// pages that are already on screen.
+window.addEventListener('languageChanged', () => {
+  const boot = document.getElementById('bootScreen');
+  if (boot && boot.style.display !== 'none' && boot.querySelector('.landing-shell')) {
+    if (typeof renderLanding === 'function') renderLanding();
+    return;
+  }
+  const safe = (fn) => { try { if (typeof fn === 'function') fn(); } catch (e) { console.warn('[i18n] re-render failed', e); } };
+  safe(window.renderSidebar);
+  const page = window.APP && window.APP.currentPage;
+  if (page === 'students')   safe(window.renderStudents);
+  if (page === 'attendance') safe(window.renderAttendance);
+  if (page === 'more')       safe(window.renderMore);
+  if (page === 'billing')    safe(window.renderBilling);
+  if (page === 'admissions') safe(window.renderAdmissions);
+});
+
 // ─── TAB BAR ────────────────────────────────────────────────────────────────
 
 function _initTabBar() {

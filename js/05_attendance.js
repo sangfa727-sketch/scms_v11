@@ -38,7 +38,7 @@ function _renderDateStrip() {
     d.setDate(_stripAnchor.getDate() - i);
     days.push(d);
     const iso = d.toISOString().slice(0, 10);
-    const day = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const day = d.toLocaleDateString(I18N.dateLocale(), { weekday: 'short' });
     const num = d.getDate();
     const active = iso === _attendDate ? ' active' : '';
     const isToday = iso === todayIso ? ' today' : '';
@@ -48,10 +48,10 @@ function _renderDateStrip() {
 
   if (label) {
     const first = days[0], last = days[6];
-    const fm = first.toLocaleDateString('en-US', { month: 'short' });
-    const lm = last.toLocaleDateString('en-US', { month: 'short' });
+    const fm = first.toLocaleDateString(I18N.dateLocale(), { month: 'short' });
+    const lm = last.toLocaleDateString(I18N.dateLocale(), { month: 'short' });
     label.textContent = (fm === lm)
-      ? last.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      ? last.toLocaleDateString(I18N.dateLocale(), { month: 'long', year: 'numeric' })
       : `${fm} – ${lm} ${last.getFullYear()}`;
   }
 }
@@ -89,7 +89,7 @@ function _renderAttendClassChips() {
   )].sort();
 
   if (!classes.length) {
-    el.innerHTML = '<span class="chip-empty">No classes — add students first</span>';
+    el.innerHTML = `<span class="chip-empty">${esc(t('att.noClasses'))}</span>`;
     return;
   }
 
@@ -98,7 +98,7 @@ function _renderAttendClassChips() {
     el.innerHTML = `
     <div class="attend-class-select-wrap">
       <select class="attend-class-select" onchange="selectAttendClass(this.value)">
-        ${classes.map(c => `<option value="${esc(c)}"${c === _attendClass ? ' selected' : ''}>${esc(c)} class</option>`).join('')}
+        ${classes.map(c => `<option value="${esc(c)}"${c === _attendClass ? ' selected' : ''}>${esc(t('att.classOption', { name: c }))}</option>`).join('')}
       </select>
     </div>`;
 
@@ -143,7 +143,7 @@ function _renderAttendGrid(cls) {
 
   const students = window.APP.students.filter(s => s.class === cls && s.status === 'Active');
   if (!students.length) {
-    el.innerHTML = emptyState('📋', `No active students in ${cls}`);
+    el.innerHTML = emptyState('📋', t('att.noActive', { cls }));
     return;
   }
 
@@ -176,7 +176,7 @@ function _renderAttendGrid(cls) {
     }).join('');
 
     const noteIndicator = note
-      ? `<span class="att-note-dot" title="Has note: ${esc(note)}">📝</span>`
+      ? `<span class="att-note-dot" title="${esc(t('att.hasNote', { note }))}">📝</span>`
       : '';
 
     return `
@@ -185,13 +185,13 @@ function _renderAttendGrid(cls) {
           <span class="att-avatar-sm" style="background:${homeHex}">${avatarContent(s)}</span>
           <span class="att-row-name">${esc(s.name_en || s.name_local || s.student_id)}</span>
           ${noteIndicator}
-          <button class="att-note-btn" onclick="openAttendNote('${esc(s.student_id)}')" aria-label="Add note" title="Add reason / note">
+          <button class="att-note-btn" onclick="openAttendNote('${esc(s.student_id)}')" aria-label="${esc(t('att.noteAdd'))}" title="${esc(t('att.noteAddTitle'))}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
             </svg>
           </button>
         </div>
-        <div class="att-codes-row" role="radiogroup" aria-label="Attendance code">${btns}</div>
+        <div class="att-codes-row" role="radiogroup" aria-label="${esc(t('att.codeGroup'))}">${btns}</div>
       </div>`;
   }).join('');
 
@@ -225,21 +225,21 @@ window.openAttendNote = function(studentId) {
   if (!student) return;
   const currentNote = _attendNotes[studentId] || '';
   const currentCode = _attendMarks[studentId] || '';
-  const codeLabel = currentCode ? attendCodeLabel(currentCode) : 'Not marked yet';
+  const codeLabel = currentCode ? attendCodeLabel(currentCode) : t('att.notMarkedYet');
 
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Note for ${esc(student.name_en || student.name_local)}</h3>
-      <p class="modal-subtitle">Current status: <strong>${esc(codeLabel)}</strong> · ${esc(fmtDateLong(_attendDate))}</p>
-      <label class="form-label">Reason / note (optional)</label>
+      <h3 class="modal-title">${esc(t('att.noteTitle', { name: student.name_en || student.name_local }))}</h3>
+      <p class="modal-subtitle">${esc(t('att.currentStatus'))} <strong>${esc(codeLabel)}</strong> · ${esc(fmtDateLong(_attendDate))}</p>
+      <label class="form-label">${t('att.reasonLabel')}</label>
       <textarea class="form-input" id="attNoteInput" rows="3"
-        placeholder="e.g. Visited doctor, family event, late bus…"
+        placeholder="${esc(t('att.reasonPh'))}"
         maxlength="200">${esc(currentNote)}</textarea>
-      <div class="form-help">${esc(currentNote.length)} / 200 characters</div>
+      <div class="form-help">${esc(t('att.charCount', { n: currentNote.length }))}</div>
       <div class="modal-actions" style="margin-top:14px">
-        <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn-primary" onclick="saveAttendNote('${esc(studentId)}')">Save note</button>
+        <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+        <button class="btn-primary" onclick="saveAttendNote('${esc(studentId)}')">${t('att.saveNote')}</button>
       </div>
     </div>
   `);
@@ -252,7 +252,7 @@ window.saveAttendNote = function(studentId) {
   else delete _attendNotes[studentId];
   closeModal();
   if (_attendClass) _renderAttendGrid(_attendClass);
-  showToast(txt ? 'Note saved' : 'Note removed');
+  showToast(t(txt ? 'att.noteSaved' : 'att.noteRemoved'));
 };
 
 window.markAllAttend = function(code) {
@@ -260,7 +260,7 @@ window.markAllAttend = function(code) {
   const students = window.APP.students.filter(s => s.class === _attendClass && s.status === 'Active');
   students.forEach(s => { _attendMarks[s.student_id] = code; });
   _renderAttendGrid(_attendClass);
-  showToast(`Marked all as ${attendCodeLabel(code)}`);
+  showToast(t('att.markedAll', { label: attendCodeLabel(code) }));
   if (window.APP.tg?.HapticFeedback) window.APP.tg.HapticFeedback.impactOccurred('medium');
 };
 
@@ -268,7 +268,7 @@ window.clearAllAttend = function() {
   _attendMarks = {};
   _attendNotes = {};
   if (_attendClass) _renderAttendGrid(_attendClass);
-  showToast('Marks cleared');
+  showToast(t('att.cleared'));
 };
 
 window.showAttendLegend = function() {
@@ -288,12 +288,12 @@ window.showAttendLegend = function() {
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Attendance Codes</h3>
+      <h3 class="modal-title">${t('att.legendTitle')}</h3>
       <p style="color:var(--muted); font-size:13px; line-height:1.6; margin-bottom:16px;">
-        Tap any code below a student's name to mark their attendance.
+        ${t('att.legendHint')}
       </p>
       <div class="legend-grid">${rows}</div>
-      <button class="btn-secondary mt16" onclick="closeModal()">Got it</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('att.gotIt')}</button>
     </div>`;
   openModal(html);
 };
@@ -322,35 +322,35 @@ function _renderAttendStats() {
   const pct     = total ? Math.round((marked / total) * 100) : 0;
 
   const breakdown = [
-    { code: 'L', label: 'Leave',    n: counts.L },
-    { code: 'T', label: 'Tardy',    n: counts.T },
-    { code: 'S', label: 'Sick',     n: counts.S },
-    { code: 'E', label: 'Excused',  n: counts.E },
-    { code: 'H', label: 'Half-day', n: counts.H },
+    { code: 'L', label: attendCodeLabel('L'), n: counts.L },
+    { code: 'T', label: attendCodeLabel('T'), n: counts.T },
+    { code: 'S', label: attendCodeLabel('S'), n: counts.S },
+    { code: 'E', label: attendCodeLabel('E'), n: counts.E },
+    { code: 'H', label: attendCodeLabel('H'), n: counts.H },
   ];
   const hasBreakdown = breakdown.some(b => b.n > 0);
   const breakdownRow = breakdown.map(b => `
-    <span class="att-statbar-mini">${b.n} <span>${b.label}</span></span>
+    <span class="att-statbar-mini">${b.n} <span>${esc(b.label)}</span></span>
   `).join('');
 
   el.innerHTML = `
     <div class="att-statbar">
       <div class="att-statbar-item">
         <span class="att-statbar-num">${marked}<span class="att-statbar-of">/${total}</span></span>
-        <span class="att-statbar-lbl">Marked</span>
+        <span class="att-statbar-lbl">${t('att.stat.marked')}</span>
       </div>
       <div class="att-statbar-sep"></div>
       <div class="att-statbar-item att-statbar-green">
         <span class="att-statbar-num">${present}</span>
-        <span class="att-statbar-lbl">Present</span>
+        <span class="att-statbar-lbl">${t('att.present')}</span>
       </div>
       <div class="att-statbar-sep"></div>
       <div class="att-statbar-item att-statbar-red">
         <span class="att-statbar-num">${absent}</span>
-        <span class="att-statbar-lbl">Absent</span>
+        <span class="att-statbar-lbl">${t('att.absent')}</span>
       </div>
       <button type="button" class="att-statbar-more" onclick="toggleAttendBreakdown(this)">
-        More${hasBreakdown ? '<span class="att-statbar-more-dot"></span>' : ''}
+        ${t('att.stat.more')}${hasBreakdown ? '<span class="att-statbar-more-dot"></span>' : ''}
       </button>
       <div class="att-statbar-progress">
         <div class="att-statbar-progress-fill" style="width:${pct}%"></div>
@@ -375,10 +375,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
-    if (!_attendClass) { showToast('Select a class first'); return; }
+    if (!_attendClass) { showToast(t('att.selectClassFirst')); return; }
 
     const students = window.APP.students.filter(s => s.class === _attendClass && s.status === 'Active');
-    if (!students.length) { showToast('No students in this class'); return; }
+    if (!students.length) { showToast(t('att.noStudentsInClass')); return; }
 
     const records = students.map(s => ({
       student_id: s.student_id,
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
 
     btn.disabled = true;
-    btn.textContent = 'Saving…';
+    btn.textContent = t('common.saving');
 
     try {
       await API.saveAttendance(_attendClass, _attendDate, records);
@@ -404,14 +404,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
       window.APP.attendance = [...existing, ...newRows];
 
-      showToast(`✓ Attendance saved for ${_attendClass} — ${_attendDate}`);
+      showToast(t('att.saved', { cls: _attendClass, date: _attendDate }));
       _renderAttendStats();
 
       if (window.APP.tg?.HapticFeedback) {
         window.APP.tg.HapticFeedback.notificationOccurred('success');
       }
     } catch (e) {
-      showToast('Save failed: ' + (e.message || 'Network error'));
+      showToast(t('att.saveFailed', { err: e.message || t('common.networkError') }));
       if (window.APP.tg?.HapticFeedback) {
         window.APP.tg.HapticFeedback.notificationOccurred('error');
       }
@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.disabled = false;
       btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px">
         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-      </svg>Save Attendance`;
+      </svg>${t('att.saveAttendance')}`;
     }
   });
 });

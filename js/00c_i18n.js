@@ -43,6 +43,9 @@ const I18N = {
     return text;
   },
 
+  // BCP-47 tag for Intl / toLocaleDateString, following the UI language
+  dateLocale() { return this.current === 'my' ? 'my-MM' : 'en-US'; },
+
   // ── ဘာသာစကား ပြောင်း ──
   setLang(lang) {
     if (!this.locales[lang]) {

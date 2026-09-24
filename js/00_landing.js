@@ -66,51 +66,51 @@ window.renderLanding = function () {
           <span class="landing-logo-text">CMS</span>
         </div>
 
-        <h1 class="landing-title">School class management,<br><em>done simply.</em></h1>
-        <p class="landing-subtitle">Attendance, homework, parent updates, and your team — all in one place.</p>
+        <h1 class="landing-title">${t('landing.title')}<br><em>${t('landing.titleEm')}</em></h1>
+        <p class="landing-subtitle">${t('landing.subtitle')}</p>
 
         <div id="googleSignInBtn" class="landing-google-btn"></div>
         <div id="googleAuthStatus" class="login-help-text" style="display:none"></div>
         <p class="login-help-text" style="text-align:center; margin-top:10px;">
-          <a href="#" onclick="showEmailSignInScreen(); return false;">Sign in with email</a>
+          <a href="#" onclick="showEmailSignInScreen(); return false;">${t('landing.emailLink')}</a>
         </p>
 
-        <div class="landing-divider"><span>or</span></div>
+        <div class="landing-divider"><span>${t('landing.or')}</span></div>
 
         <button class="landing-btn landing-btn-primary" id="btnTgLogin" onclick="startTelegramLogin()">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
             <path d="M9.999 15.2L9.847 18.6c.36 0 .516-.155.704-.34l1.688-1.62 3.499 2.563c.641.358 1.097.17 1.27-.594l2.299-10.78h.001c.205-.953-.345-1.326-.97-1.09L4.07 11.91c-.93.36-.916.873-.158 1.107l3.354 1.045 7.793-4.91c.367-.243.7-.108.426.135"/>
           </svg>
-          <span>Sign in with Telegram</span>
+          <span>${t('landing.telegram')}</span>
         </button>
 
         <button class="landing-btn landing-btn-secondary" onclick="openWebLoginModal()">
           <span class="landing-btn-icon">🔐</span>
-          <span>Sign in with Teacher ID</span>
+          <span>${t('landing.teacherId')}</span>
         </button>
 
-        <div class="landing-divider"><span>or get started</span></div>
+        <div class="landing-divider"><span>${t('landing.getStarted')}</span></div>
 
         <div class="landing-secondary">
           <button class="landing-btn-ghost" onclick="openTelegramCommand('register_school')">
             <span class="landing-btn-icon">🏫</span>
             <div class="landing-btn-text">
-              <div class="landing-btn-title">Register a new school</div>
-              <div class="landing-btn-sub">Set up your school in Telegram</div>
+              <div class="landing-btn-title">${t('landing.registerSchool')}</div>
+              <div class="landing-btn-sub">${t('landing.registerSchoolSub')}</div>
             </div>
           </button>
           <button class="landing-btn-ghost" onclick="openTelegramCommand('register_teacher')">
             <span class="landing-btn-icon">👨‍🏫</span>
             <div class="landing-btn-text">
-              <div class="landing-btn-title">Join an existing school</div>
-              <div class="landing-btn-sub">Apply as a teacher</div>
+              <div class="landing-btn-title">${t('landing.joinSchool')}</div>
+              <div class="landing-btn-sub">${t('landing.joinSchoolSub')}</div>
             </div>
           </button>
         </div>
 
         <div class="landing-parents">
-          <strong>Are you a parent?</strong>
-          <p>You don't need an app. Ask your child's teacher to send you a link in Telegram — you'll receive reports there.</p>
+          <strong>${t('landing.parentQ')}</strong>
+          <p>${t('landing.parentBody')}</p>
         </div>
 
         <div class="landing-footer">
@@ -122,22 +122,22 @@ window.renderLanding = function () {
       <div class="login-pending" id="loginPending" style="display:none">
         <div class="login-pending-inner">
           <div class="login-pending-spinner"><div class="spin-ring"></div></div>
-          <div class="login-pending-title">Waiting for Telegram…</div>
+          <div class="login-pending-title">${t('landing.waitTg')}</div>
           <div class="login-pending-sub" id="loginPendingSub">
-            We've opened Telegram. Tap <b>Start</b> in the bot to sign in.
+            ${t('landing.waitTgSub')}
           </div>
 
           <button class="btn-secondary" id="btnLoginRetry" onclick="startTelegramLogin(true)">
-            Open Telegram again
+            ${t('landing.openAgain')}
           </button>
-          <button class="btn-ghost" onclick="cancelTelegramLogin()">Cancel</button>
+          <button class="btn-ghost" onclick="cancelTelegramLogin()">${t('common.cancel')}</button>
 
           <div class="login-pending-help" id="loginPendingHelp" style="display:none">
             <details>
-              <summary>Telegram didn't open?</summary>
-              <p>Copy this link and open it in Telegram manually:</p>
+              <summary>${t('landing.tgNotOpen')}</summary>
+              <p>${t('landing.tgManual')}</p>
               <code id="loginManualUrl"></code>
-              <button class="btn-secondary" id="btnCopyManualUrl">📋 Copy link</button>
+              <button class="btn-secondary" id="btnCopyManualUrl">${t('landing.copyLink')}</button>
             </details>
           </div>
         </div>
@@ -171,7 +171,7 @@ window.renderLanding = function () {
     _loginPollCount = 0;
     const pending = document.getElementById('loginPending');
     if (pending) pending.style.display = 'flex';
-    _setPendingSub('Checking sign-in…');
+    _setPendingSub(t('landing.checking'));
     _startLoginPolling(_loginToken);
   }
 };
@@ -212,8 +212,8 @@ window.startTelegramLogin = async function (isRetry) {
   if (copyBtn) {
     copyBtn.onclick = () => {
       navigator.clipboard?.writeText(url);
-      copyBtn.textContent = '✓ Copied';
-      setTimeout(() => { copyBtn.textContent = '📋 Copy link'; }, 1500);
+      copyBtn.textContent = t('landing.copied');
+      setTimeout(() => { copyBtn.textContent = t('landing.copyLink'); }, 1500);
     };
   }
 
@@ -321,7 +321,7 @@ function _startLoginPolling(token) {
     // Stop after ~5 minutes
     if (_loginPollCount > 150) {
       _stopLoginPolling();
-      _setPendingSub('Timed out. Try again?');
+      _setPendingSub(t('landing.timeout'));
       return;
     }
     try {
@@ -342,7 +342,7 @@ function _startLoginPolling(token) {
         _stopLoginPolling();
         try { localStorage.removeItem(_PENDING_TOKEN_KEY); } catch (e) {}
         _saveSession(session);
-        _setPendingSub('Signed in! Loading your school…');
+        _setPendingSub(t('landing.signedIn'));
         // Hand back to 14_app.js bootstrap
         setTimeout(() => {
           if (typeof window.bootAfterLogin === 'function') window.bootAfterLogin();
@@ -450,25 +450,24 @@ window.openWebLoginModal = function () {
   wrap.innerHTML = `
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">🔐 Sign in</h3>
-      <p class="modal-subtitle">Use the Teacher ID your school admin gave you.</p>
+      <h3 class="modal-title">${t('login.title')}</h3>
+      <p class="modal-subtitle">${t('login.sub')}</p>
 
-      <label class="field-label">Teacher ID</label>
+      <label class="field-label">${t('login.teacherId')}</label>
       <input class="form-input" id="webLoginId" type="text" autocomplete="username"
-             placeholder="e.g. T123456" autocapitalize="off" autocorrect="off">
+             placeholder="${esc(t('login.teacherIdPh'))}" autocapitalize="off" autocorrect="off">
 
-      <label class="field-label">Password</label>
+      <label class="field-label">${t('login.password')}</label>
       <input class="form-input" id="webLoginPw" type="password" autocomplete="current-password"
              placeholder="••••••••" onkeydown="if(event.key==='Enter')doWebLogin()">
 
       <div id="webLoginError" class="form-error" style="display:none"></div>
 
-      <button class="btn-primary mt16" id="webLoginBtn" onclick="doWebLogin()">Sign in</button>
-      <button class="btn-secondary" onclick="closeWebLoginModal()">Cancel</button>
+      <button class="btn-primary mt16" id="webLoginBtn" onclick="doWebLogin()">${t('login.btn')}</button>
+      <button class="btn-secondary" onclick="closeWebLoginModal()">${t('common.cancel')}</button>
 
       <div class="login-help-text">
-        Don't have a Teacher ID? Ask your school admin to create one for you,
-        or use <b>Sign in with Telegram</b> instead.
+        ${t('login.help')}
       </div>
     </div>`;
   wrap.onclick = closeWebLoginModal;
@@ -491,14 +490,14 @@ window.doWebLogin = async function () {
 
   if (!id || !pw) {
     if (errEl) {
-      errEl.textContent = 'Teacher ID နဲ့ password ၂ ခုလုံး ထည့်ပါ';
+      errEl.textContent = t('login.needBoth');
       errEl.style.display = 'block';
     }
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Signing in…';
+  btn.textContent = t('login.signingIn');
 
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_teacher_web_login`, {
@@ -518,13 +517,13 @@ window.doWebLogin = async function () {
     const result = await resp.json();
 
     if (!result || !result.ok) {
-      const msg = (result && result.message) || 'Login မအောင်မြင်ပါ';
+      const msg = (result && result.message) || t('login.failed');
       if (errEl) {
         errEl.textContent = msg;
         errEl.style.display = 'block';
       }
       btn.disabled = false;
-      btn.textContent = 'Sign in';
+      btn.textContent = t('login.btn');
       return;
     }
 
@@ -555,11 +554,11 @@ window.doWebLogin = async function () {
     }
   } catch (e) {
     if (errEl) {
-      errEl.textContent = 'Connection error — အင်တာနက် စစ်ပါ';
+      errEl.textContent = t('login.connErr');
       errEl.style.display = 'block';
     }
     btn.disabled = false;
-    btn.textContent = 'Sign in';
+    btn.textContent = t('login.btn');
   }
 };
 
@@ -648,28 +647,28 @@ window.openChangePasswordModal = function (opts) {
   wrap.innerHTML = `
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">🔑 ${firstTime ? 'Password အသစ် သတ်မှတ်ပါ' : 'Password ပြောင်းမည်'}</h3>
+      <h3 class="modal-title">🔑 ${t(firstTime ? 'pw.titleFirst' : 'pw.titleChange')}</h3>
       ${firstTime
-        ? `<p class="modal-subtitle">ပထမဆုံး login တွင် password ပြောင်းရပါမယ်။</p>`
+        ? `<p class="modal-subtitle">${t('pw.firstNote')}</p>`
         : ''}
 
       ${firstTime ? '' : `
-        <label class="field-label">အရင် password</label>
+        <label class="field-label">${t('pw.old')}</label>
         <input class="form-input" id="cpOld" type="password" autocomplete="current-password">
       `}
 
-      <label class="field-label">Password အသစ် (အနည်းဆုံး ၆ လုံး)</label>
+      <label class="field-label">${t('pw.new')}</label>
       <input class="form-input" id="cpNew" type="password" autocomplete="new-password" minlength="6">
 
-      <label class="field-label">Password အသစ် ပြန်ရိုက်</label>
+      <label class="field-label">${t('pw.confirm')}</label>
       <input class="form-input" id="cpConfirm" type="password" autocomplete="new-password">
 
       <div id="cpError" class="form-error" style="display:none"></div>
 
       <button class="btn-primary mt16" id="cpBtn" onclick="doChangePassword(${firstTime})">
-        ${firstTime ? 'Set password & continue' : 'Change password'}
+        ${t(firstTime ? 'pw.btnFirst' : 'pw.btnChange')}
       </button>
-      ${firstTime ? '' : '<button class="btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>'}
+      ${firstTime ? '' : `<button class="btn-secondary" onclick="closeChangePasswordModal()">${t('common.cancel')}</button>`}
     </div>`;
   if (!firstTime) wrap.onclick = closeChangePasswordModal;
   document.body.appendChild(wrap);
@@ -689,25 +688,25 @@ window.doChangePassword = async function (firstTime) {
   errEl.style.display = 'none';
 
   if (newPw.length < 6) {
-    errEl.textContent = 'Password က အနည်းဆုံး ၆ လုံး ရှိရပါမယ်';
+    errEl.textContent = t('pw.tooShort');
     errEl.style.display = 'block';
     return;
   }
   if (newPw !== confirmPw) {
-    errEl.textContent = 'Password ၂ ခု မတူပါ';
+    errEl.textContent = t('pw.mismatch');
     errEl.style.display = 'block';
     return;
   }
 
   const sess = getWebSession();
   if (!sess || !sess.session_token) {
-    errEl.textContent = 'Session expired — please sign in again';
+    errEl.textContent = t('pw.sessionExpired');
     errEl.style.display = 'block';
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Saving…';
+  btn.textContent = t('common.saving');
 
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_change_password`, {
@@ -726,10 +725,10 @@ window.doChangePassword = async function (firstTime) {
     const result = await resp.json();
 
     if (!result || !result.ok) {
-      errEl.textContent = (result && result.message) || 'Password ပြောင်းမရပါ';
+      errEl.textContent = (result && result.message) || t('pw.failed');
       errEl.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = firstTime ? 'Set password & continue' : 'Change password';
+      btn.textContent = t(firstTime ? 'pw.btnFirst' : 'pw.btnChange');
       return;
     }
 
@@ -745,12 +744,12 @@ window.doChangePassword = async function (firstTime) {
         window.location.reload();
       }
     } else {
-      showToast('✓ Password ပြောင်းပြီးပါပြီ');
+      showToast(t('pw.done'));
     }
   } catch (e) {
-    errEl.textContent = 'Connection error';
+    errEl.textContent = t('pw.connErr');
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = firstTime ? 'Set password & continue' : 'Change password';
+    btn.textContent = t(firstTime ? 'pw.btnFirst' : 'pw.btnChange');
   }
 };

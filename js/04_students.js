@@ -38,21 +38,23 @@ function _renderStudentStats() {
   el.innerHTML = `
     <div class="stat-card">
       <div class="stat-num">${active}</div>
-      <div class="stat-lbl">Students</div>
+      <div class="stat-lbl">${t('students.stat.students')}</div>
     </div>
     <div class="stat-card">
       <div class="stat-num">${classes}</div>
-      <div class="stat-lbl">Classes</div>
+      <div class="stat-lbl">${t('students.stat.classes')}</div>
     </div>
     <div class="stat-card green">
       <div class="stat-num">${presents}</div>
-      <div class="stat-lbl">Here today</div>
+      <div class="stat-lbl">${t('students.stat.hereToday')}</div>
     </div>
   `;
 
   const subtitle = document.getElementById('studentsSubtitle');
-  if (subtitle) subtitle.textContent =
-    `${active} active student${active !== 1 ? 's' : ''} across ${classes} class${classes !== 1 ? 'es' : ''}`;
+  if (subtitle) subtitle.textContent = t(
+    active === 1 && classes === 1 ? 'students.subtitleOne'
+      : classes === 1 ? 'students.subtitleOneClass' : 'students.subtitle',
+    { n: active, c: classes });
 }
 
 // ─── Class filter chips ────────────────────────────────────────────────────
@@ -120,8 +122,8 @@ function _renderStudentList() {
   }
 
   if (!list.length) {
-    el.innerHTML = emptyState('👥', 'No students found',
-      _stuSearch ? 'Try a different search term' : 'Tap + to add a student');
+    el.innerHTML = emptyState('👥', t('students.empty.title'),
+      t(_stuSearch ? 'students.empty.searchHint' : 'students.empty.addHint'));
     return;
   }
 
@@ -133,7 +135,7 @@ function _renderStudentList() {
     );
     const attCode  = att?.status || '—';
     const attColor = attCode === '—' ? '#999' : attendCodeColor(attCode);
-    const attLabel = attCode === '—' ? 'Not marked' : attendCodeLabel(attCode);
+    const attLabel = attCode === '—' ? t('students.notMarked') : attendCodeLabel(attCode);
     const homeHex  = s.home_color ? homeColorHex(s.home_color) : _classColor(s.class);
     const bdayDays = daysUntilBirthday(s.date_of_birth);
     const bdaySoon = bdayDays !== null && bdayDays <= 7;
@@ -145,21 +147,21 @@ function _renderStudentList() {
           <div class="card-info">
             <div class="card-name">
               ${esc(s.name_en || s.name_local || s.student_id)}
-              ${bdaySoon ? `<span class="bday-pill" title="Birthday in ${bdayDays} day${bdayDays!==1?'s':''}">🎂 ${bdayDays === 0 ? 'Today!' : bdayDays + 'd'}</span>` : ''}
+              ${bdaySoon ? `<span class="bday-pill" title="${esc(t(bdayDays === 1 ? 'students.bday.tooltipOne' : 'students.bday.tooltip', { n: bdayDays }))}">🎂 ${bdayDays === 0 ? t('students.bday.today') : t('students.bday.short', { n: bdayDays })}</span>` : ''}
             </div>
             <div class="card-sub">
               <span class="class-tag">${esc(s.class || '—')}</span>
               ${s.name_local && s.name_local !== s.name_en
                 ? `<span class="name-local">${esc(s.name_local)}</span>` : ''}
-              ${s.home_color ? `<span class="home-dot" style="background:${homeHex}" title="Home: ${esc(homeColorName(s.home_color))}"></span>` : ''}
+              ${s.home_color ? `<span class="home-dot" style="background:${homeHex}" title="${esc(t('students.homeLabel'))} ${esc(homeColorName(s.home_color))}"></span>` : ''}
             </div>
           </div>
           <div class="card-actions" onclick="event.stopPropagation()">
             <span class="att-pill" style="--pill-color:${attColor}" title="${esc(attLabel)}">${esc(attCode)}</span>
-            <button type="button" class="icon-btn-mini" onclick="showStudentIdCard('${esc(s.student_id)}')" title="Student ID Card">🪪</button>
+            <button type="button" class="icon-btn-mini" onclick="showStudentIdCard('${esc(s.student_id)}')" title="${esc(t('idCard.title'))}">🪪</button>
           </div>
         </div>
-        ${s.parent_name ? `<div class="card-parent">👤 ${esc(s.parent_name)}${s.parent_phone ? ' · ' + esc(s.parent_phone) : ''}${s.parent_tg_id ? ' · <span class="tg-linked">✓ TG linked</span>' : ''}</div>` : ''}
+        ${s.parent_name ? `<div class="card-parent">👤 ${esc(s.parent_name)}${s.parent_phone ? ' · ' + esc(s.parent_phone) : ''}${s.parent_tg_id ? ` · <span class="tg-linked">✓ ${t('students.tgLinked')}</span>` : ''}</div>` : ''}
       </div>`;
   }).join('');
 }
@@ -195,7 +197,7 @@ window.openStudentDetail = function(studentId) {
             ${s.home_color ? `<span class="home-tag" style="background:${homeHex}20;color:${homeHex}">● ${esc(homeColorName(s.home_color))}</span>` : ''}
           </div>
         </div>
-        <button class="icon-btn-edit" onclick="openEditStudentModal('${esc(s.student_id)}')" title="Edit">
+        <button class="icon-btn-edit" onclick="openEditStudentModal('${esc(s.student_id)}')" title="${esc(t('common.edit'))}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
@@ -203,38 +205,38 @@ window.openStudentDetail = function(studentId) {
       </div>
 
       <div class="detail-grid">
-        ${_detailRow('Gender',   s.gender || '—')}
-        ${_detailRow('Grade',    s.grade  || '—')}
-        ${_detailRow('Birthday', s.date_of_birth ? `${fmtDateLong(s.date_of_birth)}${age != null ? ' · ' + age + ' yrs' : ''}` : '—')}
-        ${_detailRow('Home',     s.home_color ? homeColorName(s.home_color) : '—')}
-        ${_detailRow('Parent',        s.parent_name  || '—')}
-        ${_detailRow('Parent phone',  s.parent_phone || '—')}
-        ${_detailRow('Parent email',  s.parent_email || '—')}
-        ${_detailRow('Parent Telegram', s.parent_tg_id
-          ? `<span class="tg-linked">✓ Linked</span>`
-          : `<button class="link-btn-inline" onclick="showParentLinkQR('${esc(s.student_id)}')">Get link →</button>`)}
+        ${_detailRow(t('students.field.gender'),   s.gender || '—')}
+        ${_detailRow(t('students.field.grade'),    s.grade  || '—')}
+        ${_detailRow(t('students.field.birthday'), s.date_of_birth ? `${fmtDateLong(s.date_of_birth)}${age != null ? ' · ' + age + ' ' + t('common.years') : ''}` : '—')}
+        ${_detailRow(t('students.field.home'),     s.home_color ? homeColorName(s.home_color) : '—')}
+        ${_detailRow(t('students.field.parent'),        s.parent_name  || '—')}
+        ${_detailRow(t('students.field.parentPhone'),  s.parent_phone || '—')}
+        ${_detailRow(t('students.field.parentEmail'),  s.parent_email || '—')}
+        ${_detailRow(t('students.field.parentTg'), s.parent_tg_id
+          ? `<span class="tg-linked">${t('students.linked')}</span>`
+          : `<button class="link-btn-inline" onclick="showParentLinkQR('${esc(s.student_id)}')">${t('students.getLink')}</button>`)}
       </div>
 
       ${reports.length ? `
-        <div class="detail-section">Recent reports</div>
+        <div class="detail-section">${t('students.detail.recentReports')}</div>
         ${reports.map(r => `
-          <div class="mini-card">${esc(r.date)} · ${esc(r.mood || '—')} · Meal: ${esc(r.meal || '—')}</div>`).join('')}
+          <div class="mini-card">${esc(r.date)} · ${esc(r.mood || '—')} · ${t('students.detail.meal')} ${esc(r.meal || '—')}</div>`).join('')}
       ` : ''}
 
       ${incidents.length ? `
-        <div class="detail-section">Recent incidents</div>
+        <div class="detail-section">${t('students.detail.recentIncidents')}</div>
         ${incidents.map(i => `
           <div class="mini-card incident-card">${esc(i.date)} · ${esc(i.type)} · ${esc(i.severity)}</div>`).join('')}
       ` : ''}
 
       <button class="btn-primary mt16" onclick="openEditStudentModal('${esc(s.student_id)}')">
-        Edit student info
+        ${t('students.detail.editInfo')}
       </button>
-      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentIdCard('${esc(s.student_id)}')">🪪 Student ID Card</button>` : ''}
-      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showHealthRecord('${esc(s.student_id)}')">🏥 Health Record</button>` : ''}
-      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentLibrary('${esc(s.student_id)}')">📚 Library checkouts</button>` : ''}
-      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentTransport('${esc(s.student_id)}')">🚌 Transport</button>` : ''}
-      <button class="btn-secondary" onclick="closeModal()">Close</button>
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentIdCard('${esc(s.student_id)}')">🪪 ${t('idCard.title')}</button>` : ''}
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showHealthRecord('${esc(s.student_id)}')">🏥 ${t('students.btn.health')}</button>` : ''}
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentLibrary('${esc(s.student_id)}')">📚 ${t('stuLib.title')}</button>` : ''}
+      ${s.status === 'Active' ? `<button class="btn-secondary" onclick="showStudentTransport('${esc(s.student_id)}')">🚌 ${t('stuTr.title')}</button>` : ''}
+      <button class="btn-secondary" onclick="closeModal()">${t('common.close')}</button>
     </div>`;
 
   openModal(html);
@@ -252,7 +254,7 @@ window.showStudentIdCard = async function(studentId) {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Student ID Card</h3>
+      <h3 class="modal-title">${t('idCard.title')}</h3>
       <div id="idCardBody">${skeletonCards(1)}</div>
     </div>
   `);
@@ -266,7 +268,7 @@ async function _loadIdCard(studentId) {
   try {
     res = await API.getOrCreateStudentQr(studentId);
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">Couldn't generate a card: ${esc(e.message || 'error')}. The student must be Active.</div>`;
+    el.innerHTML = `<div class="empty-state">${esc(t('idCard.failed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
   _renderIdCardBody(res.student);
@@ -296,15 +298,15 @@ function _renderIdCardBody(s) {
       </div>
       <div class="id-card-qr" id="idCardQr"></div>
     </div>
-    <p class="muted" style="font-size:12px;text-align:center;margin:10px 0 0">Parent scans this to sign in to the Parent Portal.</p>
+    <p class="muted" style="font-size:12px;text-align:center;margin:10px 0 0">${t('idCard.scanHint')}</p>
     <div class="id-card-link-row">
       <input class="form-input" id="idCardLinkInput" value="${esc(portalUrl)}" readonly onclick="this.select()">
-      <button type="button" class="btn-pill-action ghost" onclick="_copyIdCardLink()">Copy link</button>
+      <button type="button" class="btn-pill-action ghost" onclick="_copyIdCardLink()">${t('idCard.copyLink')}</button>
     </div>
-    <p class="muted" style="font-size:11px;text-align:center">Useful to test the link yourself, or send it directly if a parent can't scan.</p>
-    <button class="btn-primary mt16" onclick="window.print()">🖨 Print card</button>
-    <button class="btn-secondary" onclick="_confirmRegenerateQr('${esc(s.student_id)}')">🔄 Card lost — issue a new code</button>
-    <button class="btn-secondary" onclick="closeModal()">Close</button>
+    <p class="muted" style="font-size:11px;text-align:center">${t('idCard.testHint')}</p>
+    <button class="btn-primary mt16" onclick="window.print()">${t('idCard.print')}</button>
+    <button class="btn-secondary" onclick="_confirmRegenerateQr('${esc(s.student_id)}')">${t('idCard.lost')}</button>
+    <button class="btn-secondary" onclick="closeModal()">${t('common.close')}</button>
   `;
 
   if (window.QRCode) {
@@ -322,23 +324,23 @@ window._copyIdCardLink = function() {
   if (!input) return;
   input.select();
   navigator.clipboard?.writeText(input.value).then(
-    () => showToast('✓ Link copied'),
-    () => { document.execCommand('copy'); showToast('✓ Link copied'); }
+    () => showToast(t('parentLink.copied')),
+    () => { document.execCommand('copy'); showToast(t('parentLink.copied')); }
   );
 };
 
 window._confirmRegenerateQr = function(studentId) {
   showConfirm(
-    '🔄 Issue a new code?',
-    "The old card's QR code will stop working immediately — reprint before handing out the new one. Any parent already signed in stays signed in.",
-    'Issue new code',
+    t('idCard.regenTitle'),
+    t('idCard.regenBody'),
+    t('idCard.regenConfirm'),
     async () => {
       try {
         const res = await API.regenerateStudentQr(studentId);
-        showToast('✓ New code issued');
+        showToast(t('idCard.regenDone'));
         _renderIdCardBody(res.student);
       } catch (e) {
-        showToast('Failed: ' + (e.message || 'error'));
+        showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
       }
     }
   );
@@ -350,7 +352,7 @@ window.showStudentLibrary = async function(studentId) {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Library checkouts</h3>
+      <h3 class="modal-title">${t('stuLib.title')}</h3>
       <div id="stuLibBody">${skeletonCards(1)}</div>
     </div>
   `);
@@ -358,30 +360,30 @@ window.showStudentLibrary = async function(studentId) {
   try {
     const rows = await API.getStudentCheckouts(studentId);
     if (!rows.length) {
-      el.innerHTML = `<div class="empty-state">No checkouts yet.</div>`;
+      el.innerHTML = `<div class="empty-state">${t('stuLib.empty')}</div>`;
       return;
     }
     el.innerHTML = rows.map(c => `
       <div class="row-with-delete">
-        <span>${esc(c.title)} <span class="muted-note">since ${esc(fmtDate(c.checked_out_date))}</span></span>
+        <span>${esc(c.title)} <span class="muted-note">${esc(t('stuLib.since', { date: fmtDate(c.checked_out_date) }))}</span></span>
         ${c.returned_date
-          ? `<span class="muted-note">Returned ${esc(fmtDate(c.returned_date))}</span>`
-          : `<button class="btn-pill-action ghost" onclick="_returnBookFromStudent(${c.id}, '${esc(studentId)}')">Return</button>`}
+          ? `<span class="muted-note">${esc(t('stuLib.returnedOn', { date: fmtDate(c.returned_date) }))}</span>`
+          : `<button class="btn-pill-action ghost" onclick="_returnBookFromStudent(${c.id}, '${esc(studentId)}')">${t('stuLib.return')}</button>`}
       </div>
     `).join('');
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    el.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
   }
 };
 
 window._returnBookFromStudent = async function(checkoutId, studentId) {
   try {
     await API.returnBook(checkoutId);
-    showToast('✓ Returned');
+    showToast(t('stuLib.returned'));
     if (typeof _libraryLoadedOnce !== 'undefined') _libraryLoadedOnce = false; // force a fresh fetch next Library visit
     showStudentLibrary(studentId);
   } catch (e) {
-    showToast('Failed: ' + (e.message || 'error'));
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
@@ -389,7 +391,7 @@ window.showStudentTransport = async function(studentId) {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Transport</h3>
+      <h3 class="modal-title">${t('stuTr.title')}</h3>
       <div id="stuTransportBody">${skeletonCards(1)}</div>
     </div>
   `);
@@ -399,22 +401,22 @@ window.showStudentTransport = async function(studentId) {
     const a = res.assignment;
     if (!a || !a.route_id) {
       el.innerHTML = `
-        <div class="empty-state">No route assigned yet.</div>
-        <button class="btn-secondary mt16" onclick="closeModal();goToPage('transport')">Go to Transport</button>`;
+        <div class="empty-state">${t('stuTr.none')}</div>
+        <button class="btn-secondary mt16" onclick="closeModal();goToPage('transport')">${t('stuTr.goto')}</button>`;
       return;
     }
     el.innerHTML = `
       <div class="billing-detail-items">
-        <div class="billing-detail-row"><span>Route</span><span>${esc(a.route_name || '—')}</span></div>
-        <div class="billing-detail-row"><span>Driver</span><span>${esc(a.driver_name || '—')}</span></div>
-        <div class="billing-detail-row"><span>Phone</span><span>${esc(a.driver_phone || '—')}</span></div>
-        <div class="billing-detail-row"><span>Pickup stop</span><span>${esc(a.pickup_stop || '—')}</span></div>
-        <div class="billing-detail-row"><span>Pickup time</span><span>${esc(a.pickup_time ? a.pickup_time.slice(0,5) : '—')}</span></div>
-        <div class="billing-detail-row"><span>Drop-off time</span><span>${esc(a.dropoff_time ? a.dropoff_time.slice(0,5) : '—')}</span></div>
+        <div class="billing-detail-row"><span>${t('stuTr.route')}</span><span>${esc(a.route_name || '—')}</span></div>
+        <div class="billing-detail-row"><span>${t('stuTr.driver')}</span><span>${esc(a.driver_name || '—')}</span></div>
+        <div class="billing-detail-row"><span>${t('stuTr.phone')}</span><span>${esc(a.driver_phone || '—')}</span></div>
+        <div class="billing-detail-row"><span>${t('stuTr.pickupStop')}</span><span>${esc(a.pickup_stop || '—')}</span></div>
+        <div class="billing-detail-row"><span>${t('stuTr.pickupTime')}</span><span>${esc(a.pickup_time ? a.pickup_time.slice(0,5) : '—')}</span></div>
+        <div class="billing-detail-row"><span>${t('stuTr.dropoffTime')}</span><span>${esc(a.dropoff_time ? a.dropoff_time.slice(0,5) : '—')}</span></div>
       </div>
-      <button class="btn-secondary mt16" onclick="closeModal();goToPage('transport')">Manage in Transport</button>`;
+      <button class="btn-secondary mt16" onclick="closeModal();goToPage('transport')">${t('stuTr.manage')}</button>`;
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    el.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
   }
 };
 
@@ -426,7 +428,7 @@ window.openAddStudentModal = function() {
 
 window.openEditStudentModal = function(studentId) {
   const s = window.APP.students.find(x => x.student_id === studentId);
-  if (!s) { showToast('Student not found'); return; }
+  if (!s) { showToast(t('students.toast.studentNotFound')); return; }
   _openStudentForm({ mode: 'edit', student: s });
 };
 
@@ -444,7 +446,7 @@ function _openStudentForm({ mode, student }) {
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">${isEdit ? 'Edit Student' : 'Add New Student'}</h3>
+      <h3 class="modal-title">${t(isEdit ? 'students.form.editTitle' : 'students.form.addTitle')}</h3>
 
       <div class="stu-photo-picker" onclick="document.getElementById('stuPhotoInput').click()">
         <div class="stu-photo-circle" id="stuPhotoPreview" style="background:${homeHex}">${avatarContent(s)}</div>
@@ -453,91 +455,91 @@ function _openStudentForm({ mode, student }) {
       <input type="file" id="stuPhotoInput" accept="image/*" style="display:none" onchange="_onStuPhotoPicked(this)">
             <button type="button" class="stu-photo-remove-link" id="stuPhotoRemoveBtn"
               onclick="_removeStuPhoto()" style="${s.photo_url ? '' : 'display:none'}">
-        Remove photo
+        ${t('students.form.removePhoto')}
       </button>
-      <label class="field-label">Local name (Myanmar / native)</label>
-      <input class="form-input" id="newStuLocal" placeholder="ကျောင်းသားနာမည်…" value="${esc(s.name_local || '')}">
+      <label class="field-label">${t('students.form.localName')}</label>
+      <input class="form-input" id="newStuLocal" placeholder="${esc(t('students.form.localNamePh'))}" value="${esc(s.name_local || '')}">
 
-      <label class="field-label">English name *</label>
-      <input class="form-input" id="newStuEn" placeholder="Full English name" value="${esc(s.name_en || '')}">
+      <label class="field-label">${t('students.form.englishName')}</label>
+      <input class="form-input" id="newStuEn" placeholder="${esc(t('students.form.englishNamePh'))}" value="${esc(s.name_en || '')}">
 
       <div class="form-row">
         <div class="form-col">
-          <label class="field-label">Class *</label>
+          <label class="field-label">${t('students.form.class')}</label>
           <button type="button" class="form-picker-trigger" id="newStuClassBtn"
                   onclick="pickClassValue('newStuClass')">
-            <span class="form-picker-value" id="newStuClass_label">${s.class ? esc(s.class) : 'Select class'}</span>
+            <span class="form-picker-value" id="newStuClass_label">${s.class ? esc(s.class) : t('students.form.selectClass')}</span>
             <svg class="form-picker-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
           </button>
           <input type="hidden" id="newStuClass" value="${esc(s.class || '')}">
         </div>
         <div class="form-col">
-          <label class="field-label">Grade</label>
+          <label class="field-label">${t('students.form.grade')}</label>
           <button type="button" class="form-picker-trigger" id="newStuGradeBtn"
                   onclick="pickGradeValue('newStuGrade')">
-            <span class="form-picker-value" id="newStuGrade_label">${s.grade ? esc(s.grade) : 'Select grade'}</span>
+            <span class="form-picker-value" id="newStuGrade_label">${s.grade ? esc(s.grade) : t('students.form.selectGrade')}</span>
             <svg class="form-picker-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
           </button>
           <input type="hidden" id="newStuGrade" value="${esc(s.grade || '')}">
         </div>
       </div>
 
-      <label class="field-label">Gender</label>
+      <label class="field-label">${t('students.form.gender')}</label>
       <div class="pill-group" id="genderPills">
-        <button class="pill ${s.gender === 'M' ? 'active' : ''}" type="button" onclick="togglePill(this,'genderPills')">M</button>
-        <button class="pill ${s.gender === 'F' ? 'active' : ''}" type="button" onclick="togglePill(this,'genderPills')">F</button>
-        <button class="pill ${s.gender === 'Other' ? 'active' : ''}" type="button" onclick="togglePill(this,'genderPills')">Other</button>
+        <button class="pill ${s.gender === 'M' ? 'active' : ''}" type="button" data-value="M" onclick="togglePill(this,'genderPills')">${t('students.form.genderM')}</button>
+        <button class="pill ${s.gender === 'F' ? 'active' : ''}" type="button" data-value="F" onclick="togglePill(this,'genderPills')">${t('students.form.genderF')}</button>
+        <button class="pill ${s.gender === 'Other' ? 'active' : ''}" type="button" data-value="Other" onclick="togglePill(this,'genderPills')">${t('students.form.genderOther')}</button>
       </div>
 
-      <label class="field-label">Birthday <span class="optional">(used for 🎂 reminders)</span></label>
+      <label class="field-label">${t('students.form.birthday')} <span class="optional">${t('students.form.birthdayHint')}</span></label>
       <input class="form-input" id="newStuDob" type="date" value="${esc(s.date_of_birth || '')}" max="${new Date().toISOString().slice(0,10)}">
 
-      <label class="field-label">Home colour <span class="optional">(team / house)</span></label>
+      <label class="field-label">${t('students.form.homeColor')} <span class="optional">${t('students.form.homeColorHint')}</span></label>
       <div class="color-grid" id="colorGrid">
         ${colors.map(c => `
           <button type="button" class="color-swatch ${s.home_color === c.id ? 'active' : ''}"
             data-color="${esc(c.id)}"
             style="--swatch:${c.hex}"
-            title="${esc(c.name)}"
+            title="${esc(homeColorName(c.id))}"
             onclick="selectHomeColor('${esc(c.id)}')">
             <span class="swatch-dot"></span>
-            <span class="swatch-name">${esc(c.name)}</span>
+            <span class="swatch-name">${esc(homeColorName(c.id))}</span>
           </button>`).join('')}
       </div>
       <input type="hidden" id="newStuColor" value="${esc(s.home_color || '')}">
 
-      <div class="form-divider"><span>Parent / Guardian</span></div>
+      <div class="form-divider"><span>${t('students.form.parentSection')}</span></div>
 
-      <label class="field-label">Parent name</label>
-      <input class="form-input" id="newStuParent" placeholder="Parent / guardian name" value="${esc(s.parent_name || '')}">
+      <label class="field-label">${t('students.form.parentName')}</label>
+      <input class="form-input" id="newStuParent" placeholder="${esc(t('students.form.parentNamePh'))}" value="${esc(s.parent_name || '')}">
 
-      <label class="field-label">Parent phone</label>
-      <input class="form-input" id="newStuPhone" type="tel" placeholder="+95 9 xxx xxx xxx" value="${esc(s.parent_phone || '')}">
+      <label class="field-label">${t('students.form.parentPhone')}</label>
+      <input class="form-input" id="newStuPhone" type="tel" placeholder="${esc(t('students.form.parentPhonePh'))}" value="${esc(s.parent_phone || '')}">
 
-      <label class="field-label">Parent email <span class="optional">(optional)</span></label>
-      <input class="form-input" id="newStuEmail" type="email" placeholder="parent@example.com" value="${esc(s.parent_email || '')}">
+      <label class="field-label">${t('students.form.parentEmail')} <span class="optional">${t('common.optional')}</span></label>
+      <input class="form-input" id="newStuEmail" type="email" placeholder="${esc(t('students.form.parentEmailPh'))}" value="${esc(s.parent_email || '')}">
 
       ${isEdit
-        ? `<label class="field-label">Parent Telegram</label>
+        ? `<label class="field-label">${t('students.form.parentTg')}</label>
            <div class="parent-tg-row">
              ${s.parent_tg_id
-                ? `<div class="tg-linked-box">✓ Linked &nbsp;<code>${esc(s.parent_tg_id)}</code></div>`
-                : `<button type="button" class="link-btn" onclick="showParentLinkQR('${esc(s.student_id)}')">📤 Send link to parent</button>`}
+                ? `<div class="tg-linked-box">${t('students.linked')} &nbsp;<code>${esc(s.parent_tg_id)}</code></div>`
+                : `<button type="button" class="link-btn" onclick="showParentLinkQR('${esc(s.student_id)}')">${t('students.sendLinkBtn')}</button>`}
            </div>`
         : `<div class="info-tip">
              <span class="info-tip-icon">ℹ️</span>
-             <span>Parent Telegram ID is filled <b>automatically</b> after you register the student. We'll show you a link to share with the parent — once they tap it in Telegram, their ID will be captured.</span>
+             <span>${t('students.form.parentTgInfo')}</span>
            </div>`
       }
 
       <button class="btn-primary mt16" id="saveStudentBtn" onclick="saveStudentForm('${isEdit ? 'edit' : 'add'}','${isEdit ? esc(s.student_id) : ''}')">
-        ${isEdit ? 'Save changes' : 'Register Student'}
+        ${t(isEdit ? 'students.form.saveEdit' : 'students.form.register')}
       </button>
       ${isEdit ? `
         <button class="btn-danger" onclick="confirmDeleteStudent('${esc(s.student_id)}')">
-          Remove student
+          ${t('students.form.removeBtn')}
         </button>` : ''}
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>`;
 
   openModal(html);
@@ -553,8 +555,8 @@ window.selectHomeColor = function(colorId) {
 window._onStuPhotoPicked = function(input) {
   const file = input.files?.[0];
   if (!file) return;
-  if (!file.type.startsWith('image/')) { showToast('Please pick an image file'); return; }
-  if (file.size > 20 * 1024 * 1024) { showToast('Photo is too large (max 20 MB)'); return; }
+  if (!file.type.startsWith('image/')) { showToast(t('students.toast.imageOnly')); return; }
+  if (file.size > 20 * 1024 * 1024) { showToast(t('students.toast.imageTooBig')); return; }
 
   _pendingPhotoFile = file;
   _removePhotoRequested = false;
@@ -573,7 +575,7 @@ window._removeStuPhoto = function() {
   _removePhotoRequested = true;
   const preview = document.getElementById('stuPhotoPreview');
   if (preview) {
-    const genderGuess = document.querySelector('#genderPills .pill.active')?.textContent.trim() || '';
+    const genderGuess = document.querySelector('#genderPills .pill.active')?.dataset.value || '';
     preview.innerHTML = avatarContent({ gender: genderGuess, name_en: document.getElementById('newStuEn')?.value });
   }
   const removeBtn = document.getElementById('stuPhotoRemoveBtn');
@@ -588,7 +590,7 @@ window.saveStudentForm = async function(mode, studentId) {
     name_en:      document.getElementById('newStuEn').value.trim(),
     class:        document.getElementById('newStuClass').value.trim(),
     grade:        document.getElementById('newStuGrade').value,
-    gender:       document.querySelector('#genderPills .pill.active')?.textContent.trim() || '',
+    gender:       document.querySelector('#genderPills .pill.active')?.dataset.value || '',
     date_of_birth: document.getElementById('newStuDob').value || null,
     home_color:   document.getElementById('newStuColor').value || null,
     parent_name:  document.getElementById('newStuParent').value.trim(),
@@ -599,17 +601,17 @@ window.saveStudentForm = async function(mode, studentId) {
   data.name_mm = data.name_local || data.name_en;
 
   // Validation
-  if (!data.name_en)  { showToast('English name is required'); return; }
-  if (!data.class)    { showToast('Class is required'); return; }
+  if (!data.name_en)  { showToast(t('students.toast.nameRequired')); return; }
+  if (!data.class)    { showToast(t('students.toast.classRequired')); return; }
   if (data.parent_email && !isValidEmail(data.parent_email)) {
-    showToast('Parent email looks invalid'); return;
+    showToast(t('students.toast.emailInvalid')); return;
   }
   if (data.parent_phone && !isValidPhone(data.parent_phone)) {
-    showToast('Parent phone looks invalid'); return;
+    showToast(t('students.toast.phoneInvalid')); return;
   }
 
   btn.disabled = true;
-  btn.textContent = mode === 'edit' ? 'Saving…' : 'Registering…';
+  btn.textContent = t(mode === 'edit' ? 'students.form.savingEdit' : 'students.form.registering');
 
       try {
     if (mode === 'edit') {
@@ -625,7 +627,7 @@ window.saveStudentForm = async function(mode, studentId) {
           await API.setStudentPhoto(studentId, url);
           if (idx >= 0) window.APP.students[idx].photo_url = url;
         } catch (photoErr) {
-          showToast('Saved, but photo upload failed: ' + (photoErr.message || 'error'));
+          showToast(t('students.toast.photoUploadFailedEdit', { err: photoErr.message || t('common.error') }));
         }
         _pendingPhotoFile = null;
       } else if (_removePhotoRequested) {
@@ -633,13 +635,13 @@ window.saveStudentForm = async function(mode, studentId) {
           await API.setStudentPhoto(studentId, null);
           if (idx >= 0) window.APP.students[idx].photo_url = null;
         } catch (photoErr) {
-          showToast('Saved, but removing photo failed: ' + (photoErr.message || 'error'));
+          showToast(t('students.toast.photoRemoveFailed', { err: photoErr.message || t('common.error') }));
         }
         _removePhotoRequested = false;
       }
       closeModal();
       renderStudents();
-      showToast(`✓ ${data.name_en} updated`);
+      showToast(t('students.toast.updated', { name: data.name_en }));
       if (window.APP.tg?.HapticFeedback) window.APP.tg.HapticFeedback.notificationOccurred('success');
     } else {
       const result = await API.registerStudent({
@@ -661,7 +663,7 @@ window.saveStudentForm = async function(mode, studentId) {
           await API.setStudentPhoto(newStudent.student_id, url);
           newStudent.photo_url = url;
         } catch (photoErr) {
-          showToast('Registered, but photo upload failed: ' + (photoErr.message || 'error'));
+          showToast(t('students.toast.photoUploadFailedAdd', { err: photoErr.message || t('common.error') }));
         }
         _pendingPhotoFile = null;
       }
@@ -672,13 +674,13 @@ window.saveStudentForm = async function(mode, studentId) {
       _showParentLinkAfterRegister(newStudent);
 
       renderStudents();
-      showToast(`✓ ${data.name_en} registered`);
+      showToast(t('students.toast.registered', { name: data.name_en }));
       if (window.APP.tg?.HapticFeedback) window.APP.tg.HapticFeedback.notificationOccurred('success');
     }
   } catch (e) {
     btn.disabled = false;
-    btn.textContent = mode === 'edit' ? 'Save changes' : 'Register Student';
-    showToast((mode === 'edit' ? 'Save' : 'Registration') + ' failed: ' + (e.message || 'Network error'));
+    btn.textContent = t(mode === 'edit' ? 'students.form.saveEdit' : 'students.form.register');
+    showToast(t(mode === 'edit' ? 'students.toast.saveFailed' : 'students.toast.registerFailed', { err: e.message || t('common.networkError') }));
   }
 };
 
@@ -689,12 +691,12 @@ window.confirmDeleteStudent = function(studentId) {
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Remove ${esc(s.name_en)}?</h3>
+      <h3 class="modal-title">${esc(t('students.delete.title', { name: s.name_en }))}</h3>
       <p style="color:var(--muted); font-size:14px; line-height:1.6">
-        This will mark the student as <b>Inactive</b>. Their records (attendance, reports) are kept, but they won't appear in daily lists. You can ask an admin to restore them later.
+        ${t('students.delete.body')}
       </p>
-      <button class="btn-danger mt16" onclick="doDeleteStudent('${esc(studentId)}')">Yes, remove</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger mt16" onclick="doDeleteStudent('${esc(studentId)}')">${t('students.delete.confirm')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>`;
   openModal(html);
 };
@@ -706,9 +708,9 @@ window.doDeleteStudent = async function(studentId) {
     if (idx >= 0) window.APP.students[idx].status = 'Inactive';
     closeModal();
     renderStudents();
-    showToast('✓ Student removed');
+    showToast(t('students.delete.done'));
   } catch (e) {
-    showToast('Failed: ' + (e.message || 'Network error'));
+    showToast(t('common.failed') + ' ' + (e.message || t('common.networkError')));
   }
 };
 
@@ -721,9 +723,9 @@ function _showParentLinkAfterRegister(student) {
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Link parent's Telegram</h3>
+      <h3 class="modal-title">${t('parentLink.title')}</h3>
       <p style="color:var(--muted); font-size:14px; line-height:1.6; margin-bottom:16px;">
-        Share this link with <b>${esc(student.name_en)}</b>'s parent. When the parent taps it in Telegram, our bot will capture their ID and link it to this student — automatically.
+        ${t('parentLink.body', { name: '<b>' + esc(student.name_en) + '</b>' })}
       </p>
 
       <div class="link-box">
@@ -731,16 +733,16 @@ function _showParentLinkAfterRegister(student) {
       </div>
 
       <div class="link-actions">
-        <button class="btn-primary" onclick="copyParentLink('${esc(url)}')">📋 Copy link</button>
-        ${isTWA() ? `<button class="btn-secondary" onclick="shareParentLinkInTelegram('${esc(url)}','${esc(student.name_en)}')">📤 Share via Telegram</button>` : ''}
+        <button class="btn-primary" onclick="copyParentLink('${esc(url)}')">${t('parentLink.copy')}</button>
+        ${isTWA() ? `<button class="btn-secondary" onclick="shareParentLinkInTelegram('${esc(url)}','${esc(student.name_en)}')">${t('parentLink.share')}</button>` : ''}
       </div>
 
       <div class="link-status" id="linkStatus">
         <div class="link-status-dot"></div>
-        <span id="linkStatusText">Waiting for parent to tap the link…</span>
+        <span id="linkStatusText">${t('parentLink.waiting')}</span>
       </div>
 
-      <button class="btn-secondary mt16" onclick="dismissParentLink()">Done — I'll share later</button>
+      <button class="btn-secondary mt16" onclick="dismissParentLink()">${t('parentLink.done')}</button>
     </div>`;
 
   openModal(html, () => {
@@ -762,7 +764,7 @@ function _showParentLinkAfterRegister(student) {
         }
         const statusEl = document.getElementById('linkStatusText');
         if (statusEl) {
-          statusEl.innerHTML = `✓ <b>Linked!</b> Parent ID: <code>${esc(result.parent_tg_id)}</code>`;
+          statusEl.innerHTML = t('parentLink.linkedHtml', { id: esc(result.parent_tg_id) });
           document.getElementById('linkStatus').classList.add('linked');
         }
         clearInterval(_parentLinkPollTimer);
@@ -781,7 +783,7 @@ window.dismissParentLink = function() {
 window.copyParentLink = function(url) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(
-      () => showToast('✓ Link copied'),
+      () => showToast(t('parentLink.copied')),
       () => _fallbackCopy(url)
     );
   } else {
@@ -795,13 +797,13 @@ function _fallbackCopy(text) {
   ta.style.position = 'fixed'; ta.style.opacity = '0';
   document.body.appendChild(ta);
   ta.select();
-  try { document.execCommand('copy'); showToast('✓ Link copied'); }
-  catch { showToast('Copy failed — long-press to copy manually'); }
+  try { document.execCommand('copy'); showToast(t('parentLink.copied')); }
+  catch { showToast(t('parentLink.copyFail')); }
   document.body.removeChild(ta);
 }
 
 window.shareParentLinkInTelegram = function(url, studentName) {
-  const text = `Hi! Please tap this link in Telegram to receive updates about ${studentName} from school:`;
+  const text = t('parentLink.shareText', { name: studentName });
   if (window.APP.tg?.openTelegramLink) {
     // Use TG's native share — opens forward dialog
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
@@ -823,11 +825,11 @@ window.showParentLinkQR = function(studentId) {
 
 window.pickClassValue = function(targetInputId) {
   _openValuePicker({
-    title:   'Select class',
+    title:   t('picker.class.title'),
     items:   window.getClassList(),
     current: document.getElementById(targetInputId)?.value || '',
     onPick:  (v) => _setValueAndLabel(targetInputId, v),
-    addLabel: 'Add new class',
+    addLabel: t('picker.class.addLabel'),
     onAdd:    (newVal) => {
       _setValueAndLabel(targetInputId, newVal);
       _persistConfigList('classes', newVal);
@@ -839,11 +841,11 @@ window.pickClassValue = function(targetInputId) {
 
 window.pickGradeValue = function(targetInputId) {
   _openValuePicker({
-    title:   'Select grade',
+    title:   t('picker.grade.title'),
     items:   window.getGradeList(),
     current: document.getElementById(targetInputId)?.value || '',
     onPick:  (v) => _setValueAndLabel(targetInputId, v),
-    addLabel: 'Add new grade',
+    addLabel: t('picker.grade.addLabel'),
     onAdd:    (newVal) => {
       _setValueAndLabel(targetInputId, newVal);
       _persistConfigList('grades', newVal);
@@ -857,7 +859,7 @@ function _setValueAndLabel(targetInputId, v) {
   const input = document.getElementById(targetInputId);
   const label = document.getElementById(targetInputId + '_label');
   if (input) input.value = v;
-  if (label) label.textContent = v || 'Select…';
+  if (label) label.textContent = v || t('picker.select');
   closeModal();
 }
 
@@ -867,9 +869,9 @@ function _openValuePicker({ title, items, current, onPick, addLabel, onAdd, allo
         <button type="button" class="vp-row ${v === current ? 'sel' : ''}" onclick="_vpPick('${esc(v)}')">
           <span class="vp-label">${esc(v)}</span>
           ${v === current ? '<span class="vp-check">✓</span>' : ''}
-          ${allowEditList && window.APP.is_admin ? `<button class="vp-delete" onclick="event.stopPropagation(); _vpDeleteFromList('${esc(listKey)}','${esc(v)}')" aria-label="Remove" title="Remove from list">×</button>` : ''}
+          ${allowEditList && window.APP.is_admin ? `<button class="vp-delete" onclick="event.stopPropagation(); _vpDeleteFromList('${esc(listKey)}','${esc(v)}')" aria-label="${esc(t('picker.remove'))}" title="${esc(t('picker.removeFromList'))}">×</button>` : ''}
         </button>`).join('')
-    : `<div class="vp-empty">No options yet — add one below</div>`;
+    : `<div class="vp-empty">${t('picker.empty')}</div>`;
 
   openModal(`
     <div class="modal-sheet vp-sheet" onclick="event.stopPropagation()">
@@ -878,10 +880,10 @@ function _openValuePicker({ title, items, current, onPick, addLabel, onAdd, allo
       <div class="vp-list">${itemsHtml}</div>
       ${addLabel ? `
         <div class="vp-add-row">
-          <input type="text" class="form-input" id="vpAddInput" placeholder="${esc(addLabel)} (e.g. P4 Online)" maxlength="20">
-          <button class="btn-primary" onclick="_vpAddItem()">Add</button>
+          <input type="text" class="form-input" id="vpAddInput" placeholder="${esc(addLabel)} ${esc(t('picker.class.placeholder'))}" maxlength="20">
+          <button class="btn-primary" onclick="_vpAddItem()">${t('common.add')}</button>
         </div>` : ''}
-      <button class="btn-secondary mt16" onclick="closeModal()">Cancel</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
   window._vpPick = onPick;
@@ -891,23 +893,23 @@ function _openValuePicker({ title, items, current, onPick, addLabel, onAdd, allo
 window._vpAddItem = function() {
   const input = document.getElementById('vpAddInput');
   const v = (input?.value || '').trim();
-  if (!v) { showToast('Type a name first'); return; }
+  if (!v) { showToast(t('picker.typeName')); return; }
   if (typeof window._vpOnAdd === 'function') window._vpOnAdd(v);
 };
 
 window._vpDeleteFromList = async function(listKey, value) {
-  if (!confirm(`Remove "${value}" from the ${listKey} list?\n\nExisting students in this ${listKey.slice(0,-2)} are not affected.`)) return;
+  if (!confirm(t('picker.deleteConfirm', { value, list: t('picker.list.' + listKey) }) + '\n\n' + t('picker.deleteNote', { kind: t('picker.kind.' + listKey) }))) return;
   const cfg = window.APP.config || {};
   const cur = Array.isArray(cfg[listKey]) ? cfg[listKey] : window[listKey === 'classes' ? 'getClassList' : 'getGradeList']();
   const updated = cur.filter(x => x !== value);
   cfg[listKey] = updated;
-  showToast('Saving…');
+  showToast(t('common.saving'));
   try {
     await API.updateSchoolConfig({ [listKey]: updated });
-    showToast('Removed');
+    showToast(t('common.removed'));
     closeModal();
   } catch (e) {
-    showToast('Could not save — try again');
+    showToast(t('common.saveFailed'));
   }
 };
 

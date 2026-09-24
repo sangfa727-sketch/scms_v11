@@ -135,21 +135,20 @@ window.homeColorHex = function(id) {
 /** Lookup the display name for a home_color id. */
 window.homeColorName = function(id) {
   const c = window.HOME_COLORS.find(c => c.id === id);
-  return c ? c.name : (id || '—');
+  return c ? t('color.' + c.id) : (id || '—');
 };
 
 /** Friendly attendance code dictionary.
  *  Used everywhere we need to translate a single-letter code (P/A/L/T/S/E/H)
  *  into a human-readable label. Falls back to the code itself if not found. */
-window.ATTENDANCE_CODE_LABELS = {
-  P: { label: 'Present',  short: 'Pres',  color: '#10B981', desc: 'Student is here'              },
-  A: { label: 'Absent',   short: 'Abs',   color: '#EF4444', desc: 'Unexcused absence'            },
-  L: { label: 'Leave',    short: 'Lv',    color: '#3B82F6', desc: 'Approved leave / on holiday'  },
-  T: { label: 'Tardy',    short: 'Late',  color: '#F59E0B', desc: 'Arrived late'                 },
-  S: { label: 'Sick',     short: 'Sick',  color: '#DC2626', desc: 'Out sick'                     },
-  E: { label: 'Excused',  short: 'Exc',   color: '#0891B2', desc: 'Excused absence'              },
-  H: { label: 'Half-day', short: '½ day', color: '#7C3AED', desc: 'Attended only part of the day'},
-};
+const _ATT_COLORS = { P: '#10B981', A: '#EF4444', L: '#3B82F6', T: '#F59E0B', S: '#DC2626', E: '#0891B2', H: '#7C3AED' };
+// label / short / desc are getters so they follow the current language.
+window.ATTENDANCE_CODE_LABELS = Object.fromEntries(Object.entries(_ATT_COLORS).map(([code, color]) => [code, {
+  get label() { return t('att.code.' + code + '.label'); },
+  get short() { return t('att.code.' + code + '.short'); },
+  get desc()  { return t('att.code.' + code + '.desc'); },
+  color,
+}]));
 
 window.attendCodeLabel = function(code) {
   return window.ATTENDANCE_CODE_LABELS[code]?.label || code || '—';
