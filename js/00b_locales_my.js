@@ -266,7 +266,7 @@ window.I18N_MY = {
   'att.code.S.label': 'နေမကောင်း',
   'att.code.S.short': 'နေမကောင်း',
   'att.code.S.desc': 'ဖျားနာလို့ မလာနိုင်',
-  'att.code.E.label': 'ခွင့်တိုင်ခြင်း',
+  'att.code.E.label': 'ခွင့်ပြုပြီး',
   'att.code.E.short': 'ခွင့်ပြု',
   'att.code.E.desc': 'ခွင့်ပြုထားသော ပျက်ကွက်မှု',
   'att.code.H.label': 'တစ်ဝက်နေ့',
