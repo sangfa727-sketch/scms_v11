@@ -13,9 +13,9 @@ function renderComms() {
   if (!el) return;
 
   const types = ['All','General','Absent Alert','Daily Report','Praise','Incident','Homework','Broadcast'];
-  el.innerHTML = types.map(t =>
-    `<button class="chip${t === _commsType ? ' active' : ''}" data-type="${esc(t)}"
-      onclick="filterCommsType('${esc(t)}')">${esc(t)}</button>`
+  el.innerHTML = types.map(ty =>
+    `<button class="chip${ty === _commsType ? ' active' : ''}" data-type="${esc(ty)}"
+      onclick="filterCommsType('${esc(ty)}')">${esc(tv('commType', ty))}</button>`
   ).join('');
 
   _renderCommsList();
@@ -37,7 +37,7 @@ function _renderCommsList() {
   if (_commsType !== 'All') list = list.filter(c => c.type === _commsType);
 
   if (!list.length) {
-    el.innerHTML = emptyState('💬', 'No messages yet', 'Comms will appear here after you send them');
+    el.innerHTML = emptyState('💬', t('comms.none'), t('comms.noneSub'));
     return;
   }
 
@@ -48,13 +48,13 @@ function _renderCommsList() {
       <div class="card-row">
         <div class="comm-icon">${typeIcon[c.type] || '💬'}</div>
         <div class="card-info">
-          <div class="card-name">${esc(c.name_en || 'Class broadcast')}</div>
-          <div class="card-sub">${esc(c.type)} · ${esc(fmtDate(c.date))}</div>
+          <div class="card-name">${esc(c.name_en || t('comms.broadcast'))}</div>
+          <div class="card-sub">${esc(tv('commType', c.type))} · ${esc(fmtDate(c.date))}</div>
           ${c.message_preview ? `<div class="card-note">${esc(c.message_preview.slice(0, 100))}${c.message_preview.length > 100 ? '…' : ''}</div>` : ''}
         </div>
-        <span class="status-dot ${c.status === 'Sent' ? 'dot-sent' : 'dot-queued'}" title="${esc(c.status || 'queued')}"></span>
+        <span class="status-dot ${c.status === 'Sent' ? 'dot-sent' : 'dot-queued'}" title="${esc(tv('commStatus', c.status || 'queued'))}"></span>
         <div class="card-actions">
-          <button class="icon-btn-mini danger" onclick="confirmDeleteComm('${esc(c.id)}')" title="Delete">🗑</button>
+          <button class="icon-btn-mini danger" onclick="confirmDeleteComm('${esc(c.id)}')" title="${esc(t('btn.delete'))}">🗑</button>
         </div>
       </div>
     </div>`
@@ -63,9 +63,9 @@ function _renderCommsList() {
 
 window.confirmDeleteComm = function(id) {
   showConfirm(
-    '🗑 Delete this message from the log?',
-    'This can\'t be undone.',
-    'Delete',
+    t('comms.confirmTitle'),
+    t('common.cantUndo'),
+    t('btn.delete'),
     () => doDeleteComm(id)
   );
 };
@@ -75,9 +75,9 @@ async function doDeleteComm(id) {
     await API.deleteParentComm(id);
     window.APP.parentComms = window.APP.parentComms.filter(x => String(x.id) !== String(id));
     _renderCommsList();
-    showToast('✓ Deleted');
+    showToast(t('common.deleted'));
   } catch (e) {
-    showToast('Delete failed: ' + (e.message || 'error'));
+    showToast(t('common.deleteFailed', { err: e.message || t('common.error') }));
   }
 }
 
@@ -88,34 +88,34 @@ window.openParentCommModal = function() {
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Send Parent Message</h3>
+      <h3 class="modal-title">${t('comms.sendTitle')}</h3>
 
-      <label class="field-label">Send to</label>
+      <label class="field-label">${t('comms.sendTo')}</label>
       <div class="pill-group" id="commTargetPills">
-        <button type="button" class="pill active" onclick="togglePill(this,'commTargetPills');toggleCommTarget('class')">Whole class</button>
-        <button type="button" class="pill" onclick="togglePill(this,'commTargetPills');toggleCommTarget('student')">Individual</button>
+        <button type="button" class="pill active" data-value="class" onclick="togglePill(this,'commTargetPills');toggleCommTarget('class')">${t('comms.wholeClass')}</button>
+        <button type="button" class="pill" data-value="student" onclick="togglePill(this,'commTargetPills');toggleCommTarget('student')">${t('comms.individual')}</button>
       </div>
 
       <div id="commClassTarget">
-        <label class="field-label">Class</label>
+        <label class="field-label">${t('comms.class')}</label>
         <select class="form-input" id="commClass">
           ${classes.map(c => `<option>${esc(c)}</option>`).join('')}
         </select>
       </div>
 
       <div id="commStudentTarget" style="display:none">
-        <label class="field-label">Student</label>
+        <label class="field-label">${t('comms.student')}</label>
         <button type="button" class="picker-trigger" id="commStuTrigger" onclick="commPickStudent()">
-          <span id="commStuTriggerText">Tap to choose a student…</span>
+          <span id="commStuTriggerText">${t('comms.chooseStudent')}</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
 
-      <label class="field-label">Message</label>
-      <textarea class="form-textarea" id="commMsg" rows="4" placeholder="Type your message to parents…"></textarea>
+      <label class="field-label">${t('comms.message')}</label>
+      <textarea class="form-textarea" id="commMsg" rows="4" placeholder="${esc(t('comms.msgPh'))}"></textarea>
 
-      <button class="btn-primary mt16" id="sendCommBtn" onclick="sendParentComm()">Send Message</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="sendCommBtn" onclick="sendParentComm()">${t('comms.send')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>`;
 
   openModal(html);
@@ -132,7 +132,7 @@ window.commPickStudent = function() {
   const savedHtml = overlay.innerHTML;
 
   openStudentPicker({
-    title:   'Choose a student',
+    title:   t('comms.pickerTitle'),
     onPick:  (s) => {
       _commPickedStudent = s;
       // Restore the comm modal
@@ -155,14 +155,14 @@ window.commPickStudent = function() {
 window.sendParentComm = async function() {
   const btn = document.getElementById('sendCommBtn');
   const msg = document.getElementById('commMsg').value.trim();
-  if (!msg) { showToast('Message is required'); return; }
+  if (!msg) { showToast(t('comms.msgRequired')); return; }
 
-  const isIndividual = document.querySelector('#commTargetPills .pill.active')?.textContent.includes('Individual');
+  const isIndividual = document.querySelector('#commTargetPills .pill.active')?.dataset.value === 'student';
   if (isIndividual && !_commPickedStudent) {
-    showToast('Pick a student first'); return;
+    showToast(t('comms.pickStudentFirst')); return;
   }
 
-  btn.disabled = true; btn.textContent = 'Sending…';
+  btn.disabled = true; btn.textContent = t('comms.sending');
   try {
        const res = await API.sendParentComm({
       message_preview: msg,
@@ -178,10 +178,10 @@ window.sendParentComm = async function() {
       if (typeof _renderCommsList === 'function') _renderCommsList();
     }
     closeModal();
-    showToast('✓ Message sent');
+    showToast(t('comms.sent'));
     if (window.APP.tg?.HapticFeedback) window.APP.tg.HapticFeedback.notificationOccurred('success');
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Send Message';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('comms.send');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };

@@ -58,7 +58,7 @@ window.openStudentPicker = function(opts = {}) {
       </div>
 
       <div class="chips-row picker-chips" id="pickerClassChips">
-        ${classes.map(c => `<button class="chip${c === _pickerState.classFilter ? ' active' : ''}" data-class="${esc(c)}" onclick="filterPickerClass('${esc(c)}')">${esc(c)}</button>`).join('')}
+        ${classes.map(c => `<button class="chip${c === _pickerState.classFilter ? ' active' : ''}" data-class="${esc(c)}" onclick="filterPickerClass('${esc(c)}')">${esc(c === 'All' ? t('common.all') : c)}</button>`).join('')}
       </div>
 
       <div class="picker-list" id="pickerList"></div>

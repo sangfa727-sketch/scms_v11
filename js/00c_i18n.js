@@ -43,6 +43,19 @@ const I18N = {
     return text;
   },
 
+  has(key) {
+    const d = this.locales[this.current]?.() || {};
+    const fb = this.locales[this.fallback]?.() || {};
+    return Object.prototype.hasOwnProperty.call(d, key) || Object.prototype.hasOwnProperty.call(fb, key);
+  },
+
+  // Display label for a stored value (meal, mood, incident type …). The DB always keeps
+  // the English value; unknown / school-defined values are shown as-is.
+  tv(group, value) {
+    const key = 'enum.' + group + '.' + value;
+    return this.has(key) ? this.t(key) : (value == null ? '' : String(value));
+  },
+
   // BCP-47 tag for Intl / toLocaleDateString, following the UI language
   dateLocale() { return this.current === 'my' ? 'my-MM' : 'en-US'; },
 
@@ -106,6 +119,7 @@ const I18N = {
 // Global export
 window.I18N = I18N;
 window.t = (key, vars) => I18N.t(key, vars);
+window.tv = (group, value) => I18N.tv(group, value);
 
 
 // ───────────────────────────────────────────────────────────

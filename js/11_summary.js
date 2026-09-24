@@ -17,7 +17,7 @@ function renderSummary() {
 
   el.innerHTML = classes.map(c =>
     `<button class="chip${c === _sumClass ? ' active' : ''}" data-class="${esc(c)}"
-      onclick="filterSumClass('${esc(c)}')">${esc(c)}</button>`
+      onclick="filterSumClass('${esc(c)}')">${esc(c === 'All' ? t('common.all') : c)}</button>`
   ).join('');
 
   _renderSummaryList();
@@ -39,7 +39,7 @@ function _renderSummaryList() {
   if (_sumClass !== 'All') list = list.filter(s => s.class === _sumClass);
 
   if (!list.length) {
-    el.innerHTML = emptyState('📊', 'No summary data yet', 'Generated automatically each month');
+    el.innerHTML = emptyState('📊', t('sum.none'), t('sum.noneSub'));
     return;
   }
 
@@ -52,7 +52,7 @@ function _renderSummaryList() {
         <div class="card-row">
           <div class="card-info">
             <div class="card-name">${esc(s.name_en || s.student_id)}</div>
-            <div class="card-sub">${esc(s.class || '—')} · Absent: ${s.absent_days ?? '—'} days · HW: ${s.hw_assigned ?? '—'}</div>
+            <div class="card-sub">${esc(s.class || '—')} · ${t('sum.absent')} ${s.absent_days ?? '—'} ${t('sum.days')} · ${t('sum.hw')} ${s.hw_assigned ?? '—'}</div>
             ${s.notes ? `<div class="card-note">${esc(s.notes)}</div>` : ''}
           </div>
           ${s.overall_grade ? `<span class="grade-badge" style="color:${gColor}">${esc(s.overall_grade)}</span>` : ''}
