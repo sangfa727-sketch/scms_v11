@@ -56,7 +56,6 @@ function renderSidebar() {
   const schoolCover = A.school_cover || cfg.school_cover || '';
   const schoolName  = A.school_name || 'SCMS';
   const isAdmin = !!A.is_admin && A.platform === 'web';
-  const canEditOwn = A.platform === 'web';
 
   const schoolBadge = schoolLogo
     ? `<img src="${esc(schoolLogo)}" alt="" class="sidebar-school-logo"
@@ -64,9 +63,6 @@ function renderSidebar() {
     : `<span class="sidebar-school-mark">${esc(schoolName[0] || 'S')}</span>`;
 
   const coverStyle = schoolCover ? `style="background-image:url('${esc(schoolCover)}')"` : '';
-  const avatarInner = A.teacher_photo_url
-    ? `<img src="${esc(A.teacher_photo_url)}" alt="" class="avatar-img">`
-    : esc((A.teacher_name || '?')[0]);
 
   sidebar.innerHTML = `
     <div class="sidebar-header">
@@ -78,16 +74,6 @@ function renderSidebar() {
             ${isAdmin ? `<button class="sidebar-logo-edit" onclick="openSchoolLogoModal()" aria-label="Change school logo">📷</button>` : ''}
           </div>
           <span class="sidebar-school-name">${esc(schoolName)}</span>
-        </div>
-      </div>
-      <div class="sidebar-profile">
-        <div class="sidebar-avatar ${canEditOwn ? 'editable' : ''}" ${canEditOwn ? 'onclick="openMyPhotoModal()" role="button" aria-label="Change my profile photo"' : ''}>
-          ${avatarInner}
-          ${canEditOwn ? '<span class="avatar-cam">📷</span>' : ''}
-        </div>
-        <div class="sidebar-profile-info">
-          <div class="sidebar-name">${esc(A.teacher_name || '—')}</div>
-          <div class="sidebar-role">${esc(A.teacher_role || '—')}</div>
         </div>
       </div>
     </div>
@@ -105,6 +91,10 @@ function renderSidebar() {
       <button class="sidebar-item" onclick="sidebarGo('more')">
         <span class="sidebar-icon">⚙️</span>
         <span class="sidebar-label">Settings & More</span>
+      </button>
+      <button class="sidebar-item sidebar-signout" onclick="closeSidebar(); confirmSignOut()">
+        <span class="sidebar-icon">🚪</span>
+        <span class="sidebar-label">Sign out</span>
       </button>
       <div class="sidebar-version">v${esc(SCMS_CONFIG.VERSION)} · ${esc(window.APP.platform)}</div>
     </div>`;
