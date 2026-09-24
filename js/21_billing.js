@@ -131,6 +131,7 @@ async function _loadAndRenderInvoices() {
         </div>
         <div class="card-actions">
           <span class="billing-status-badge billing-status-${esc((inv.display_status || inv.status).toLowerCase())}">${esc(inv.display_status || inv.status)}</span>
+          ${inv.student_status === 'Pending' && inv.status === 'Paid' ? '<span class="billing-status-badge billing-ready-badge">Ready to activate</span>' : ''}
         </div>
       </div>
     </div>
@@ -361,10 +362,36 @@ async function _loadInvoiceDetail(id) {
       `).join('') : `<div class="billing-payments-empty">No payments recorded yet.</div>`}
     </div>
 
+    ${inv.student_status === 'Pending' ? (inv.status === 'Paid' ? `
+      <div class="billing-section-title mt16">Enrollment</div>
+      <p class="billing-notes">Fee paid ✓ — ${esc(inv.name_en || inv.student_id)} is still <em>Pending</em> and hidden from the Students list.</p>
+      <button class="btn-primary" id="btnMakeActive" onclick="_makeStudentActive(${inv.id}, '${esc(inv.student_id)}')">✅ Make active student</button>
+    ` : `
+      <p class="billing-notes">This student is <em>Pending</em>. Once this invoice is fully paid, you can make them an active student here.</p>
+    `) : ''}
+
     ${balance > 0 ? `<button class="btn-primary mt16" onclick="_openRecordPayment(${inv.id}, ${balance})">Record payment</button>` : ''}
     <button class="btn-secondary" onclick="_confirmDeleteInvoice(${inv.id})">Delete invoice</button>
   `;
 }
+
+window._makeStudentActive = async function(invoiceId, studentId) {
+  const btn = document.getElementById('btnMakeActive');
+  if (btn) { btn.disabled = true; btn.textContent = 'Activating…'; }
+  try {
+    await API.activateStudent(studentId);
+    showToast('✓ Student is now active — added to the Students list');
+    if (window.APP && typeof API.getStudents === 'function') {
+      window.APP.students = await API.getStudents().catch(() => window.APP.students);
+      if (typeof renderStudents === 'function') { try { renderStudents(); } catch (e) {} }
+    }
+    await _loadInvoiceDetail(invoiceId);
+    await _loadAndRenderInvoices();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Make active student'; }
+    showToast('Failed: ' + (e.message || 'error'));
+  }
+};
 
 window._openRecordPayment = function(invoiceId, balance) {
   openModal(`

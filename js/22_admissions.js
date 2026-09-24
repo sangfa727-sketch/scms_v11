@@ -11,7 +11,7 @@
  *
  *   Accepted → [Enroll as student] → students row (Pending, has a real
  *   student_id / "ID card") → [Create registration invoice] → parent pays
- *   (Billing page) → [Activate] → status='Active' → now an official student,
+ *   (Billing page) → [Make active student on the paid invoice] → status='Active' → official student,
  *   visible in the Students list.
  *
  * The whole gate reuses the existing, unmodified billing RPCs
@@ -529,11 +529,11 @@ function _admEnrollmentSectionHtml(a, student, invoice) {
     const balance = Number(invoice.total_amount) - Number(invoice.paid_amount);
     if (invoice.status === 'Paid') {
       body += `
-        <p class="billing-notes">Registration invoice ${esc(invoice.invoice_number || '')} — <strong>Paid</strong>.</p>
-        <button class="btn-primary" onclick="_activatePendingStudent(${a.id}, '${esc(student.student_id)}')">Activate — make official student</button>`;
+        <p class="billing-notes">Registration invoice ${esc(invoice.invoice_number || '')} — <strong>Paid ✓</strong>. Open this invoice on the Billing page and tap <em>Make active student</em> to add them to the Students list.</p>
+        <button class="btn-primary" onclick="closeModal();goToPage('billing')">Go to Billing</button>`;
     } else {
       body += `
-        <p class="billing-notes">Registration invoice ${esc(invoice.invoice_number || '')} — ${esc(invoice.status)}, balance ${esc(String(balance))}. Record the payment on the Billing page, then come back here to activate.</p>
+        <p class="billing-notes">Registration invoice ${esc(invoice.invoice_number || '')} — ${esc(invoice.status)}, balance ${esc(String(balance))}. Record the payment on the Billing page — once paid, tap <em>Make active student</em> there.</p>
         <button class="btn-secondary" onclick="closeModal();goToPage('billing')">Go to Billing</button>`;
     }
   }
@@ -834,21 +834,6 @@ window._saveRegistrationInvoice = async function(id, studentId) {
     await _loadAdmissionDetail(id);
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Create invoice';
-    showToast('Failed: ' + (e.message || 'error'));
-  }
-};
-
-window._activatePendingStudent = async function(id, studentId) {
-  try {
-    await API.activateStudent(studentId);
-    showToast(`✓ ${studentId} is now an official student`);
-    if (typeof API.getStudents === 'function' && window.APP) {
-      window.APP.students = await API.getStudents().catch(() => window.APP.students);
-      if (typeof renderStudents === 'function') renderStudents();
-    }
-    await _loadAdmissionDetail(id);
-    await renderAdmissions();
-  } catch (e) {
     showToast('Failed: ' + (e.message || 'error'));
   }
 };
