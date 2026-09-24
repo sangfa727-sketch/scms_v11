@@ -36,7 +36,7 @@ async function renderBilling() {
     _billingFeeItems = feeItems || [];
     _billingLoadedOnce = true;
   } catch (e) {
-    if (!_billingLoadedOnce && listEl) listEl.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    if (!_billingLoadedOnce && listEl) listEl.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
@@ -56,18 +56,18 @@ function _renderBillingFilters() {
   if (!clsEl || !statusEl || !termEl) return;
 
   clsEl.innerHTML = classes.map(c =>
-    `<button class="chip${c === _billingClass ? ' active' : ''}" onclick="selectBillingClass('${esc(c)}')">${esc(c)}</button>`
+    `<button class="chip${c === _billingClass ? ' active' : ''}" data-value="${esc(c)}" onclick="selectBillingClass('${esc(c)}')">${esc(c === 'All' ? t('common.all') : c)}</button>`
   ).join('');
 
   statusEl.innerHTML = BILLING_STATUSES.map(s =>
-    `<button class="chip${s === _billingStatus ? ' active' : ''}" onclick="selectBillingStatus('${esc(s)}')">${esc(s)}</button>`
+    `<button class="chip${s === _billingStatus ? ' active' : ''}" data-value="${esc(s)}" onclick="selectBillingStatus('${esc(s)}')">${esc(tv('billStatus', s))}</button>`
   ).join('');
 
   termEl.innerHTML = _billingTerms.length
     ? `<div class="attend-class-select-wrap">
          <select class="attend-class-select" onchange="selectBillingTerm(this.value)">
-           <option value=""${!_billingTermId ? ' selected' : ''}>All terms</option>
-           ${_billingTerms.map(t => `<option value="${t.id}"${t.id === _billingTermId ? ' selected' : ''}>${esc(t.term_name)}${t.is_current ? ' (current)' : ''}</option>`).join('')}
+           <option value=""${!_billingTermId ? ' selected' : ''}>${t('bill.allTerms')}</option>
+           ${_billingTerms.map(tm => `<option value="${tm.id}"${tm.id === _billingTermId ? ' selected' : ''}>${esc(tm.term_name)}${tm.is_current ? ' ' + t('grades.current') : ''}</option>`).join('')}
          </select>
        </div>`
     : '';
@@ -76,14 +76,14 @@ function _renderBillingFilters() {
 window.selectBillingClass = function(cls) {
   _billingClass = cls;
   document.querySelectorAll('#billingClassPicker .chip').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim() === cls));
+    b.classList.toggle('active', b.dataset.value === cls));
   _loadAndRenderInvoices();
 };
 
 window.selectBillingStatus = function(status) {
   _billingStatus = status;
   document.querySelectorAll('#billingStatusPicker .chip').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim() === status));
+    b.classList.toggle('active', b.dataset.value === status));
   _loadAndRenderInvoices();
 };
 
@@ -113,12 +113,12 @@ async function _loadAndRenderInvoices() {
     _billingInvoices = invoices;
     if (summaryEl) _renderBillingSummary(summaryEl, summary);
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    el.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
   if (!_billingInvoices.length) {
-    el.innerHTML = `<div class="empty-state">No invoices yet — tap + to bill a student.</div>`;
+    el.innerHTML = `<div class="empty-state">${t('bill.none')}</div>`;
     return;
   }
 
@@ -127,11 +127,11 @@ async function _loadAndRenderInvoices() {
       <div class="card-row">
         <div class="card-info">
           <div class="card-name">${esc(inv.name_en || inv.student_id)} <span class="type-tag">${esc(inv.invoice_number || '')}</span></div>
-          <div class="card-sub">${esc(inv.class || '')} · Due ${inv.due_date ? esc(fmtDate(inv.due_date)) : '—'} · ${esc(String(inv.total_amount))} total</div>
+          <div class="card-sub">${esc(t('bill.cardSub', { cls: inv.class || '', due: inv.due_date ? fmtDate(inv.due_date) : '—', total: inv.total_amount }))}</div>
         </div>
         <div class="card-actions">
-          <span class="billing-status-badge billing-status-${esc((inv.display_status || inv.status).toLowerCase())}">${esc(inv.display_status || inv.status)}</span>
-          ${inv.student_status === 'Pending' && inv.status === 'Paid' ? '<span class="billing-status-badge billing-ready-badge">Ready to activate</span>' : ''}
+          <span class="billing-status-badge billing-status-${esc((inv.display_status || inv.status).toLowerCase())}">${esc(tv('billStatus', inv.display_status || inv.status))}</span>
+          ${inv.student_status === 'Pending' && inv.status === 'Paid' ? `<span class="billing-status-badge billing-ready-badge">${t('bill.ready')}</span>` : ''}
         </div>
       </div>
     </div>
@@ -142,19 +142,19 @@ function _renderBillingSummary(el, s) {
   el.innerHTML = `
     <div class="billing-summary-row">
       <div class="billing-summary-cell">
-        <div class="billing-summary-label">Billed</div>
+        <div class="billing-summary-label">${t('bill.billed')}</div>
         <div class="billing-summary-value">${esc(String(s.total_billed))}</div>
       </div>
       <div class="billing-summary-cell">
-        <div class="billing-summary-label">Collected</div>
+        <div class="billing-summary-label">${t('bill.collected')}</div>
         <div class="billing-summary-value">${esc(String(s.total_collected))}</div>
       </div>
       <div class="billing-summary-cell">
-        <div class="billing-summary-label">Outstanding</div>
+        <div class="billing-summary-label">${t('bill.outstanding')}</div>
         <div class="billing-summary-value">${esc(String(s.outstanding))}</div>
       </div>
       <div class="billing-summary-cell">
-        <div class="billing-summary-label">Overdue</div>
+        <div class="billing-summary-label">${t('enum.billStatus.Overdue')}</div>
         <div class="billing-summary-value${s.overdue_count > 0 ? ' danger' : ''}">${esc(String(s.overdue_count))}</div>
       </div>
     </div>`;
@@ -168,33 +168,33 @@ window.openNewInvoiceModal = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">New Invoice</h3>
+      <h3 class="modal-title">${t('bill.newTitle')}</h3>
 
-      <label class="field-label">Student</label>
-      <button class="form-input billing-student-btn" id="niStudentBtn" onclick="_pickInvoiceStudent()">Choose a student…</button>
+      <label class="field-label">${t('bill.student')}</label>
+      <button class="form-input billing-student-btn" id="niStudentBtn" onclick="_pickInvoiceStudent()">${t('bill.chooseStudent')}</button>
 
-      <label class="field-label">Term (optional)</label>
+      <label class="field-label">${t('bill.termOptional')}</label>
       <div class="attend-class-select-wrap">
         <select class="attend-class-select" id="niTerm">
-          <option value="">No term</option>
-          ${_billingTerms.map(t => `<option value="${t.id}"${t.is_current ? ' selected' : ''}>${esc(t.term_name)}</option>`).join('')}
+          <option value="">${t('bill.noTerm')}</option>
+          ${_billingTerms.map(tm => `<option value="${tm.id}"${tm.is_current ? ' selected' : ''}>${esc(tm.term_name)}</option>`).join('')}
         </select>
       </div>
 
-      <label class="field-label">Due date</label>
+      <label class="field-label">${t('bill.dueDate')}</label>
       <input class="form-input" id="niDueDate" type="date">
 
-      <label class="field-label">Line items</label>
+      <label class="field-label">${t('bill.lineItems')}</label>
       <div id="niItemsList"></div>
-      <button class="btn-pill-action ghost" onclick="_addInvoiceLineItem()">+ Add line item</button>
+      <button class="btn-pill-action ghost" onclick="_addInvoiceLineItem()">${t('bill.addLineItem')}</button>
 
-      <div class="billing-total-row" id="niTotalRow">Total: 0</div>
+      <div class="billing-total-row" id="niTotalRow">${t('bill.total', { n: 0 })}</div>
 
-      <label class="field-label">Notes</label>
-      <input class="form-input" id="niNotes" placeholder="Optional">
+      <label class="field-label">${t('bill.notes')}</label>
+      <input class="form-input" id="niNotes" placeholder="${esc(t('bill.optional'))}">
 
-      <button class="btn-primary mt16" id="niSaveBtn" onclick="_saveNewInvoice()">Create invoice</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="niSaveBtn" onclick="_saveNewInvoice()">${t('bill.createInvoice')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
   _renderInvoiceItemsList();
@@ -202,7 +202,7 @@ window.openNewInvoiceModal = function() {
 
 window._pickInvoiceStudent = function() {
   openStudentPicker({
-    title: 'Bill which student?',
+    title: t('bill.pickerTitle'),
     onPick: (s) => {
       _newInvoiceStudent = s;
       const btn = document.getElementById('niStudentBtn');
@@ -238,7 +238,7 @@ function _renderInvoiceItemsList() {
   const catalogRow = _billingFeeItems.length
     ? `<div class="attend-class-select-wrap mb8">
          <select class="attend-class-select" onchange="_pickCatalogItem(this)">
-           <option value="">+ Add from catalog…</option>
+           <option value="">${t('bill.fromCatalog')}</option>
            ${_billingFeeItems.map(f => `<option value="${f.id}">${esc(f.name)} (${esc(String(f.default_amount))})</option>`).join('')}
          </select>
        </div>`
@@ -246,11 +246,11 @@ function _renderInvoiceItemsList() {
 
   el.innerHTML = catalogRow + _newInvoiceItems.map((it, idx) => `
     <div class="billing-line-item" data-idx="${idx}">
-      <input class="form-input" placeholder="Description" value="${esc(it.description)}"
+      <input class="form-input" placeholder="${esc(t('bill.descPh'))}" value="${esc(it.description)}"
         oninput="_updateInvoiceLineItem(${idx},'description',this.value)">
       <input class="form-input billing-amount-input" type="number" min="0" value="${esc(String(it.amount))}"
         oninput="_updateInvoiceLineItem(${idx},'amount',this.value);_renderInvoiceTotal()">
-      <button class="icon-btn-mini danger" onclick="_removeInvoiceLineItem(${idx})" title="Remove">🗑</button>
+      <button class="icon-btn-mini danger" onclick="_removeInvoiceLineItem(${idx})" title="${esc(t('picker.remove'))}">🗑</button>
     </div>
   `).join('');
 
@@ -269,16 +269,16 @@ function _renderInvoiceTotal() {
   const row = document.getElementById('niTotalRow');
   if (!row) return;
   const total = _newInvoiceItems.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
-  row.textContent = `Total: ${total}`;
+  row.textContent = t('bill.total', { n: total });
 }
 
 window._saveNewInvoice = async function() {
-  if (!_newInvoiceStudent) { showToast('Choose a student'); return; }
+  if (!_newInvoiceStudent) { showToast(t('bill.chooseStudentToast')); return; }
   const items = _newInvoiceItems.filter(it => it.description && it.description.trim());
-  if (!items.length) { showToast('Add at least one line item'); return; }
+  if (!items.length) { showToast(t('bill.needItem')); return; }
 
   const btn = document.getElementById('niSaveBtn');
-  btn.disabled = true; btn.textContent = 'Creating…';
+  btn.disabled = true; btn.textContent = t('grades.creating');
   try {
     await API.createInvoice({
       student_id: _newInvoiceStudent.student_id,
@@ -288,11 +288,11 @@ window._saveNewInvoice = async function() {
       items,
     });
     closeModal();
-    showToast('✓ Invoice created');
+    showToast(t('bill.invoiceCreated'));
     await _loadAndRenderInvoices();
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Create invoice';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('bill.createInvoice');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
@@ -303,7 +303,7 @@ window.openInvoiceDetail = async function(id) {
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto" id="invoiceDetailSheet">
       <div class="modal-handle"></div>
       <div id="invoiceDetailBody">${skeletonCards(2)}</div>
-      <button class="btn-secondary mt16" onclick="closeModal()">Close</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.close')}</button>
     </div>
   `);
   await _loadInvoiceDetail(id);
@@ -316,7 +316,7 @@ async function _loadInvoiceDetail(id) {
   try {
     data = await API.getInvoiceDetail(id);
   } catch (e) {
-    body.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    body.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
@@ -328,7 +328,7 @@ async function _loadInvoiceDetail(id) {
   body.innerHTML = `
     <h3 class="modal-title mb0">${esc(inv.name_en || inv.student_id)}</h3>
     <p class="modal-subtitle">${esc(inv.class || '')} · ${esc(inv.invoice_number || '')}
-      <span class="billing-status-badge billing-status-${esc(displayStatus.toLowerCase())}">${esc(displayStatus)}</span>
+      <span class="billing-status-badge billing-status-${esc(displayStatus.toLowerCase())}">${esc(tv('billStatus', displayStatus))}</span>
     </p>
 
     <div class="billing-detail-items">
@@ -339,48 +339,48 @@ async function _loadInvoiceDetail(id) {
         </div>
       `).join('')}
       <div class="billing-detail-row total">
-        <span>Total</span><span>${esc(String(inv.total_amount))}</span>
+        <span>${t('bill.rowTotal')}</span><span>${esc(String(inv.total_amount))}</span>
       </div>
       <div class="billing-detail-row">
-        <span>Paid</span><span>${esc(String(inv.paid_amount))}</span>
+        <span>${t('bill.rowPaid')}</span><span>${esc(String(inv.paid_amount))}</span>
       </div>
       <div class="billing-detail-row balance${balance > 0 ? ' danger' : ''}">
-        <span>Balance</span><span>${esc(String(balance))}</span>
+        <span>${t('bill.rowBalance')}</span><span>${esc(String(balance))}</span>
       </div>
     </div>
 
     ${inv.notes ? `<p class="billing-notes">${esc(inv.notes)}</p>` : ''}
 
     <div class="billing-payments-section">
-      <div class="billing-section-title">Payments</div>
+      <div class="billing-section-title">${t('bill.payments')}</div>
       ${payments.length ? payments.map(p => `
         <div class="billing-payment-row">
-          <span>${esc(fmtDate(p.payment_date))} · ${esc(p.method)}</span>
+          <span>${esc(fmtDate(p.payment_date))} · ${esc(tv('payMethod', p.method))}</span>
           <span>${esc(String(p.amount))}</span>
-          <button class="icon-btn-mini danger" onclick="_confirmDeletePayment(${p.id}, ${inv.id})" title="Remove">🗑</button>
+          <button class="icon-btn-mini danger" onclick="_confirmDeletePayment(${p.id}, ${inv.id})" title="${esc(t('picker.remove'))}">🗑</button>
         </div>
-      `).join('') : `<div class="billing-payments-empty">No payments recorded yet.</div>`}
+      `).join('') : `<div class="billing-payments-empty">${t('bill.noPayments')}</div>`}
     </div>
 
     ${inv.student_status === 'Pending' ? (inv.status === 'Paid' ? `
-      <div class="billing-section-title mt16">Enrollment</div>
-      <p class="billing-notes">Fee paid ✓ — ${esc(inv.name_en || inv.student_id)} is still <em>Pending</em> and hidden from the Students list.</p>
-      <button class="btn-primary" id="btnMakeActive" onclick="_makeStudentActive(${inv.id}, '${esc(inv.student_id)}')">✅ Make active student</button>
+      <div class="billing-section-title mt16">${t('bill.enrollment')}</div>
+      <p class="billing-notes">${t('bill.feePaidPending', { name: esc(inv.name_en || inv.student_id) })}</p>
+      <button class="btn-primary" id="btnMakeActive" onclick="_makeStudentActive(${inv.id}, '${esc(inv.student_id)}')">${t('bill.makeActive')}</button>
     ` : `
-      <p class="billing-notes">This student is <em>Pending</em>. Once this invoice is fully paid, you can make them an active student here.</p>
+      <p class="billing-notes">${t('bill.pendingNote')}</p>
     `) : ''}
 
-    ${balance > 0 ? `<button class="btn-primary mt16" onclick="_openRecordPayment(${inv.id}, ${balance})">Record payment</button>` : ''}
-    <button class="btn-secondary" onclick="_confirmDeleteInvoice(${inv.id})">Delete invoice</button>
+    ${balance > 0 ? `<button class="btn-primary mt16" onclick="_openRecordPayment(${inv.id}, ${balance})">${t('bill.recordPayment')}</button>` : ''}
+    <button class="btn-secondary" onclick="_confirmDeleteInvoice(${inv.id})">${t('bill.deleteInvoice')}</button>
   `;
 }
 
 window._makeStudentActive = async function(invoiceId, studentId) {
   const btn = document.getElementById('btnMakeActive');
-  if (btn) { btn.disabled = true; btn.textContent = 'Activating…'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('bill.activating'); }
   try {
     await API.activateStudent(studentId);
-    showToast('✓ Student is now active — added to the Students list');
+    showToast(t('bill.activated'));
     if (window.APP && typeof API.getStudents === 'function') {
       window.APP.students = await API.getStudents().catch(() => window.APP.students);
       if (typeof renderStudents === 'function') { try { renderStudents(); } catch (e) {} }
@@ -388,8 +388,8 @@ window._makeStudentActive = async function(invoiceId, studentId) {
     await _loadInvoiceDetail(invoiceId);
     await _loadAndRenderInvoices();
   } catch (e) {
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Make active student'; }
-    showToast('Failed: ' + (e.message || 'error'));
+    if (btn) { btn.disabled = false; btn.textContent = t('bill.makeActive'); }
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
@@ -397,61 +397,61 @@ window._openRecordPayment = function(invoiceId, balance) {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Record payment</h3>
-      <label class="field-label">Amount (balance: ${esc(String(balance))})</label>
+      <h3 class="modal-title">${t('bill.recordPayment')}</h3>
+      <label class="field-label">${esc(t('bill.amountBalance', { n: balance }))}</label>
       <input class="form-input" id="rpAmount" type="number" min="0" max="${esc(String(balance))}" value="${esc(String(balance))}">
-      <label class="field-label">Date</label>
+      <label class="field-label">${t('grades.date')}</label>
       <input class="form-input" id="rpDate" type="date" value="${new Date().toISOString().slice(0, 10)}">
-      <label class="field-label">Method</label>
+      <label class="field-label">${t('bill.method')}</label>
       <div class="pill-group" id="rpMethodPills">
         ${['Cash', 'Bank Transfer', 'Mobile', 'Other'].map((m, i) =>
-          `<button type="button" class="pill${i === 0 ? ' active' : ''}" onclick="togglePill(this,'rpMethodPills')">${m}</button>`
+          `<button type="button" class="pill${i === 0 ? ' active' : ''}" data-value="${m}" onclick="togglePill(this,'rpMethodPills')">${esc(tv('payMethod', m))}</button>`
         ).join('')}
       </div>
-      <label class="field-label">Notes</label>
-      <input class="form-input" id="rpNotes" placeholder="Optional">
-      <button class="btn-primary mt16" id="rpSaveBtn" onclick="_saveRecordPayment(${invoiceId})">Save payment</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <label class="field-label">${t('bill.notes')}</label>
+      <input class="form-input" id="rpNotes" placeholder="${esc(t('bill.optional'))}">
+      <button class="btn-primary mt16" id="rpSaveBtn" onclick="_saveRecordPayment(${invoiceId})">${t('bill.savePayment')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
 
 window._saveRecordPayment = async function(invoiceId) {
   const amount = Number(document.getElementById('rpAmount').value);
-  if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+  if (!amount || amount <= 0) { showToast(t('bill.validAmount')); return; }
 
   const btn = document.getElementById('rpSaveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = t('common.saving');
   try {
     await API.recordPayment(invoiceId, {
       amount,
       payment_date: document.getElementById('rpDate').value || null,
-      method: document.querySelector('#rpMethodPills .pill.active')?.textContent.trim() || 'Cash',
+      method: document.querySelector('#rpMethodPills .pill.active')?.dataset.value || 'Cash',
       notes: document.getElementById('rpNotes').value.trim() || null,
     });
     await _loadInvoiceDetail(invoiceId);
     await _loadAndRenderInvoices();
     closeModal();
-    showToast('✓ Payment recorded');
+    showToast(t('bill.paymentRecorded'));
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Save payment';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('bill.savePayment');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
 window._confirmDeletePayment = function(paymentId, invoiceId) {
   showConfirm(
-    '🗑 Remove this payment?',
-    'The invoice balance will be recalculated.',
-    'Remove',
+    t('bill.removePayTitle'),
+    t('bill.removePayBody'),
+    t('picker.remove'),
     async () => {
       try {
         await API.deletePayment(paymentId);
-        showToast('✓ Removed');
+        showToast(t('bill.removedToast'));
         await _loadInvoiceDetail(invoiceId);
         await _loadAndRenderInvoices();
       } catch (e) {
-        showToast('Failed: ' + (e.message || 'error'));
+        showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
       }
     }
   );
@@ -459,17 +459,17 @@ window._confirmDeletePayment = function(paymentId, invoiceId) {
 
 window._confirmDeleteInvoice = function(id) {
   showConfirm(
-    '🗑 Delete this invoice?',
-    'All line items and payments for it will be removed too — this can\'t be undone.',
-    'Delete',
+    t('bill.delInvTitle'),
+    t('bill.delInvBody'),
+    t('btn.delete'),
     async () => {
       try {
         await API.deleteInvoice(id);
         closeModal();
-        showToast('✓ Deleted');
+        showToast(t('common.deleted'));
         await _loadAndRenderInvoices();
       } catch (e) {
-        showToast('Delete failed: ' + (e.message || 'error'));
+        showToast(t('common.deleteFailed', { err: e.message || t('common.error') }));
       }
     }
   );
@@ -481,10 +481,10 @@ window.openFeeItemsManager = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Fee items</h3>
+      <h3 class="modal-title">${t('billing.feeItems')}</h3>
       <div id="feeItemsList"></div>
-      <button class="btn-pill-action ghost" onclick="_openAddFeeItem()">+ Add fee item</button>
-      <button class="btn-secondary mt16" onclick="closeModal()">Close</button>
+      <button class="btn-pill-action ghost" onclick="_openAddFeeItem()">${t('bill.addFeeItem')}</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.close')}</button>
     </div>
   `);
   _renderFeeItemsList();
@@ -494,18 +494,18 @@ function _renderFeeItemsList() {
   const el = document.getElementById('feeItemsList');
   if (!el) return;
   if (!_billingFeeItems.length) {
-    el.innerHTML = `<div class="empty-state">No fee items yet.</div>`;
+    el.innerHTML = `<div class="empty-state">${t('bill.noFeeItems')}</div>`;
     return;
   }
   el.innerHTML = _billingFeeItems.map(f => `
     <div class="list-card">
       <div class="card-row">
         <div class="card-info">
-          <div class="card-name">${esc(f.name)} <span class="type-tag">${esc(f.category)}</span></div>
-          <div class="card-sub">${esc(String(f.default_amount))}${f.is_recurring ? ' · Recurring' : ''}</div>
+          <div class="card-name">${esc(f.name)} <span class="type-tag">${esc(tv('feeCategory', f.category))}</span></div>
+          <div class="card-sub">${esc(String(f.default_amount))}${f.is_recurring ? ' · ' + t('bill.recurring') : ''}</div>
         </div>
         <div class="card-actions">
-          <button class="icon-btn-mini danger" onclick="_confirmDeleteFeeItem(${f.id})" title="Delete">🗑</button>
+          <button class="icon-btn-mini danger" onclick="_confirmDeleteFeeItem(${f.id})" title="${esc(t('btn.delete'))}">🗑</button>
         </div>
       </div>
     </div>
@@ -516,59 +516,59 @@ window._openAddFeeItem = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Add fee item</h3>
-      <label class="field-label">Name</label>
-      <input class="form-input" id="fiName" placeholder="e.g. Tuition Term 1">
-      <label class="field-label">Category</label>
+      <h3 class="modal-title">${t('bill.addFeeTitle')}</h3>
+      <label class="field-label">${t('bill.name')}</label>
+      <input class="form-input" id="fiName" placeholder="${esc(t('bill.namePh'))}">
+      <label class="field-label">${t('bill.category')}</label>
       <div class="pill-group" id="fiCategoryPills">
         ${['Tuition', 'Transport', 'Meals', 'Uniform', 'Books', 'Activity', 'Other'].map((c, i) =>
-          `<button type="button" class="pill${i === 0 ? ' active' : ''}" onclick="togglePill(this,'fiCategoryPills')">${c}</button>`
+          `<button type="button" class="pill${i === 0 ? ' active' : ''}" data-value="${c}" onclick="togglePill(this,'fiCategoryPills')">${esc(tv('feeCategory', c))}</button>`
         ).join('')}
       </div>
-      <label class="field-label">Default amount</label>
+      <label class="field-label">${t('bill.defaultAmount')}</label>
       <input class="form-input" id="fiAmount" type="number" min="0" value="0">
-      <button class="btn-primary mt16" id="fiSaveBtn" onclick="_saveNewFeeItem()">Add</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="fiSaveBtn" onclick="_saveNewFeeItem()">${t('common.add')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
 
 window._saveNewFeeItem = async function() {
   const name = document.getElementById('fiName').value.trim();
-  if (!name) { showToast('Enter a name'); return; }
+  if (!name) { showToast(t('bill.enterName')); return; }
 
   const btn = document.getElementById('fiSaveBtn');
-  btn.disabled = true; btn.textContent = 'Adding…';
+  btn.disabled = true; btn.textContent = t('subject.adding');
   try {
     await API.addFeeItem({
       name,
-      category: document.querySelector('#fiCategoryPills .pill.active')?.textContent.trim() || 'Other',
+      category: document.querySelector('#fiCategoryPills .pill.active')?.dataset.value || 'Other',
       default_amount: Number(document.getElementById('fiAmount').value) || 0,
       is_recurring: true,
     });
     _billingFeeItems = await API.getFeeItems();
     _renderFeeItemsList(); // refresh the manager sheet underneath, in place
     closeModal();           // pop just this "Add fee item" layer
-    showToast('✓ Fee item added');
+    showToast(t('bill.feeAdded'));
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Add';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('common.add');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
 window._confirmDeleteFeeItem = function(id) {
   showConfirm(
-    '🗑 Delete this fee item?',
-    'It will be removed from the catalog. Existing invoices are unaffected.',
-    'Delete',
+    t('bill.delFeeTitle'),
+    t('bill.delFeeBody'),
+    t('btn.delete'),
     async () => {
       try {
         await API.deleteFeeItem(id);
         _billingFeeItems = await API.getFeeItems();
-        showToast('✓ Deleted');
+        showToast(t('common.deleted'));
         _renderFeeItemsList();
       } catch (e) {
-        showToast('Failed: ' + (e.message || 'error'));
+        showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
       }
     }
   );

@@ -27,7 +27,7 @@ async function renderGrades() {
     _gradesTerms    = terms || [];
     _gradesSubjects = subjects || [];
   } catch (e) {
-    if (listEl) listEl.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    if (listEl) listEl.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
@@ -56,22 +56,22 @@ function _renderGradesFilters(classes) {
   termEl.innerHTML = _gradesTerms.length
     ? `<div class="attend-class-select-wrap">
          <select class="attend-class-select" onchange="selectGradesTerm(this.value)">
-           ${_gradesTerms.map(t => `<option value="${t.id}"${t.id === _gradesTermId ? ' selected' : ''}>${esc(t.term_name)}${t.is_current ? ' (current)' : ''}</option>`).join('')}
+           ${_gradesTerms.map(tm => `<option value="${tm.id}"${tm.id === _gradesTermId ? ' selected' : ''}>${esc(tm.term_name)}${tm.is_current ? ' ' + t('grades.current') : ''}</option>`).join('')}
          </select>
        </div>`
-    : `<button class="btn-pill-action ghost" onclick="openAddTermPrompt()">+ Add term</button>`;
+    : `<button class="btn-pill-action ghost" onclick="openAddTermPrompt()">${t('grades.addTerm')}</button>`;
 
   subjEl.innerHTML = `
     <div class="attend-class-select-wrap">
       <select class="attend-class-select" onchange="handleGradesSubjectChange(this)">
-        ${_gradesSubjects.map(s => `<option value="${s.id}"${s.id === _gradesSubjectId ? ' selected' : ''}>${esc(s.subject_name)}</option>`).join('')}
-        <option value="__add__">+ Add subject…</option>
+        ${_gradesSubjects.map(s => `<option value="${s.id}"${s.id === _gradesSubjectId ? ' selected' : ''}>${esc(tv('subject', s.subject_name))}</option>`).join('')}
+        <option value="__add__">${t('hw.addSubject')}</option>
       </select>
     </div>`;
 
   clsEl.innerHTML = classes.length
     ? classes.map(c => `<button class="chip${c === _gradesClass ? ' active' : ''}" onclick="selectGradesClass('${esc(c)}')">${esc(c)}</button>`).join('')
-    : `<span class="chip-empty">Add students first</span>`;
+    : `<span class="chip-empty">${t('daily.addStudentsFirst')}</span>`;
 }
 
 window.selectGradesTerm = function(id) {
@@ -107,12 +107,12 @@ async function _loadAndRenderAssessments() {
   const toolbar = `
     <div class="attend-toolbar">
       <button class="btn-pill-action ghost" onclick="openReportCard()">
-        📄 Report card
+        ${t('grades.reportCard')}
       </button>
     </div>`;
 
   if (!_gradesClass) {
-    el.innerHTML = toolbar + `<div class="empty-state">No classes yet — add students first.</div>`;
+    el.innerHTML = toolbar + `<div class="empty-state">${t('grades.noClasses')}</div>`;
     return;
   }
 
@@ -122,12 +122,12 @@ async function _loadAndRenderAssessments() {
       class: _gradesClass, subject_id: _gradesSubjectId, term_id: _gradesTermId,
     });
   } catch (e) {
-    el.innerHTML = toolbar + `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    el.innerHTML = toolbar + `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
   if (!_gradesAssessments.length) {
-    el.innerHTML = toolbar + `<div class="empty-state">No assessments yet for this class/subject/term — tap + to add one.</div>`;
+    el.innerHTML = toolbar + `<div class="empty-state">${t('grades.noAssessments')}</div>`;
     return;
   }
 
@@ -135,11 +135,11 @@ async function _loadAndRenderAssessments() {
     <div class="list-card" onclick="openGradeEntry(${a.id})">
       <div class="card-row">
         <div class="card-info">
-          <div class="card-name">${esc(a.title)} <span class="type-tag">${esc(a.type)}</span></div>
-          <div class="card-sub">${esc(fmtDate(a.date))} · Max ${esc(String(a.max_score))} · Weight ${esc(String(a.weight))}%</div>
+          <div class="card-name">${esc(a.title)} <span class="type-tag">${esc(tv('assessType', a.type))}</span></div>
+          <div class="card-sub">${esc(t('grades.metaLine', { date: fmtDate(a.date), max: a.max_score, w: a.weight }))}</div>
         </div>
         <div class="card-actions">
-          <button class="icon-btn-mini danger" onclick="event.stopPropagation();confirmDeleteAssessment(${a.id})" title="Delete">🗑</button>
+          <button class="icon-btn-mini danger" onclick="event.stopPropagation();confirmDeleteAssessment(${a.id})" title="${esc(t('btn.delete'))}">🗑</button>
         </div>
       </div>
     </div>
@@ -149,16 +149,16 @@ async function _loadAndRenderAssessments() {
 /* ─── Report card (term-end weighted average per subject + overall) ────── */
 
 window.openReportCard = async function() {
-  if (!_gradesTermId) { showToast('Pick a term first'); return; }
-  if (!_gradesClass)  { showToast('Pick a class first'); return; }
+  if (!_gradesTermId) { showToast(t('grades.pickTerm')); return; }
+  if (!_gradesClass)  { showToast(t('grades.pickClass')); return; }
 
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:640px;max-height:85vh;overflow-y:auto">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Report Card</h3>
+      <h3 class="modal-title">${t('grades.reportTitle')}</h3>
       <p class="modal-subtitle">${esc(_gradesClass)} · ${esc(_gradesTerms.find(t => t.id === _gradesTermId)?.term_name || '')}</p>
       <div id="reportCardBody">${skeletonCards(2)}</div>
-      <button class="btn-secondary mt16" onclick="closeModal()">Close</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.close')}</button>
     </div>
   `);
 
@@ -168,13 +168,13 @@ window.openReportCard = async function() {
     const res = await API.getReportCard(_gradesTermId, _gradesClass);
     students = res?.students || [];
   } catch (e) {
-    if (body) body.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    if (body) body.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
   if (!body) return;
   if (!students.length) {
-    body.innerHTML = `<div class="empty-state">No graded assessments for this term/class yet.</div>`;
+    body.innerHTML = `<div class="empty-state">${t('grades.noGraded')}</div>`;
     return;
   }
 
@@ -199,9 +199,9 @@ window.openReportCard = async function() {
       <table class="report-table">
         <thead>
           <tr>
-            <th>Student</th>
-            ${subjectNames.map(n => `<th>${esc(n)}</th>`).join('')}
-            <th>Overall</th>
+            <th>${t('grades.thStudent')}</th>
+            ${subjectNames.map(n => `<th>${esc(tv('subject', n))}</th>`).join('')}
+            <th>${t('grades.overall')}</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -212,40 +212,40 @@ window.openReportCard = async function() {
 /* ─── New assessment ─────────────────────────────────────────────── */
 
 window.openNewAssessmentModal = function() {
-  if (!_gradesClass) { showToast('Pick a class first'); return; }
+  if (!_gradesClass) { showToast(t('grades.pickClass')); return; }
 
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">New Assessment</h3>
+      <h3 class="modal-title">${t('grades.newTitle')}</h3>
       <p class="modal-subtitle">${esc(_gradesClass)}</p>
 
-      <label class="field-label">Title</label>
-      <input class="form-input" id="gaTitle" placeholder="e.g. Quiz 1, Midterm Exam">
+      <label class="field-label">${t('grades.title')}</label>
+      <input class="form-input" id="gaTitle" placeholder="${esc(t('grades.titlePh'))}">
 
-      <label class="field-label">Type</label>
+      <label class="field-label">${t('grades.type')}</label>
       <div class="pill-group" id="gaTypePills">
-        ${['Quiz', 'Test', 'Exam', 'Assignment', 'Project'].map((t, i) =>
-          `<button type="button" class="pill${i === 0 ? ' active' : ''}" onclick="togglePill(this,'gaTypePills')">${t}</button>`
+        ${['Quiz', 'Test', 'Exam', 'Assignment', 'Project'].map((ty, i) =>
+          `<button type="button" class="pill${i === 0 ? ' active' : ''}" data-value="${ty}" onclick="togglePill(this,'gaTypePills')">${esc(tv('assessType', ty))}</button>`
         ).join('')}
       </div>
 
       <div class="form-row">
         <div class="form-col">
-          <label class="field-label">Max score</label>
+          <label class="field-label">${t('grades.maxScore')}</label>
           <input class="form-input" id="gaMax" type="number" value="100" min="1">
         </div>
         <div class="form-col">
-          <label class="field-label">Weight (%)</label>
+          <label class="field-label">${t('grades.weight')}</label>
           <input class="form-input" id="gaWeight" type="number" value="10" min="0" max="100">
         </div>
       </div>
 
-      <label class="field-label">Date</label>
+      <label class="field-label">${t('grades.date')}</label>
       <input class="form-input" id="gaDate" type="date" value="${new Date().toISOString().slice(0, 10)}">
 
-      <button class="btn-primary mt16" id="gaSaveBtn" onclick="saveNewAssessment()">Create</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="gaSaveBtn" onclick="saveNewAssessment()">${t('grades.create')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
@@ -253,42 +253,42 @@ window.openNewAssessmentModal = function() {
 window.saveNewAssessment = async function() {
   const btn   = document.getElementById('gaSaveBtn');
   const title = document.getElementById('gaTitle').value.trim();
-  if (!title) { showToast('Enter a title'); return; }
+  if (!title) { showToast(t('grades.enterTitle')); return; }
 
-  btn.disabled = true; btn.textContent = 'Creating…';
+  btn.disabled = true; btn.textContent = t('grades.creating');
   try {
     const res = await API.createAssessment({
       term_id:    _gradesTermId,
       subject_id: _gradesSubjectId,
       class:      _gradesClass,
       title,
-      type:       document.querySelector('#gaTypePills .pill.active')?.textContent.trim() || 'Assignment',
+      type:       document.querySelector('#gaTypePills .pill.active')?.dataset.value || 'Assignment',
       max_score:  Number(document.getElementById('gaMax').value) || 100,
       weight:     Number(document.getElementById('gaWeight').value) || 0,
       date:       document.getElementById('gaDate').value || null,
     });
     closeModal();
-    showToast('✓ Assessment created');
+    showToast(t('grades.created'));
     await _loadAndRenderAssessments();
     if (res?.assessment?.id) openGradeEntry(res.assessment.id);
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Create';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('grades.create');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
 window.confirmDeleteAssessment = function(id) {
   showConfirm(
-    '🗑 Delete this assessment?',
-    'All scores recorded for it will be removed too — this can\'t be undone.',
-    'Delete',
+    t('grades.confirmTitle'),
+    t('grades.confirmBody'),
+    t('btn.delete'),
     async () => {
       try {
         await API.deleteAssessment(id);
-        showToast('✓ Deleted');
+        showToast(t('common.deleted'));
         await _loadAndRenderAssessments();
       } catch (e) {
-        showToast('Delete failed: ' + (e.message || 'error'));
+        showToast(t('common.deleteFailed', { err: e.message || t('common.error') }));
       }
     }
   );
@@ -312,7 +312,7 @@ window.openGradeEntry = async function(assessmentId) {
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
       <div class="modal-handle"></div>
       <h3 class="modal-title">${esc(a.title)}</h3>
-      <p class="modal-subtitle">${esc(a.class)} · Max score ${esc(String(a.max_score))}</p>
+      <p class="modal-subtitle">${esc(t('grades.classMax', { cls: a.class, max: a.max_score }))}</p>
 
       <div id="gradeEntryRows">
         ${students.map(s => {
@@ -328,8 +328,8 @@ window.openGradeEntry = async function(assessmentId) {
         }).join('')}
       </div>
 
-      <button class="btn-primary mt16" id="gradeSaveBtn" onclick="saveGradeEntry(${assessmentId})">Save scores</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="gradeSaveBtn" onclick="saveGradeEntry(${assessmentId})">${t('grades.saveScores')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
@@ -352,16 +352,16 @@ window.saveGradeEntry = async function(assessmentId) {
     comment:    null,
   })).filter(r => r.score !== null && r.score !== '');
 
-  if (!records.length) { showToast('Enter at least one score'); return; }
+  if (!records.length) { showToast(t('grades.enterOne')); return; }
 
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = t('common.saving');
   try {
     await API.saveGrades(assessmentId, records);
     closeModal();
-    showToast('✓ Scores saved');
+    showToast(t('grades.scoresSaved'));
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Save scores';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('grades.saveScores');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
@@ -371,33 +371,33 @@ window.openAddTermPrompt = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Add term</h3>
-      <label class="field-label">Term name</label>
-      <input class="form-input" id="newTermName" placeholder="e.g. Term 1">
-      <label class="field-label">Academic year</label>
-      <input class="form-input" id="newTermYear" placeholder="e.g. 2026-2027">
+      <h3 class="modal-title">${t('grades.addTermTitle')}</h3>
+      <label class="field-label">${t('grades.termName')}</label>
+      <input class="form-input" id="newTermName" placeholder="${esc(t('grades.termNamePh'))}">
+      <label class="field-label">${t('grades.year')}</label>
+      <input class="form-input" id="newTermYear" placeholder="${esc(t('grades.yearPh'))}">
       <div class="form-row">
         <div class="form-col">
-          <label class="field-label">Start date</label>
+          <label class="field-label">${t('grades.start')}</label>
           <input class="form-input" id="newTermStart" type="date">
         </div>
         <div class="form-col">
-          <label class="field-label">End date</label>
+          <label class="field-label">${t('grades.end')}</label>
           <input class="form-input" id="newTermEnd" type="date">
         </div>
       </div>
-      <button class="btn-primary mt16" id="addTermBtn" onclick="_confirmAddTerm()">Add</button>
-      <button class="btn-secondary mt8" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="addTermBtn" onclick="_confirmAddTerm()">${t('common.add')}</button>
+      <button class="btn-secondary mt8" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
 
 window._confirmAddTerm = async function() {
   const name = document.getElementById('newTermName').value.trim();
-  if (!name) { showToast('Enter a term name'); return; }
+  if (!name) { showToast(t('grades.enterTermName')); return; }
 
   const btn = document.getElementById('addTermBtn');
-  btn.disabled = true; btn.textContent = 'Adding…';
+  btn.disabled = true; btn.textContent = t('subject.adding');
   try {
     await API.addTerm({
       term_name:     name,
@@ -408,10 +408,10 @@ window._confirmAddTerm = async function() {
       is_current:    _gradesTerms.length === 0,
     });
     closeModal();
-    showToast('✓ Term added');
+    showToast(t('grades.termAdded'));
     renderGrades();
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Add';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('common.add');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
