@@ -20,13 +20,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- App stylesheet -->
-<link rel="stylesheet" href="style.css?v=20260924h">
+<link rel="stylesheet" href="style.css?v=20260924i">
 </head>
 <body>
 <div id="app">
 
   <!-- ===== OFFLINE BANNER ===== -->
-  <div class="offline-banner" id="offlineBanner">📡 Offline — Changes will sync when reconnected</div>
+  <div class="offline-banner" id="offlineBanner" data-i18n="msg.offlineBanner">📡 Offline — Changes will sync when reconnected</div>
 
   <!-- ===== BOOT SCREEN ===== -->
   <div class="boot-screen" id="bootScreen">
@@ -47,7 +47,7 @@
       <div class="error-icon">⚠️</div>
       <h2 class="error-title" id="errorTitle">Unable to connect</h2>
       <p class="error-msg" id="errorMsg">Please open this app from Telegram.</p>
-      <button class="btn-primary" id="btnRetry" onclick="window.location.reload()">Retry</button>
+      <button class="btn-primary" id="btnRetry" onclick="window.location.reload()" data-i18n="btn.retry">Retry</button>
     </div>
   </div>
 
@@ -59,7 +59,7 @@
   <header class="app-header" id="appHeader">
     <div class="header-row">
       <!-- Burger menu — visible only in native app -->
-      <button class="icon-btn icon-btn-burger" id="btnBurger" aria-label="Open menu" title="Menu">
+      <button class="icon-btn icon-btn-burger" id="btnBurger" aria-label="Open menu" title="Menu" data-i18n-aria="menu.open" data-i18n-title="menu.title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="6" x2="21" y2="6"/>
           <line x1="3" y1="12" x2="21" y2="12"/>
@@ -74,7 +74,7 @@
           <span class="dot">·</span>
           <span id="userName">Loading…</span>
           <span class="dot">·</span>
-          <span class="conn-dot" id="connDot" title="Connection status"></span>
+          <span class="conn-dot" id="connDot" title="Connection status" data-i18n-title="status.connection"></span>
         </div>
       </div>
             <div class="header-actions">
@@ -82,11 +82,11 @@
         <button class="lang-switch" id="langSwitch"
         aria-label="Switch language"
         data-i18n-aria="topbar.language"
-        title="Switch language / ဘာသာစကား ပြောင်းရန်">
+        title="Switch language / ဘာသာစကား ပြောင်းရန်" data-i18n-title="lang.switchTitle">
   <span class="lang-label" id="langLabel">EN</span>
 </button>
 
-        <button class="icon-btn" id="btnRefresh" aria-label="Refresh" title="Refresh data">
+        <button class="icon-btn" id="btnRefresh" aria-label="Refresh" title="Refresh data" data-i18n-aria="btn.refresh" data-i18n-title="btn.refreshData">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
@@ -103,8 +103,8 @@
     <!-- STUDENTS -->
     <section class="page active" id="page-students">
       <div class="page-header">
-        <div class="page-eyebrow">Roster</div>
-        <h1 class="page-title">My <em>students</em></h1>
+        <div class="page-eyebrow" data-i18n="page.students.eyebrow">Roster</div>
+        <h1 class="page-title" data-i18n-html="page.students.title">My <em>students</em></h1>
         <p class="page-subtitle" id="studentsSubtitle">Loading…</p>
       </div>
       <div class="stats-grid" id="studentStats"></div>
@@ -114,7 +114,7 @@
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
         </span>
-        <input type="text" id="studentSearchInput" placeholder="Search by name, ID, or class…">
+        <input type="text" id="studentSearchInput" placeholder="Search by name, ID, or class…" data-i18n-placeholder="students.searchPh">
         <button class="clear-btn" id="studentSearchClear">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <path d="M18 6 6 18M6 6l12 12"/>
@@ -128,17 +128,17 @@
           <!-- ATTENDANCE -->
     <section class="page" id="page-attend">
       <div class="page-header" id="attendPageHeader">
-        <div class="page-eyebrow">Daily check-in</div>
-        <h1 class="page-title"><em>Attendance</em></h1>
-        <p class="page-subtitle" id="attendSubtitle">Mark today's attendance for your class.</p>
+        <div class="page-eyebrow" data-i18n="page.attend.eyebrow">Daily check-in</div>
+        <h1 class="page-title" data-i18n-html="page.attend.title"><em>Attendance</em></h1>
+        <p class="page-subtitle" id="attendSubtitle" data-i18n="page.attend.sub">Mark today's attendance for your class.</p>
         <div class="chips-row" id="attendClassChips"></div>
       </div>
       <div class="attend-toprow">
         <div class="attend-cal-col">
           <div class="date-strip-head">
-            <button type="button" class="date-strip-nav" onclick="shiftDateStrip(-1)" aria-label="Previous week">‹</button>
-            <button type="button" class="date-strip-label" id="dateStripLabel" onclick="resetDateStripToToday()" title="Jump to today"></button>
-            <button type="button" class="date-strip-nav" onclick="shiftDateStrip(1)" aria-label="Next week">›</button>
+            <button type="button" class="date-strip-nav" onclick="shiftDateStrip(-1)" aria-label="Previous week" data-i18n-aria="att.prevWeek">‹</button>
+            <button type="button" class="date-strip-label" id="dateStripLabel" onclick="resetDateStripToToday()" title="Jump to today" data-i18n-title="att.jumpToday"></button>
+            <button type="button" class="date-strip-nav" onclick="shiftDateStrip(1)" aria-label="Next week" data-i18n-aria="att.nextWeek">›</button>
           </div>
           <div class="date-strip" id="dateStrip"></div>
         </div>
@@ -151,7 +151,7 @@
             <button class="btn-pill-action" onclick="clearAllAttend()">
               <span class="dot-mini" style="background:#8A8A82"></span> Clear marks
             </button>
-            <button class="btn-pill-action ghost" onclick="showAttendLegend()" title="Code legend">
+            <button class="btn-pill-action ghost" onclick="showAttendLegend()" title="Code legend" data-i18n-title="att.legendBtn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
               </svg>
@@ -173,9 +173,9 @@
     <!-- DAILY REPORTS -->
     <section class="page" id="page-daily">
       <div class="page-header">
-        <div class="page-eyebrow">For parents</div>
-        <h1 class="page-title">Daily <em>reports</em></h1>
-        <p class="page-subtitle">Quick snapshot for today, sent to parents.</p>
+        <div class="page-eyebrow" data-i18n="page.daily.eyebrow">For parents</div>
+        <h1 class="page-title" data-i18n-html="page.daily.title">Daily <em>reports</em></h1>
+        <p class="page-subtitle" data-i18n="page.daily.sub">Quick snapshot for today, sent to parents.</p>
       </div>
       <div class="chips-row" id="dailyClassChips"></div>
       <div id="dailyList"></div>
@@ -184,9 +184,9 @@
     <!-- HOMEWORK -->
     <section class="page" id="page-hw">
       <div class="page-header">
-        <div class="page-eyebrow">Assignments</div>
-        <h1 class="page-title"><em>Homework</em></h1>
-        <p class="page-subtitle">Track & assign work for each class.</p>
+        <div class="page-eyebrow" data-i18n="page.hw.eyebrow">Assignments</div>
+        <h1 class="page-title" data-i18n-html="page.hw.title"><em>Homework</em></h1>
+        <p class="page-subtitle" data-i18n="page.hw.sub">Track & assign work for each class.</p>
       </div>
       <div class="chips-row" id="hwClassChips"></div>
       <div id="hwList"></div>
@@ -195,9 +195,9 @@
         <!-- GRADES -->
     <section class="page" id="page-grades">
       <div class="page-header">
-        <div class="page-eyebrow">Assessment</div>
-        <h1 class="page-title"><em>Grades</em></h1>
-        <p class="page-subtitle">Record and track student assessment scores.</p>
+        <div class="page-eyebrow" data-i18n="page.grades.eyebrow">Assessment</div>
+        <h1 class="page-title" data-i18n-html="page.grades.title"><em>Grades</em></h1>
+        <p class="page-subtitle" data-i18n="page.grades.sub">Record and track student assessment scores.</p>
       </div>
       <div class="grades-filter-row">
         <div id="gradesTermPicker"></div>
@@ -210,14 +210,14 @@
     <!-- BILLING -->
     <section class="page" id="page-billing">
       <div class="page-header">
-        <div class="page-eyebrow">Fees</div>
-        <h1 class="page-title"><em>Billing</em></h1>
-        <p class="page-subtitle">Invoices and payments per student.</p>
+        <div class="page-eyebrow" data-i18n="page.billing.eyebrow">Fees</div>
+        <h1 class="page-title" data-i18n-html="page.billing.title"><em>Billing</em></h1>
+        <p class="page-subtitle" data-i18n="page.billing.sub">Invoices and payments per student.</p>
       </div>
       <div id="billingSummary"></div>
       <div class="billing-filter-row">
         <div id="billingTermPicker"></div>
-        <button class="btn-pill-action ghost" onclick="openFeeItemsManager()">Fee items</button>
+        <button class="btn-pill-action ghost" onclick="openFeeItemsManager()" data-i18n="billing.feeItems">Fee items</button>
       </div>
       <div class="chips-row" id="billingClassPicker"></div>
       <div class="chips-row" id="billingStatusPicker"></div>
@@ -227,9 +227,9 @@
     <!-- ADMISSIONS -->
     <section class="page" id="page-admissions">
       <div class="page-header">
-        <div class="page-eyebrow">Enrollment</div>
-        <h1 class="page-title"><em>Admissions</em></h1>
-        <p class="page-subtitle">Track applicants from inquiry through enrollment.</p>
+        <div class="page-eyebrow" data-i18n="page.admissions.eyebrow">Enrollment</div>
+        <h1 class="page-title" data-i18n-html="page.admissions.title"><em>Admissions</em></h1>
+        <p class="page-subtitle" data-i18n="page.admissions.sub">Track applicants from inquiry through enrollment.</p>
       </div>
       <div id="admissionsSummary"></div>
       <div class="chips-row" id="admissionsStatusPicker"></div>
@@ -240,9 +240,9 @@
     <!-- LIBRARY -->
     <section class="page" id="page-library">
       <div class="page-header">
-        <div class="page-eyebrow">Resources</div>
-        <h1 class="page-title"><em>Library</em></h1>
-        <p class="page-subtitle">Book catalog and checkouts.</p>
+        <div class="page-eyebrow" data-i18n="page.library.eyebrow">Resources</div>
+        <h1 class="page-title" data-i18n-html="page.library.title"><em>Library</em></h1>
+        <p class="page-subtitle" data-i18n="page.library.sub">Book catalog and checkouts.</p>
       </div>
       <div id="librarySummary"></div>
       <div id="libraryList"></div>
@@ -251,9 +251,9 @@
     <!-- TRANSPORT -->
     <section class="page" id="page-transport">
       <div class="page-header">
-        <div class="page-eyebrow">Resources</div>
-        <h1 class="page-title"><em>Transport</em></h1>
-        <p class="page-subtitle">Bus routes and student pickup/drop-off.</p>
+        <div class="page-eyebrow" data-i18n="page.transport.eyebrow">Resources</div>
+        <h1 class="page-title" data-i18n-html="page.transport.title"><em>Transport</em></h1>
+        <p class="page-subtitle" data-i18n="page.transport.sub">Bus routes and student pickup/drop-off.</p>
       </div>
       <div id="transportList"></div>
     </section>
@@ -261,9 +261,9 @@
     <!-- PARENT COMMS -->
     <section class="page" id="page-parents">
       <div class="page-header">
-        <div class="page-eyebrow">Communication</div>
-        <h1 class="page-title">Parent <em>messages</em></h1>
-        <p class="page-subtitle">Recent communication with families.</p>
+        <div class="page-eyebrow" data-i18n="page.parents.eyebrow">Communication</div>
+        <h1 class="page-title" data-i18n-html="page.parents.title">Parent <em>messages</em></h1>
+        <p class="page-subtitle" data-i18n="page.parents.sub">Recent communication with families.</p>
       </div>
       <div class="chips-row" id="commsTypeChips"></div>
       <div id="commsList"></div>
@@ -272,9 +272,9 @@
     <!-- INCIDENTS -->
     <section class="page" id="page-incidents">
       <div class="page-header">
-        <div class="page-eyebrow">Records</div>
-        <h1 class="page-title"><em>Incidents</em></h1>
-        <p class="page-subtitle">Behavior, achievement, and important notes.</p>
+        <div class="page-eyebrow" data-i18n="page.incidents.eyebrow">Records</div>
+        <h1 class="page-title" data-i18n-html="page.incidents.title"><em>Incidents</em></h1>
+        <p class="page-subtitle" data-i18n="page.incidents.sub">Behavior, achievement, and important notes.</p>
       </div>
       <div class="chips-row" id="incidentTypeChips"></div>
       <div id="incidentList"></div>
@@ -283,8 +283,8 @@
     <!-- TIMETABLE -->
     <section class="page" id="page-timetable">
       <div class="page-header">
-        <div class="page-eyebrow">Schedule</div>
-        <h1 class="page-title"><em>Timetable</em></h1>
+        <div class="page-eyebrow" data-i18n="page.timetable.eyebrow">Schedule</div>
+        <h1 class="page-title" data-i18n-html="page.timetable.title"><em>Timetable</em></h1>
         <p class="page-subtitle" id="timetableSubtitle">Weekly class schedule.</p>
       </div>
       <div class="timetable-day-tabs" id="dayTabs"></div>
@@ -295,9 +295,9 @@
     <!-- MONTHLY SUMMARY -->
     <section class="page" id="page-summary">
       <div class="page-header">
-        <div class="page-eyebrow">Analytics</div>
-        <h1 class="page-title">Monthly <em>summary</em></h1>
-        <p class="page-subtitle">Performance overview for this month.</p>
+        <div class="page-eyebrow" data-i18n="page.summary.eyebrow">Analytics</div>
+        <h1 class="page-title" data-i18n-html="page.summary.title">Monthly <em>summary</em></h1>
+        <p class="page-subtitle" data-i18n="page.summary.sub">Performance overview for this month.</p>
       </div>
       <div class="chips-row" id="summaryClassChips"></div>
       <div id="summaryList"></div>
@@ -306,8 +306,8 @@
     <!-- MORE -->
     <section class="page" id="page-more">
       <div class="page-header">
-        <div class="page-eyebrow">Tools</div>
-        <h1 class="page-title">More <em>features</em></h1>
+        <div class="page-eyebrow" data-i18n="page.more.eyebrow">Tools</div>
+        <h1 class="page-title" data-i18n-html="page.more.title">More <em>features</em></h1>
       </div>
       <div id="moreMenu"></div>
     </section>
@@ -320,7 +320,7 @@
   </main>
 
   <!-- ===== FLOATING ACTION BUTTON ===== -->
-  <button class="fab" id="fab" aria-label="Add new">
+  <button class="fab" id="fab" aria-label="Add new" data-i18n-aria="btn.addNew">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 5v14M5 12h14"/>
     </svg>
@@ -335,14 +335,14 @@
         <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
-      <span class="tab-label">Students</span>
+      <span class="tab-label" data-i18n="tab.students">Students</span>
     </button>
     <button class="tab-btn" data-page="attend">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 11l3 3L22 4"/>
         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
       </svg>
-      <span class="tab-label">Attend</span>
+      <span class="tab-label" data-i18n="tab.attend">Attend</span>
     </button>
     <button class="tab-btn" data-page="daily">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -351,21 +351,21 @@
         <line x1="16" y1="13" x2="8" y2="13"/>
         <line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
-      <span class="tab-label">Daily</span>
+      <span class="tab-label" data-i18n="tab.daily">Daily</span>
     </button>
     <button class="tab-btn" data-page="hw">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
       </svg>
-      <span class="tab-label">HW</span>
+      <span class="tab-label" data-i18n="tab.hw">HW</span>
     </button>
     <!-- Chat tab — hidden in TWA via CSS -->
     <button class="tab-btn tab-btn-chat" data-page="chat">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-      <span class="tab-label">Chat</span>
+      <span class="tab-label" data-i18n="tab.chat">Chat</span>
     </button>
     <button class="tab-btn" data-page="more">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -373,7 +373,7 @@
         <circle cx="19" cy="12" r="1"/>
         <circle cx="5" cy="12" r="1"/>
       </svg>
-      <span class="tab-label">More</span>
+      <span class="tab-label" data-i18n="tab.more">More</span>
     </button>
   </nav>
 
@@ -387,36 +387,36 @@
 
 <!-- ===== APPLICATION SCRIPTS ===== -->
 <!-- Order matters: config → api → utils → landing → picker → features → app -->
-<script src="js/00a_locales_en.js?v=20260924h"></script>
-<script src="js/00b_locales_my.js?v=20260924h"></script>
-<script src="js/00c_i18n.js?v=20260924h"></script>
-<script src="js/01_config.js?v=20260924h"></script>
-<script src="js/02_api.js?v=20260924h"></script>
-<script src="js/03_utils.js?v=20260924h"></script>
-<script src="js/00_landing.js?v=20260924h"></script>
-<script src="js/19_google_auth.js?v=20260924h"></script>
-<script src="js/03b_student_picker.js?v=20260924h"></script>
-<script src="js/04_students.js?v=20260924h"></script>
-<script src="js/05_attendance.js?v=20260924h"></script>
-<script src="js/06_daily.js?v=20260924h"></script>
-<script src="js/07_homework.js?v=20260924h"></script>
-<script src="js/08_comms.js?v=20260924h"></script>
-<script src="js/09_incidents.js?v=20260924h"></script>
-<script src="js/10_timetable.js?v=20260924h"></script>
-<script src="js/11_summary.js?v=20260924h"></script>
-<script src="js/12_more.js?v=20260924h"></script>
-<script src="js/13_register.js?v=20260924h"></script>
-<script src="js/15_settings.js?v=20260924h"></script>
-<script src="js/16_chat.js?v=20260924h"></script>
-<script src="js/17_sidebar.js?v=20260924h"></script>
-<script src="js/18_help.js?v=20260924h"></script>
-<script src="js/20_grades.js?v=20260924h"></script>
-<script src="js/21_billing.js?v=20260924h"></script>
-<script src="js/22_admissions.js?v=20260924h"></script>
-<script src="js/23_health.js?v=20260924h"></script>
-<script src="js/24_library.js?v=20260924h"></script>
-<script src="js/25_transport.js?v=20260924h"></script>
-<script src="js/26_branding.js?v=20260924h"></script>
-<script src="js/14_app.js?v=20260924h"></script>
+<script src="js/00a_locales_en.js?v=20260924i"></script>
+<script src="js/00b_locales_my.js?v=20260924i"></script>
+<script src="js/00c_i18n.js?v=20260924i"></script>
+<script src="js/01_config.js?v=20260924i"></script>
+<script src="js/02_api.js?v=20260924i"></script>
+<script src="js/03_utils.js?v=20260924i"></script>
+<script src="js/00_landing.js?v=20260924i"></script>
+<script src="js/19_google_auth.js?v=20260924i"></script>
+<script src="js/03b_student_picker.js?v=20260924i"></script>
+<script src="js/04_students.js?v=20260924i"></script>
+<script src="js/05_attendance.js?v=20260924i"></script>
+<script src="js/06_daily.js?v=20260924i"></script>
+<script src="js/07_homework.js?v=20260924i"></script>
+<script src="js/08_comms.js?v=20260924i"></script>
+<script src="js/09_incidents.js?v=20260924i"></script>
+<script src="js/10_timetable.js?v=20260924i"></script>
+<script src="js/11_summary.js?v=20260924i"></script>
+<script src="js/12_more.js?v=20260924i"></script>
+<script src="js/13_register.js?v=20260924i"></script>
+<script src="js/15_settings.js?v=20260924i"></script>
+<script src="js/16_chat.js?v=20260924i"></script>
+<script src="js/17_sidebar.js?v=20260924i"></script>
+<script src="js/18_help.js?v=20260924i"></script>
+<script src="js/20_grades.js?v=20260924i"></script>
+<script src="js/21_billing.js?v=20260924i"></script>
+<script src="js/22_admissions.js?v=20260924i"></script>
+<script src="js/23_health.js?v=20260924i"></script>
+<script src="js/24_library.js?v=20260924i"></script>
+<script src="js/25_transport.js?v=20260924i"></script>
+<script src="js/26_branding.js?v=20260924i"></script>
+<script src="js/14_app.js?v=20260924i"></script>
 </body>
 </html>
