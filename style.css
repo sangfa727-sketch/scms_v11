@@ -4175,3 +4175,9 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 }
 .sidebar-cover .sidebar-cover-edit { z-index: 3; }
 .sidebar-profile { padding-top: 14px; }
+
+.billing-ready-badge { background: rgba(37,99,235,0.14); color: #2563eb; margin-left: 6px; white-space: nowrap; }
+
+/* Sidebar: profile row removed (name/role already in the top bar) → more room for the menu */
+.sidebar-signout { color: #EF4444; }
+.sidebar-signout .sidebar-label { color: #EF4444; }
