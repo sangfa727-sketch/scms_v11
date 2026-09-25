@@ -27,7 +27,7 @@ async function renderTransport() {
     _transportRoutesAll = await API.getRoutes();
     _transportLoadedOnce = true;
   } catch (e) {
-    if (!_transportLoadedOnce && listEl) listEl.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    if (!_transportLoadedOnce && listEl) listEl.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
     return;
   }
 
@@ -39,7 +39,7 @@ function _renderTransportList() {
   if (!el) return;
 
   if (!_transportRoutesAll.length) {
-    el.innerHTML = `<div class="empty-state">No routes yet — tap + to add one.</div>`;
+    el.innerHTML = `<div class="empty-state">${t('tr.none')}</div>`;
     return;
   }
 
@@ -48,7 +48,7 @@ function _renderTransportList() {
       <div class="card-row">
         <div class="card-info">
           <div class="card-name">${esc(r.route_name)}</div>
-          <div class="card-sub">${esc(r.driver_name || 'No driver set')} ${r.driver_phone ? '· ' + esc(r.driver_phone) : ''}</div>
+          <div class="card-sub">${esc(r.driver_name || t('tr.noDriver'))} ${r.driver_phone ? '· ' + esc(r.driver_phone) : ''}</div>
         </div>
         <div class="card-actions">
           <span class="adm-status-badge adm-status-accepted">${esc(String(r.student_count))} 🧑‍🎓</span>
@@ -64,29 +64,29 @@ window.openNewRouteModal = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-height:85vh;overflow-y:auto">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">New route</h3>
-      <label class="field-label">Route name</label>
-      <input class="form-input" id="nrName" placeholder="e.g. Route A — North">
-      <label class="field-label">Driver name</label>
-      <input class="form-input" id="nrDriverName" placeholder="Optional">
-      <label class="field-label">Driver phone</label>
-      <input class="form-input" id="nrDriverPhone" placeholder="Optional" type="tel">
-      <label class="field-label">Vehicle</label>
-      <input class="form-input" id="nrVehicle" placeholder="e.g. Toyota Coaster, plate no. (optional)">
-      <label class="field-label">Notes</label>
-      <input class="form-input" id="nrNotes" placeholder="Optional">
-      <button class="btn-primary mt16" id="nrSaveBtn" onclick="_saveNewRoute()">Add route</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <h3 class="modal-title">${t('tr.newTitle')}</h3>
+      <label class="field-label">${t('tr.routeName')}</label>
+      <input class="form-input" id="nrName" placeholder="${esc(t('tr.routeNamePh'))}">
+      <label class="field-label">${t('tr.driverName')}</label>
+      <input class="form-input" id="nrDriverName" placeholder="${esc(t('health.medicationsOpt'))}">
+      <label class="field-label">${t('tr.driverPhone')}</label>
+      <input class="form-input" id="nrDriverPhone" placeholder="${esc(t('health.medicationsOpt'))}" type="tel">
+      <label class="field-label">${t('tr.vehicle')}</label>
+      <input class="form-input" id="nrVehicle" placeholder="${esc(t('tr.vehiclePh'))}">
+      <label class="field-label">${t('health.notes')}</label>
+      <input class="form-input" id="nrNotes" placeholder="${esc(t('health.medicationsOpt'))}">
+      <button class="btn-primary mt16" id="nrSaveBtn" onclick="_saveNewRoute()">${t('tr.add')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
 
 window._saveNewRoute = async function() {
   const name = document.getElementById('nrName').value.trim();
-  if (!name) { showToast('Enter a route name'); return; }
+  if (!name) { showToast(t('tr.enterName')); return; }
 
   const btn = document.getElementById('nrSaveBtn');
-  btn.disabled = true; btn.textContent = 'Adding…';
+  btn.disabled = true; btn.textContent = t('subject.adding');
   try {
     await API.addRoute({
       route_name: name,
@@ -96,11 +96,11 @@ window._saveNewRoute = async function() {
       notes: document.getElementById('nrNotes').value.trim() || null,
     });
     closeModal();
-    showToast('✓ Route added');
+    showToast(t('tr.added'));
     await renderTransport();
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Add route';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('tr.add');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
@@ -124,7 +124,7 @@ async function _loadRouteDetail(id) {
     _transportRouteCache = res.route;
     _renderRouteDetailView(id, res.students);
   } catch (e) {
-    el.innerHTML = `<div class="empty-state">Failed to load: ${esc(e.message || 'error')}</div>`;
+    el.innerHTML = `<div class="empty-state">${esc(t('common.loadFailed', { err: e.message || t('common.error') }))}</div>`;
   }
 }
 
@@ -132,28 +132,28 @@ function _renderRouteDetailView(id, students) {
   const el = document.getElementById('routeDetailBody');
   if (!el) return;
   const r = _transportRouteCache;
-  if (!r) { el.innerHTML = `<div class="empty-state">Route not found.</div>`; return; }
+  if (!r) { el.innerHTML = `<div class="empty-state">${t('common.itemNotFound')}</div>`; return; }
 
   el.innerHTML = `
     <h3 class="modal-title">${esc(r.route_name)}</h3>
     <div class="billing-detail-items">
-      <div class="billing-detail-row"><span>Driver</span><span>${esc(r.driver_name || '—')}</span></div>
-      <div class="billing-detail-row"><span>Phone</span><span>${esc(r.driver_phone || '—')}</span></div>
-      <div class="billing-detail-row"><span>Vehicle</span><span>${esc(r.vehicle_info || '—')}</span></div>
+      <div class="billing-detail-row"><span>${t('tr.driver')}</span><span>${esc(r.driver_name || '—')}</span></div>
+      <div class="billing-detail-row"><span>${t('tr.phone')}</span><span>${esc(r.driver_phone || '—')}</span></div>
+      <div class="billing-detail-row"><span>${t('tr.vehicleLabel')}</span><span>${esc(r.vehicle_info || '—')}</span></div>
     </div>
     ${r.notes ? `<p class="billing-notes">${esc(r.notes)}</p>` : ''}
 
-    <div class="billing-section-title mt16">Students (${students.length})</div>
+    <div class="billing-section-title mt16">${t('tr.students', { n: students.length })}</div>
     ${students.length ? students.map(s => `
       <div class="row-with-delete">
         <span>${esc(s.name_en)} <span class="muted-note">${esc(s.class || '')}${s.pickup_stop ? ' · ' + esc(s.pickup_stop) : ''}${s.pickup_time ? ' · ' + esc(s.pickup_time.slice(0,5)) : ''}</span></span>
-        <button class="icon-btn-mini danger" onclick="_removeFromRoute('${esc(s.student_id)}', ${id})" title="Remove">🗑</button>
+        <button class="icon-btn-mini danger" onclick="_removeFromRoute('${esc(s.student_id)}', ${id})" title="${esc(t('picker.remove'))}">🗑</button>
       </div>
-    `).join('') : `<p class="muted-note">No students assigned yet.</p>`}
+    `).join('') : `<p class="muted-note">${t('tr.noStudents')}</p>`}
 
-    <button class="btn-primary mt16" onclick="_showAssignStudentView(${id})">Assign a student</button>
-    <button class="btn-secondary" onclick="_showEditRouteView(${id})">Edit route</button>
-    <button class="btn-secondary" onclick="_confirmDeleteRoute(${id})">Delete route</button>
+    <button class="btn-primary mt16" onclick="_showAssignStudentView(${id})">${t('tr.assign')}</button>
+    <button class="btn-secondary" onclick="_showEditRouteView(${id})">${t('tr.editRoute')}</button>
+    <button class="btn-secondary" onclick="_confirmDeleteRoute(${id})">${t('tr.deleteRoute')}</button>
   `;
 }
 
@@ -164,28 +164,28 @@ window._showEditRouteView = function(id) {
   if (!r) return;
 
   el.innerHTML = `
-    <h3 class="modal-title">Edit route</h3>
-    <label class="field-label">Route name</label>
+    <h3 class="modal-title">${t('tr.editTitle')}</h3>
+    <label class="field-label">${t('tr.routeName')}</label>
     <input class="form-input" id="erName" value="${esc(r.route_name)}">
-    <label class="field-label">Driver name</label>
+    <label class="field-label">${t('tr.driverName')}</label>
     <input class="form-input" id="erDriverName" value="${esc(r.driver_name || '')}">
-    <label class="field-label">Driver phone</label>
+    <label class="field-label">${t('tr.driverPhone')}</label>
     <input class="form-input" id="erDriverPhone" value="${esc(r.driver_phone || '')}">
-    <label class="field-label">Vehicle</label>
+    <label class="field-label">${t('tr.vehicle')}</label>
     <input class="form-input" id="erVehicle" value="${esc(r.vehicle_info || '')}">
-    <label class="field-label">Notes</label>
+    <label class="field-label">${t('health.notes')}</label>
     <input class="form-input" id="erNotes" value="${esc(r.notes || '')}">
-    <button class="btn-primary mt16" id="erSaveBtn" onclick="_saveEditRoute(${id})">Save changes</button>
-    <button class="btn-secondary" onclick="_loadRouteDetail(${id})">Cancel</button>
+    <button class="btn-primary mt16" id="erSaveBtn" onclick="_saveEditRoute(${id})">${t('common.saveChanges')}</button>
+    <button class="btn-secondary" onclick="_loadRouteDetail(${id})">${t('common.cancel')}</button>
   `;
 };
 
 window._saveEditRoute = async function(id) {
   const name = document.getElementById('erName').value.trim();
-  if (!name) { showToast('Route name is required'); return; }
+  if (!name) { showToast(t('tr.routeRequired')); return; }
 
   const btn = document.getElementById('erSaveBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  btn.disabled = true; btn.textContent = t('common.saving');
   try {
     await API.updateRoute(id, {
       route_name: name,
@@ -194,12 +194,12 @@ window._saveEditRoute = async function(id) {
       vehicle_info: document.getElementById('erVehicle').value.trim() || null,
       notes: document.getElementById('erNotes').value.trim() || null,
     });
-    showToast('✓ Saved');
+    showToast(t('common.saved'));
     await renderTransport();
     await _loadRouteDetail(id);
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Save changes';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('common.saveChanges');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
@@ -207,21 +207,21 @@ window._showAssignStudentView = function(id) {
   const el = document.getElementById('routeDetailBody');
   if (!el) return;
   el.innerHTML = `
-    <h3 class="modal-title">Assign a student</h3>
-    <label class="field-label">Student</label>
+    <h3 class="modal-title">${t('tr.assignTitle')}</h3>
+    <label class="field-label">${t('tr.students', {n:''}).split(' (')[0]}</label>
     <button type="button" class="form-picker-trigger" id="asStudentBtn" onclick="openStudentPicker({onPick:_onAssignStudentPicked})">
-      <span class="form-picker-value" id="asStudent_label">Select student</span>
+      <span class="form-picker-value" id="asStudent_label">${t('lib.selectStudent')}</span>
       <svg class="form-picker-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <input type="hidden" id="asStudentId" value="">
-    <label class="field-label">Pickup stop</label>
-    <input class="form-input" id="asPickupStop" placeholder="e.g. Main Gate (optional)">
-    <label class="field-label">Pickup time</label>
+    <label class="field-label">${t('tr.pickupStop')}</label>
+    <input class="form-input" id="asPickupStop" placeholder="${esc(t('tr.pickupStopPh'))}">
+    <label class="field-label">${t('tr.pickupTime')}</label>
     <input class="form-input" id="asPickupTime" type="time">
-    <label class="field-label">Drop-off time</label>
+    <label class="field-label">${t('tr.dropoffTime')}</label>
     <input class="form-input" id="asDropoffTime" type="time">
-    <button class="btn-primary mt16" id="asSaveBtn" onclick="_saveAssignStudent(${id})">Assign</button>
-    <button class="btn-secondary" onclick="_loadRouteDetail(${id})">Cancel</button>
+    <button class="btn-primary mt16" id="asSaveBtn" onclick="_saveAssignStudent(${id})">${t('tr.assignBtn')}</button>
+    <button class="btn-secondary" onclick="_loadRouteDetail(${id})">${t('common.cancel')}</button>
   `;
 };
 
@@ -232,10 +232,10 @@ window._onAssignStudentPicked = function(student) {
 
 window._saveAssignStudent = async function(routeId) {
   const studentId = document.getElementById('asStudentId').value;
-  if (!studentId) { showToast('Pick a student'); return; }
+  if (!studentId) { showToast(t('lib.pickStudent')); return; }
 
   const btn = document.getElementById('asSaveBtn');
-  btn.disabled = true; btn.textContent = 'Assigning…';
+  btn.disabled = true; btn.textContent = t('tr.assigning');
   try {
     await API.assignStudentTransport(studentId, {
       route_id: routeId,
@@ -243,39 +243,39 @@ window._saveAssignStudent = async function(routeId) {
       pickup_time: document.getElementById('asPickupTime').value || null,
       dropoff_time: document.getElementById('asDropoffTime').value || null,
     });
-    showToast('✓ Assigned');
+    showToast(t('tr.assigned'));
     await renderTransport();
     await _loadRouteDetail(routeId);
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Assign';
-    showToast('Failed: ' + (e.message || 'error'));
+    btn.disabled = false; btn.textContent = t('tr.assignBtn');
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
 window._removeFromRoute = async function(studentId, routeId) {
   try {
     await API.removeStudentTransport(studentId);
-    showToast('✓ Removed');
+    showToast(t('bill.removedToast'));
     await renderTransport();
     await _loadRouteDetail(routeId);
   } catch (e) {
-    showToast('Failed: ' + (e.message || 'error'));
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
   }
 };
 
 window._confirmDeleteRoute = function(id) {
   showConfirm(
-    '🗑 Delete this route?',
-    'Any students on it will just be unassigned, not removed from the school.',
-    'Delete',
+    t('tr.delTitle'),
+    t('tr.delBody'),
+    t('btn.delete'),
     async () => {
       try {
         await API.deleteRoute(id);
         closeModal();
-        showToast('✓ Deleted');
+        showToast(t('common.deleted'));
         await renderTransport();
       } catch (e) {
-        showToast('Delete failed: ' + (e.message || 'error'));
+        showToast(t('common.deleteFailed', { err: e.message || t('common.error') }));
       }
     }
   );
