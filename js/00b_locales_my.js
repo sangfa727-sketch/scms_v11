@@ -350,6 +350,9 @@ window.I18N_MY = {
   'login.help': 'Teacher ID မရှိသေးဘူးလား? ကိုယ့်ကျောင်းရဲ့ admin ကို ဖန်တီးပေးခိုင်းပါ၊ ဒါမှမဟုတ် <b>Telegram ဖြင့် ဝင်ရန်</b> ကို သုံးပါ။',
 
   // ── Added: Batch A: shell, navigation, More, chat, index.html (v11.8) ──
+  'page.dashboard.eyebrow': 'ခြုံငုံသုံးသပ်ချက်',
+  'page.dashboard.title': 'ယနေ့ <em>ဒက်ရှ်ဘုတ်</em>',
+  'page.dashboard.sub': 'ယနေ့အတွက် အမြန်အနှစ်ချုပ်။',
   'page.students.eyebrow': 'ကျောင်းသားစာရင်း',
   'page.students.title': 'ကျွန်ုပ်၏ <em>ကျောင်းသားများ</em>',
   'page.attend.eyebrow': 'နေ့စဉ် တက်ရောက်စစ်ဆေးမှု',
@@ -418,6 +421,7 @@ window.I18N_MY = {
   'module.parents': 'မိဘထံ မက်ဆေ့ချ်များ',
   'module.timetable': 'အချိန်ဇယား',
   'module.summary': 'လစဉ် အနှစ်ချုပ်',
+  'sb.dashboard': 'ဒက်ရှ်ဘုတ်',
   'sb.students': 'ကျောင်းသားများ',
   'sb.attend': 'တက်ရောက်မှု',
   'sb.daily': 'နေ့စဉ် အစီရင်ခံစာများ',
