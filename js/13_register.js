@@ -10,17 +10,15 @@ window.openRegisterModal = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">Registration</h3>
+      <h3 class="modal-title">${t('reg.title')}</h3>
       <p style="color:var(--muted);font-size:14px;line-height:1.6">
-        To register a new school or join as a teacher,
-        please use the <strong>Telegram bot</strong> commands:
+        ${t('reg.instructions')}
       </p>
-      <div class="cmd-block"><code>/register_school</code> — create new school</div>
-      <div class="cmd-block"><code>/register_teacher</code> — join existing school</div>
+      <div class="cmd-block"><code>/register_school</code> — ${t('reg.createSchool')}</div>
+      <div class="cmd-block"><code>/register_teacher</code> — ${t('reg.joinSchool')}</div>
       <p style="color:var(--muted);font-size:13px;margin-top:12px">
-        Once approved by the admin, your account will be active
-        and this dashboard will load automatically.
+        ${t('reg.approvedNote')}
       </p>
-      <button class="btn-secondary mt16" onclick="closeModal()">Got it</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('reg.gotIt')}</button>
     </div>`);
 };

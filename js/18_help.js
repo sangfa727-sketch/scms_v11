@@ -5,7 +5,8 @@
  *   • startFirstTour()    — first-launch coachmark tour
  *   • maybeStartTour()    — runs the tour once for new users
  *
- * Bilingual (Burmese + English). No external dependencies.
+ * Bilingual (Burmese + English) — every string goes through t(), so the whole
+ * page and the tour rebuild themselves when the language is switched.
  */
 
 'use strict';
@@ -25,218 +26,127 @@ window.openHelpModal = function () {
       <div class="help-hero">
         <div class="help-hero-mark">S</div>
         <div>
-          <h3 class="help-hero-title">SCMS အသုံးပြုနည်း</h3>
-          <p class="help-hero-sub">How to use · Quick guide</p>
+          <h3 class="help-hero-title">${t('help.title')}</h3>
+          <p class="help-hero-sub">${t('help.subtitle')}</p>
         </div>
       </div>
 
       <div class="help-tabs">
-        <button class="help-tab active" onclick="switchHelpTab(this,'help-basics')">အခြေခံ</button>
-        <button class="help-tab" onclick="switchHelpTab(this,'help-features')">လုပ်ဆောင်ချက်</button>
+        <button class="help-tab active" onclick="switchHelpTab(this,'help-basics')">${t('help.tab.basics')}</button>
+        <button class="help-tab" onclick="switchHelpTab(this,'help-features')">${t('help.tab.features')}</button>
         <button class="help-tab" onclick="switchHelpTab(this,'help-ai')">AI Chat</button>
-        ${isAdmin ? `<button class="help-tab" onclick="switchHelpTab(this,'help-admin')">Admin</button>` : ''}
-        <button class="help-tab" onclick="switchHelpTab(this,'help-trouble')">ပြဿနာ</button>
-        <button class="help-tab" onclick="switchHelpTab(this,'help-about')">About</button>
+        ${isAdmin ? `<button class="help-tab" onclick="switchHelpTab(this,'help-admin')">${t('help.tab.admin')}</button>` : ''}
+        <button class="help-tab" onclick="switchHelpTab(this,'help-trouble')">${t('help.tab.trouble')}</button>
+        <button class="help-tab" onclick="switchHelpTab(this,'help-about')">${t('help.tab.about')}</button>
       </div>
 
       <div class="help-body">
 
         <!-- BASICS -->
         <div class="help-pane active" id="help-basics">
-          ${_helpSection('🏫', 'SCMS ဆိုတာ ဘာလဲ?',
-            'School Class Management System — ကျောင်းတစ်ခုလုံးကို Telegram တစ်ခုထဲက စီမံခန့်ခွဲနိုင်တဲ့ စနစ်ပါ။ Attendance, homework, daily report, parent message အကုန် တစ်နေရာတည်းမှာ။')}
+          ${_helpSection('🏫', t('help.basics.introTitle'), t('help.basics.introBody'))}
 
-          ${_helpStep('1', 'အကောင့်ဝင်ရန်', 'Telegram bot ထဲက menu button နှိပ်ပြီး app ဖွင့်ပါ။ သင့်အကောင့် auto-detect ဖြစ်ပါတယ်။')}
-          ${_helpStep('2', 'အောက်ခြေ tab များ', 'Students · Attend · Daily · HW · More — တစ်ခုချင်း နှိပ်ပြီး သွားနိုင်ပါတယ်။')}
-          ${_helpStep('3', '+ ခလုတ် (FAB)', 'ညာဘက်အောက်ခြေက + ခလုတ်က — ဘယ် page မှာ ရှိနေတယ်ဆို အဲ့ဒီ "add" အလုပ်လုပ်ပါတယ်။ ဥပမာ — Students page မှာ ဆို Student အသစ်ထည့်။')}
-          ${_helpStep('4', 'Refresh', 'အပေါ်ညာက ↻ ခလုတ်နဲ့ နောက်ဆုံး data ပြန်ဆွဲနိုင်ပါတယ်။')}
+          ${_helpStep('1', t('help.basics.step1Title'), t('help.basics.step1Body'))}
+          ${_helpStep('2', t('help.basics.step2Title'), t('help.basics.step2Body'))}
+          ${_helpStep('3', t('help.basics.step3Title'), t('help.basics.step3Body'))}
+          ${_helpStep('4', t('help.basics.step4Title'), t('help.basics.step4Body'))}
 
           <div class="help-tip">
             <span class="help-tip-icon">💡</span>
-            <span><b>Tip:</b> ပထမဆုံး အကြိမ်အတွက် — student တွေ အရင် ထည့်ပါ။ ပြီးမှ attendance, homework စတာတွေ လုပ်လို့ ရပါတယ်။</span>
+            <span>${esc(t('help.basics.tip'))}</span>
           </div>
         </div>
 
         <!-- FEATURES -->
         <div class="help-pane" id="help-features">
-          ${_helpFeature('👥', 'Students', [
-            'Student card တစ်ခု နှိပ် → အသေးစိတ် ကြည့်ရန်',
-            '✎ Edit ခလုတ်နဲ့ — နာမည်, class, birthday, parent email ပြောင်းရန်',
-            'Student ထည့်တာနဲ့ — parent link ပေါ်လာ → မိဘဆီ ပို့ → Telegram auto-connect',
-            '🎂 emoji — birthday နီးနေတဲ့ student ပြ',
-          ])}
-          ${_helpFeature('✅', 'Attendance', [
-            'Date strip — ဘယ်ရက်အတွက် မှတ်မလဲ ရွေး',
-            'Student တစ်ယောက်ချင်း — P/A/L/T/S/E/H code နှိပ်',
-            '"All Present" — အကုန်လုံး Present တစ်ချက်တည်း',
-            '✏️ note — "ဘာကြောင့်" ဆိုတဲ့ မှတ်ချက် ထည့်နိုင်',
-            '"Save Attendance" — အဆုံးမှာ နှိပ်ဖို့ မမေ့ပါနဲ့',
-          ])}
-          ${_helpFeature('📋', 'Daily Reports', [
-            'Student တစ်ယောက်ချင်း — meal, mood, nap, behaviour မှတ်',
-            'မိဘဆီ ပို့ဖို့ အသင့်',
-            '✎ နဲ့ ပြန်ပြင်, 🗑 နဲ့ ဖျက်နိုင်',
-          ])}
-          ${_helpFeature('📚', 'Homework', [
-            'Subject, class, type, description ထည့်',
-            'LB/WB page number ထည့်နိုင်',
-            'Due date သတ်မှတ်နိုင်',
-            '✎ Edit / 🗑 Delete',
-          ])}
-          ${_helpFeature('💬', 'Parent Messages', [
-            'Whole class ဒါမှမဟုတ် individual student ရွေး',
-            'Message ရိုက်ပြီး ပို့',
-            'Telegram ထဲ parent ဆီ တိုက်ရိုက် ရောက်',
-          ])}
-          ${_helpFeature('⚡', 'Incidents', [
-            'Behaviour, achievement, health မှတ်တမ်း',
-            'Severity (Info/Low/Medium/High) သတ်မှတ်',
-            'Parent notified checkbox',
-          ])}
+          ${_helpFeature('👥', t('help.feat.students.title'), _helpPoints('help.feat.students', 4))}
+          ${_helpFeature('✅', t('help.feat.attend.title'), _helpPoints('help.feat.attend', 5))}
+          ${_helpFeature('📋', t('help.feat.daily.title'), _helpPoints('help.feat.daily', 3))}
+          ${_helpFeature('📚', t('help.feat.hw.title'), _helpPoints('help.feat.hw', 4))}
+          ${_helpFeature('💬', t('help.feat.msg.title'), _helpPoints('help.feat.msg', 3))}
+          ${_helpFeature('⚡', t('help.feat.inc.title'), _helpPoints('help.feat.inc', 3))}
         </div>
 
         <!-- AI CHAT -->
         <div class="help-pane" id="help-ai">
-          ${_helpSection('🤖', 'AI Smart Assistant',
-            'Telegram chat ထဲမှာ — form မဖြည့်ဘဲ — စကားပြောရုံနဲ့ data ထည့်လို့ ရပါတယ်။ မြန်မာလို ရော English လို ရော နားလည်ပါတယ်။')}
+          ${_helpSection('🤖', 'AI Smart Assistant', t('help.ai.introBody'))}
 
           <div class="help-ai-examples">
-            <div class="help-ai-label">ဒီလို ပြောကြည့်ပါ —</div>
-            ${_helpChat('teacher', 'Adam ဒီနေ့ မလာဘူး')}
-            ${_helpChat('ai', '✓ Adam → Absent မှတ်ပြီးပါပြီ')}
-            ${_helpChat('teacher', 'Hannah ဖျားနေတယ်')}
-            ${_helpChat('ai', '✓ Hannah → Sick မှတ်ပြီးပါပြီ')}
-            ${_helpChat('teacher', 'P4 ကို မနက်ဖြန် Maths test ရှိတယ်လို့ ပြော')}
-            ${_helpChat('ai', '✓ Homework saved · မိဘဆီ broadcast ပို့ပြီး')}
-            ${_helpChat('teacher', 'မနေ့က Maths HW ဖျက်')}
-            ${_helpChat('ai', 'ဘယ်ဟာလဲ? 1. Maths P4 · 2. Maths KG')}
+            <div class="help-ai-label">${t('help.ai.examplesLabel')}</div>
+            ${_helpChat('teacher', t('help.ai.ex1'))}
+            ${_helpChat('ai', t('help.ai.ex2'))}
+            ${_helpChat('teacher', t('help.ai.ex3'))}
+            ${_helpChat('ai', t('help.ai.ex4'))}
+            ${_helpChat('teacher', t('help.ai.ex5'))}
+            ${_helpChat('ai', t('help.ai.ex6'))}
+            ${_helpChat('teacher', t('help.ai.ex7'))}
+            ${_helpChat('ai', t('help.ai.ex8'))}
           </div>
 
-          <div class="help-ai-label" style="margin-top:18px">📋 အမျိုးအစားအလိုက် command များ</div>
+          <div class="help-ai-label" style="margin-top:18px">📋 ${t('help.ai.cheatLabel')}</div>
 
-          ${_helpCheat('✅ Attendance (အတန်းတိုက်)', [
-            '"Adam လာတယ်" / "Adam present"',
-            '"Hannah မလာဘူး" / "Hannah absent"',
-            '"Mg Mg ဖျားနေတယ်" → Sick',
-            '"Su Su နောက်ကျတယ်" → Tardy',
-            '"P4 အကုန် လာတယ်" → All present',
-          ])}
-
-          ${_helpCheat('📚 Homework (အိမ်စာ)', [
-            '"P4 ကို Maths page 24-25 ပေး"',
-            '"KG ကို English worksheet 3"',
-            '"မနေ့က Science HW description ပြောင်း"',
-            '"ဒီနေ့ Maths HW ဖျက်"',
-          ])}
-
-          ${_helpCheat('📋 Daily Report (နေ့စဉ်)', [
-            '"Adam ဒီနေ့ ထမင်း အကုန်စားတယ်၊ ပျော်ရွှင်တယ်"',
-            '"Hannah အိပ်ချိန် ၃၀ မိနစ်"',
-            '"Adam report ထဲ mood Happy ပြောင်း"',
-          ])}
-
-          ${_helpCheat('⚡ Incident (မှတ်တမ်း)', [
-            '"Adam သူငယ်ချင်းကို ကူညီတယ် - good behaviour"',
-            '"Mg Mg incident severity High ပြောင်း"',
-            '"Hannah ရဲ့ incident ဖျက်"',
-          ])}
-
-          ${_helpCheat('💬 Parent / Broadcast', [
-            '"Adam မိဘကို ဖုန်းဆက်ဖို့ ပြော"',
-            '"P4 အကုန်ကို မနက်ဖြန် ကျောင်းပိတ်တယ်လို့ ပြော"',
-            '"မှားပို့မိတဲ့ broadcast ဖျက်"',
-          ])}
-
-          ${_helpCheat('🔍 မေးမြန်းခြင်း', [
-            '"P4 မှာ ဘယ်နှယောက်ရှိလဲ"',
-            '"Adam ရဲ့ ဖုန်းနံပါတ်"',
-            '"ဒီနေ့ ဘယ်သူတွေ မလာဘူးလဲ"',
-            '"student list ပြ"',
-          ])}
+          ${_helpCheat(t('help.ai.cheat.attend.title'), _helpPoints('help.ai.cheat.attend', 5))}
+          ${_helpCheat(t('help.ai.cheat.hw.title'), _helpPoints('help.ai.cheat.hw', 4))}
+          ${_helpCheat(t('help.ai.cheat.daily.title'), _helpPoints('help.ai.cheat.daily', 3))}
+          ${_helpCheat(t('help.ai.cheat.inc.title'), _helpPoints('help.ai.cheat.inc', 3))}
+          ${_helpCheat(t('help.ai.cheat.parent.title'), _helpPoints('help.ai.cheat.parent', 3))}
+          ${_helpCheat(t('help.ai.cheat.query.title'), _helpPoints('help.ai.cheat.query', 4))}
 
           <div class="help-tip">
             <span class="help-tip-icon">⚡</span>
-            <span><b>AI က လုပ်နိုင်တာ:</b> attendance, daily report, homework, incident, parent message, broadcast, timetable — ထည့်/ပြင်/ဖျက် အကုန်လုံး။ Student list, info တွေ မေးကြည့်လို့လည်း ရ။</span>
+            <span><b>${t('help.ai.tip1').split(':')[0]}:</b>${t('help.ai.tip1').split(':').slice(1).join(':')}</span>
           </div>
 
           <div class="help-tip" style="background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.3)">
             <span class="help-tip-icon">💡</span>
-            <span><b>သတိ:</b> ဖျက်/ပြင်တဲ့အခါ — AI က "ဘယ်ဟာလဲ?" ဆိုပြီး အရင်မေးပါတယ်။ မှန်တဲ့ဟာ ရွေးပြီးမှ လုပ်ပါတယ် — မှားဖျက်တာ မဖြစ်အောင်။</span>
+            <span><b>${t('help.ai.tip2').split(':')[0]}:</b>${t('help.ai.tip2').split(':').slice(1).join(':')}</span>
           </div>
         </div>
 
         <!-- TROUBLESHOOTING -->
         <div class="help-pane" id="help-trouble">
-          ${_helpSection('🔧', 'ပြဿနာ ဖြေရှင်းနည်း',
-            'အသုံးပြုရင်း ပြဿနာ တွေ့ရင် — အောက်က ဖြေရှင်းနည်းတွေ စမ်းကြည့်ပါ။')}
+          ${_helpSection('🔧', t('help.trouble.introTitle'), t('help.trouble.introBody'))}
 
-          ${_helpTrouble('App မဖွင့်ဘူး / "Connection failed" ပြတယ်',
-            'အင်တာနက် ချိတ်ဆက်မှု စစ်ပါ။ ပြီးရင် Retry နှိပ်ပါ။ ၂-၃ ကြိမ် မရရင် — admin ဆီ အကြောင်းကြားပါ။')}
-
-          ${_helpTrouble('Attendance save လုပ်လို့ မရဘူး',
-            'အပေါ်က date မှန်/မမှန် စစ်ပါ။ Student တွေ မှတ်ပြီးတဲ့အခါ — အောက်ဆုံးက "Save Attendance" ခလုတ် နှိပ်ဖို့ မမေ့ပါနဲ့။')}
-
-          ${_helpTrouble('Student အသစ်ထည့်လို့ မရဘူး',
-            'English name က မဖြစ်မနေ လိုပါတယ် (* မှတ်ထားတဲ့ field)။ Class လည်း ရွေးထားဖို့ လိုပါတယ်။')}
-
-          ${_helpTrouble('မိဘ Telegram ချိတ်လို့ မရဘူး',
-            'Student ထည့်ပြီးတဲ့အခါ ပေါ်လာတဲ့ link ကို မိဘဆီ ပို့ပါ။ မိဘက အဲ့ link နှိပ်ပြီး bot ထဲ Start နှိပ်ရပါမယ်။ ၁ မိနစ်လောက် စောင့်ပါ။')}
-
-          ${_helpTrouble('AI က နားမလည်ဘူး',
-            'ပိုရှင်းအောင် ပြောကြည့်ပါ။ ဥပမာ — "Adam" တစ်ခုတည်းမဟုတ်ဘဲ "Adam ဒီနေ့ မလာဘူး" လို့ အပြည့်ပြောပါ။ Student နာမည် မှန်အောင် ရိုက်ပါ။')}
-
-          ${_helpTrouble('Data မမြင်ရဘူး / အဟောင်းတွေ ပြနေတယ်',
-            'အပေါ်ညာက ↻ refresh ခလုတ် နှိပ်ပါ။ App ပြန်ပိတ်ဖွင့်ကြည့်ပါ။')}
+          ${_helpTrouble(t('help.trouble.q1'), t('help.trouble.a1'))}
+          ${_helpTrouble(t('help.trouble.q2'), t('help.trouble.a2'))}
+          ${_helpTrouble(t('help.trouble.q3'), t('help.trouble.a3'))}
+          ${_helpTrouble(t('help.trouble.q4'), t('help.trouble.a4'))}
+          ${_helpTrouble(t('help.trouble.q5'), t('help.trouble.a5'))}
+          ${_helpTrouble(t('help.trouble.q6'), t('help.trouble.a6'))}
 
           <div class="help-tip">
             <span class="help-tip-icon">🆘</span>
-            <span>ဖြေရှင်းလို့ မရရင် — သင့်ကျောင်း <b>admin</b> ဆီ ဒါမှမဟုတ် <b>support channel</b> ဆီ ဆက်သွယ်ပါ။</span>
+            <span>${esc(t('help.trouble.tip'))}</span>
           </div>
         </div>
 
         ${isAdmin ? `
         <!-- ADMIN -->
         <div class="help-pane" id="help-admin">
-          ${_helpSection('🛠️', 'Admin Tools',
-            'Admin အနေနဲ့ — ကျောင်းတစ်ခုလုံး setting ပြောင်းနိုင်ပါတယ်။')}
-          ${_helpFeature('🖼️', 'School Logo', [
-            'More → School logo → image upload',
-            'Header, sidebar, report တွေမှာ ပေါ်လာ',
-          ])}
-          ${_helpFeature('🏷️', 'Classes & Grades', [
-            'More → Classes & grades',
-            'သင့်ကျောင်းသုံး class name (P4 Online, C1...) ထည့်/ဖျက်',
-            'Student ထည့်တဲ့အခါ ဒီ list ပေါ်လာ',
-          ])}
-          ${_helpFeature('🗓️', 'Timetable', [
-            'More → Timetable → + နဲ့ period ထည့်',
-            'Day, period, class, subject, room',
-          ])}
-          ${_helpFeature('🏫', 'Registration', [
-            'New teacher — bot ထဲ /register_teacher',
-            'Admin approve ပြီးမှ teacher account active',
-          ])}
+          ${_helpSection('🛠️', t('help.admin.introTitle'), t('help.admin.introBody'))}
+          ${_helpFeature('🖼️', t('help.admin.logo.title'), _helpPoints('help.admin.logo', 2))}
+          ${_helpFeature('🏷️', t('help.admin.classes.title'), _helpPoints('help.admin.classes', 3))}
+          ${_helpFeature('🗓️', t('help.admin.timetable.title'), _helpPoints('help.admin.timetable', 2))}
+          ${_helpFeature('🏫', t('help.admin.reg.title'), _helpPoints('help.admin.reg', 2))}
         </div>` : ''}
 
         <!-- ABOUT -->
         <div class="help-pane" id="help-about">
-          ${_helpSection('📱', 'About SCMS',
-            'SCMS v11 — Telegram-first school management. Made for Myanmar schools.')}
+          ${_helpSection('📱', t('help.about.introTitle'), t('help.about.introBody'))}
           <div class="help-about-rows">
-            <div class="help-about-row"><span>Version</span><span>v${esc(SCMS_CONFIG.VERSION)}</span></div>
-            <div class="help-about-row"><span>Platform</span><span>${esc(window.APP.platform)}</span></div>
-            <div class="help-about-row"><span>School</span><span>${esc(window.APP.school_name || '—')}</span></div>
+            <div class="help-about-row"><span>${t('help.about.version')}</span><span>v${esc(SCMS_CONFIG.VERSION)}</span></div>
+            <div class="help-about-row"><span>${t('help.about.platform')}</span><span>${esc(window.APP.platform)}</span></div>
+            <div class="help-about-row"><span>${t('help.about.school')}</span><span>${esc(window.APP.school_name || '—')}</span></div>
           </div>
-          ${_helpSection('🆘', 'အကူအညီ လိုရင်',
-            'ပြဿနာ တစ်ခုခု ဖြစ်ရင် — သင့်ကျောင်း admin ဆီ ဒါမှမဟုတ် support channel ဆီ ဆက်သွယ်ပါ။')}
+          ${_helpSection('🆘', t('help.about.needHelpTitle'), t('help.about.needHelpBody'))}
           <button class="help-replay-btn" onclick="closeModal(); setTimeout(startFirstTour, 300);">
-            🔄 Welcome tour ပြန်ကြည့်မယ်
+            ${t('help.about.replayTour')}
           </button>
         </div>
 
       </div>
 
-      <button class="btn-secondary" style="margin-top:14px" onclick="closeModal()">ပိတ်မယ်</button>
+      <button class="btn-secondary" style="margin-top:14px" onclick="closeModal()">${t('help.close')}</button>
     </div>`;
 
   openModal(html);
@@ -252,6 +162,12 @@ window.switchHelpTab = function (btn, paneId) {
 };
 
 // ── Help content builders ──────────────────────────────────────────────────
+// Collects t('<prefix>.1') .. t('<prefix>.N') into an array of translated strings.
+function _helpPoints(prefix, n) {
+  const out = [];
+  for (let i = 1; i <= n; i++) out.push(t(`${prefix}.${i}`));
+  return out;
+}
 function _helpSection(icon, title, text) {
   return `
     <div class="help-section">
@@ -305,38 +221,16 @@ function _helpTrouble(problem, solution) {
 
 const TOUR_KEY = 'scms_tour_done_v1';
 
-const TOUR_STEPS = [
-  {
-    title: 'SCMS မှ ကြိုဆိုပါတယ် 👋',
-    text: 'ကျောင်းတစ်ခုလုံးကို ဒီနေရာက စီမံနိုင်ပါတယ်။ ၅ ဆင့်နဲ့ မိတ်ဆက်ပေးပါမယ်။',
-    target: null,  // centered welcome
-    emoji: '🏫',
-  },
-  {
-    title: 'Students',
-    text: 'ကျောင်းသားတွေ ဒီမှာ ရှိတယ်။ Card တစ်ခု နှိပ်ရင် — အသေးစိတ်ကြည့်/ပြင်နိုင်တယ်။',
-    target: '.tab-btn[data-page="students"]',
-    emoji: '👥',
-  },
-  {
-    title: 'Attendance',
-    text: 'ဒီနေ့ ဘယ်သူလာ/မလာ — P/A/L/T/S/E/H code နဲ့ တစ်ချက်တည်း မှတ်နိုင်တယ်။',
-    target: '.tab-btn[data-page="attend"]',
-    emoji: '✅',
-  },
-  {
-    title: '+ ခလုတ်',
-    text: 'ဒီ + ခလုတ်က — ဘယ် page မှာ ရှိနေတယ်ဆို အဲ့ဒီ "အသစ်ထည့်" အလုပ်လုပ်တယ်။',
-    target: '#fab',
-    emoji: '➕',
-  },
-  {
-    title: 'More — အကူအညီ ဒီမှာ',
-    text: 'More tab ထဲမှာ — အသုံးပြုနည်း အပြည့်အစုံ, admin tools, settings အကုန် ရှိတယ်။',
-    target: '.tab-btn[data-page="more"]',
-    emoji: '⋯',
-  },
-];
+// Built fresh from t() each time the tour starts, so it follows the current language.
+function _tourSteps() {
+  return [
+    { title: t('tour.s1.title'), text: t('tour.s1.text'), target: null, emoji: '🏫' },
+    { title: t('tour.s2.title'), text: t('tour.s2.text'), target: '.tab-btn[data-page="students"]', emoji: '👥' },
+    { title: t('tour.s3.title'), text: t('tour.s3.text'), target: '.tab-btn[data-page="attend"]', emoji: '✅' },
+    { title: t('tour.s4.title'), text: t('tour.s4.text'), target: '#fab', emoji: '➕' },
+    { title: t('tour.s5.title'), text: t('tour.s5.text'), target: '.tab-btn[data-page="more"]', emoji: '⋯' },
+  ];
+}
 
 window.maybeStartTour = function () {
   // Only in TWA or native — skip on landing/web preview; only once.
@@ -348,15 +242,17 @@ window.maybeStartTour = function () {
 };
 
 let _tourIdx = 0;
+let _tourStepsCache = [];
 
 window.startFirstTour = function () {
   _tourIdx = 0;
+  _tourStepsCache = _tourSteps();
   _renderTourStep();
 };
 
 function _renderTourStep() {
   _removeTour();
-  const step = TOUR_STEPS[_tourIdx];
+  const step = _tourStepsCache[_tourIdx];
   if (!step) { _finishTour(); return; }
 
   const overlay = document.createElement('div');
@@ -388,12 +284,12 @@ function _renderTourStep() {
       <h3 class="tour-title">${esc(step.title)}</h3>
       <p class="tour-text">${esc(step.text)}</p>
       <div class="tour-dots">
-        ${TOUR_STEPS.map((_, i) => `<span class="tour-dot ${i === _tourIdx ? 'active' : ''}"></span>`).join('')}
+        ${_tourStepsCache.map((_, i) => `<span class="tour-dot ${i === _tourIdx ? 'active' : ''}"></span>`).join('')}
       </div>
       <div class="tour-actions">
-        <button class="tour-skip" onclick="skipTour()">ကျော်မယ်</button>
+        <button class="tour-skip" onclick="skipTour()">${t('tour.skip')}</button>
         <button class="tour-next" onclick="nextTourStep()">
-          ${_tourIdx === TOUR_STEPS.length - 1 ? 'ပြီးပြီ ✓' : 'နောက်တစ်ခု →'}
+          ${_tourIdx === _tourStepsCache.length - 1 ? t('tour.done') : t('tour.next')}
         </button>
       </div>
     </div>`;
@@ -403,7 +299,7 @@ function _renderTourStep() {
 
 window.nextTourStep = function () {
   _tourIdx++;
-  if (_tourIdx >= TOUR_STEPS.length) { _finishTour(); return; }
+  if (_tourIdx >= _tourStepsCache.length) { _finishTour(); return; }
   _renderTourStep();
 };
 

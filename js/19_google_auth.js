@@ -78,7 +78,7 @@ async function _onGoogleCredential(response) {
  * needs_choice response if this is a brand-new Google account.
  */
 async function _submitGoogleLogin(idToken, extra) {
-  _setGoogleStatus('Signing in…');
+  _setGoogleStatus(t('ga.signingIn'));
   try {
     const resp = await fetch(SCMS_CONFIG.GOOGLE_LOGIN_URL, {
       method: 'POST',
@@ -104,9 +104,9 @@ async function _submitGoogleLogin(idToken, extra) {
       return;
     }
 
-    _setGoogleStatus(result?.message || 'Sign-in မအောင်မြင်ပါ', true);
+    _setGoogleStatus(result?.message || t('ga.loginFailed'), true);
   } catch (e) {
-    _setGoogleStatus('Connection error — အင်တာနက် စစ်ပါ', true);
+    _setGoogleStatus(t('ga.connErr'), true);
   }
 }
 
@@ -201,7 +201,7 @@ function _pwFieldHtml(id, placeholder, autocomplete, extraAttrs) {
   return `
     <div class="pw-field-wrap">
       <input class="form-input" id="${id}" type="password" placeholder="${placeholder}" autocomplete="${autocomplete}" ${extraAttrs || ''}>
-      <button type="button" class="pw-toggle-btn" onclick="togglePwVisibility('${id}', this)" aria-label="Show password">👁️</button>
+      <button type="button" class="pw-toggle-btn" onclick="togglePwVisibility('${id}', this)" aria-label="${esc(t('ga.showPassword'))}">👁️</button>
     </div>`;
 }
 
@@ -221,28 +221,28 @@ window.togglePwVisibility = function (id, btn) {
 
 function _showGoogleChoiceScreen() {
   _transitionAuthScreen(_authScreenShell(
-    '👋 ကြိုဆိုပါတယ်',
-    'ဒီ Google account နဲ့ SCMS account မရှိသေးပါ။ ဘာလုပ်ချင်ပါသလဲ?',
+    t('ga.welcome'),
+    t('ga.noAccount'),
     `
       <button class="landing-btn-ghost" onclick="showGoogleNewSchoolForm()">
         <span class="landing-btn-icon">🏫</span>
         <div class="landing-btn-text">
-          <div class="landing-btn-title">School အသစ် စတင်မည်</div>
-          <div class="landing-btn-sub">သင်က admin ဖြစ်လာပါမယ်</div>
+          <div class="landing-btn-title">${t('ga.startSchool')}</div>
+          <div class="landing-btn-sub">${t('ga.startSchoolSub')}</div>
         </div>
       </button>
       <button class="landing-btn-ghost mt8" onclick="showGoogleInviteForm()">
         <span class="landing-btn-icon">✉️</span>
         <div class="landing-btn-text">
-          <div class="landing-btn-title">Invite code ရှိပါတယ်</div>
-          <div class="landing-btn-sub">Admin ပေးထားတဲ့ code နဲ့ join ဝင်မည်</div>
+          <div class="landing-btn-title">${t('ga.haveInvite')}</div>
+          <div class="landing-btn-sub">${t('ga.haveInviteSub')}</div>
         </div>
       </button>
 
       <div id="authScreenForm"></div>
       <div id="authScreenStatus" class="form-error" style="display:none"></div>
 
-      <button class="btn-secondary mt16" onclick="_backToLanding()">← နောက်သို့</button>
+      <button class="btn-secondary mt16" onclick="_backToLanding()">${t('ga.back')}</button>
     `
   ));
 }
@@ -251,11 +251,11 @@ window.showGoogleNewSchoolForm = function () {
   const form = document.getElementById('authScreenForm');
   if (!form) return;
   form.innerHTML = `
-    <label class="field-label">Your name</label>
-    <input class="form-input" id="gNewTeacherName" type="text" placeholder="e.g. Sangfa">
-    <label class="field-label">School name</label>
-    <input class="form-input" id="gNewSchoolName" type="text" placeholder="e.g. Vavida ISB">
-    <button class="btn-primary mt16" onclick="submitGoogleNewSchool()">School စတင်မည်</button>
+    <label class="field-label">${t('ga.yourName')}</label>
+    <input class="form-input" id="gNewTeacherName" type="text" placeholder="${esc(t('ga.namePh'))}">
+    <label class="field-label">${t('ga.schoolName')}</label>
+    <input class="form-input" id="gNewSchoolName" type="text" placeholder="${esc(t('ga.schoolNamePh'))}">
+    <button class="btn-primary mt16" onclick="submitGoogleNewSchool()">${t('ga.startSchoolBtn')}</button>
   `;
 };
 
@@ -263,7 +263,7 @@ window.submitGoogleNewSchool = async function () {
   if (!_gisPendingChoice) return;
   const name = document.getElementById('gNewTeacherName')?.value.trim();
   const school = document.getElementById('gNewSchoolName')?.value.trim();
-  if (!school) { _setGoogleStatus('School name ထည့်ပါ', true); return; }
+  if (!school) { _setGoogleStatus(t('ga.enterSchoolName'), true); return; }
   await _submitGoogleLogin(_gisPendingChoice.id_token, {
     new_school_name: school,
     teacher_name: name || null,
@@ -274,12 +274,12 @@ window.showGoogleInviteForm = function () {
   const form = document.getElementById('authScreenForm');
   if (!form) return;
   form.innerHTML = `
-    <label class="field-label">Your name</label>
-    <input class="form-input" id="gInviteTeacherName" type="text" placeholder="e.g. Sangfa">
-    <label class="field-label">Invite code</label>
-    <input class="form-input" id="gInviteCode" type="text" placeholder="e.g. AC3F79"
+    <label class="field-label">${t('ga.yourName')}</label>
+    <input class="form-input" id="gInviteTeacherName" type="text" placeholder="${esc(t('ga.namePh'))}">
+    <label class="field-label">${t('ga.inviteCode')}</label>
+    <input class="form-input" id="gInviteCode" type="text" placeholder="${esc(t('ga.inviteCodePh'))}"
            autocapitalize="characters" style="text-transform:uppercase">
-    <button class="btn-primary mt16" onclick="submitGoogleInvite()">Join</button>
+    <button class="btn-primary mt16" onclick="submitGoogleInvite()">${t('ga.join')}</button>
   `;
 };
 
@@ -287,7 +287,7 @@ window.submitGoogleInvite = async function () {
   if (!_gisPendingChoice) return;
   const name = document.getElementById('gInviteTeacherName')?.value.trim();
   const code = document.getElementById('gInviteCode')?.value.trim().toUpperCase();
-  if (!code) { _setGoogleStatus('Invite code ထည့်ပါ', true); return; }
+  if (!code) { _setGoogleStatus(t('ga.enterInviteCode'), true); return; }
   await _submitGoogleLogin(_gisPendingChoice.id_token, {
     invite_code: code,
     teacher_name: name || null,
@@ -298,24 +298,24 @@ window.submitGoogleInvite = async function () {
 
 window.showEmailSignInScreen = function () {
   _transitionAuthScreen(_authScreenShell(
-    '📧 Email နဲ့ Sign in',
-    'သင့် email address နဲ့ password ကို ထည့်ပါ',
+    t('ga.emailSignIn'),
+    t('ga.emailSignInSub'),
     `
-      <label class="field-label">Email</label>
+      <label class="field-label">${t('ga.email')}</label>
       <input class="form-input" id="emailLoginEmail" type="email" placeholder="you@example.com" autocomplete="username">
-      <label class="field-label">Password</label>
+      <label class="field-label">${t('ga.password')}</label>
       ${_pwFieldHtml('emailLoginPw', '••••••••', 'current-password', 'onkeydown="if(event.key===\'Enter\')submitEmailLogin()"')}
 
       <label class="remember-me-row">
         <input type="checkbox" id="emailLoginRemember" checked>
-        <span>Remember me</span>
+        <span>${t('ga.rememberMe')}</span>
       </label>
 
-      <button class="btn-primary mt16" onclick="submitEmailLogin()">Sign in</button>
+      <button class="btn-primary mt16" onclick="submitEmailLogin()">${t('ga.signIn')}</button>
       <div id="authScreenStatus" class="form-error" style="display:none"></div>
 
-      <p class="login-help-text mt16">Account မရှိသေးဘူးလား? <a href="#" onclick="showEmailSignUpScreen(); return false;">Sign up</a></p>
-      <button class="btn-secondary mt8" onclick="_backToLanding()">← နောက်သို့</button>
+      <p class="login-help-text mt16">${t('ga.noAccountQ')} <a href="#" onclick="showEmailSignUpScreen(); return false;">${t('ga.signUp')}</a></p>
+      <button class="btn-secondary mt8" onclick="_backToLanding()">${t('ga.back')}</button>
     `
   ));
 };
@@ -324,8 +324,8 @@ window.submitEmailLogin = async function () {
   const email = document.getElementById('emailLoginEmail')?.value.trim();
   const pw = document.getElementById('emailLoginPw')?.value;
   const remember = document.getElementById('emailLoginRemember')?.checked !== false;
-  if (!email || !pw) { _setGoogleStatus('Email/Password ထည့်ပါ', true); return; }
-  _setGoogleStatus('Signing in…');
+  if (!email || !pw) { _setGoogleStatus(t('ga.enterEmailPw'), true); return; }
+  _setGoogleStatus(t('ga.signingIn'));
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_email_login`, {
       method: 'POST',
@@ -338,7 +338,7 @@ window.submitEmailLogin = async function () {
     });
     const result = await resp.json();
     if (result && result.ok) { _completeLogin(result, 'email', remember); return; }
-    _setGoogleStatus(result?.message || 'Sign-in မအောင်မြင်ပါ', true);
+    _setGoogleStatus(result?.message || t('ga.loginFailed'), true);
   } catch (e) {
     _setGoogleStatus('Connection error', true);
   }
@@ -351,38 +351,38 @@ let _emailSignupChoice = null; // 'new' | 'invite'
 window.showEmailSignUpScreen = function () {
   _emailSignupChoice = null;
   _transitionAuthScreen(_authScreenShell(
-    '✨ Account အသစ် ဖန်တီးမည်',
-    'Email/Password ကိုယ်တိုင် ရွေးချယ်နိုင်ပါတယ်',
+    t('ga.createAccount'),
+    t('ga.createAccountSub'),
     `
-      <label class="field-label">Your name</label>
-      <input class="form-input" id="emailSignupName" type="text" placeholder="e.g. Sangfa">
-      <label class="field-label">Email</label>
+      <label class="field-label">${t('ga.yourName')}</label>
+      <input class="form-input" id="emailSignupName" type="text" placeholder="${esc(t('ga.namePh'))}">
+      <label class="field-label">${t('ga.email')}</label>
       <input class="form-input" id="emailSignupEmail" type="email" placeholder="you@example.com" autocomplete="username">
-      <label class="field-label">Password</label>
-      ${_pwFieldHtml('emailSignupPw', '၆ လုံးအနည်းဆုံး', 'new-password')}
+      <label class="field-label">${t('ga.password')}</label>
+      ${_pwFieldHtml('emailSignupPw', t('ga.atLeast6'), 'new-password')}
 
-      <div class="landing-divider mt16"><span>ဘာလုပ်ချင်ပါသလဲ</span></div>
+      <div class="landing-divider mt16"><span>${t('ga.whatToDo')}</span></div>
 
       <button class="landing-btn-ghost" id="tabNewSchool" onclick="_signupChoiceTab('new')">
         <span class="landing-btn-icon">🏫</span>
         <div class="landing-btn-text">
-          <div class="landing-btn-title">School အသစ် စတင်မည်</div>
+          <div class="landing-btn-title">${t('ga.startSchool')}</div>
         </div>
       </button>
       <button class="landing-btn-ghost mt8" id="tabInvite" onclick="_signupChoiceTab('invite')">
         <span class="landing-btn-icon">✉️</span>
         <div class="landing-btn-text">
-          <div class="landing-btn-title">Invite code ရှိပါတယ်</div>
+          <div class="landing-btn-title">${t('ga.haveInvite')}</div>
         </div>
       </button>
 
       <div id="signupExtraField" class="mt8"></div>
 
-      <button class="btn-primary mt16" id="emailSignupBtn" onclick="submitEmailSignup()" disabled>ဆက်သွားရန် ရွေးချယ်ပါ</button>
+      <button class="btn-primary mt16" id="emailSignupBtn" onclick="submitEmailSignup()" disabled>${t('ga.chooseToContinue')}</button>
       <div id="authScreenStatus" class="form-error" style="display:none"></div>
 
-      <p class="login-help-text mt16">Account ရှိပြီးသားလား? <a href="#" onclick="showEmailSignInScreen(); return false;">Sign in</a></p>
-      <button class="btn-secondary mt8" onclick="_backToLanding()">← နောက်သို့</button>
+      <p class="login-help-text mt16">${t('ga.haveAccountQ')} <a href="#" onclick="showEmailSignInScreen(); return false;">${t('ga.signIn')}</a></p>
+      <button class="btn-secondary mt8" onclick="_backToLanding()">${t('ga.back')}</button>
     `
   ));
 };
@@ -394,15 +394,15 @@ window._signupChoiceTab = function (which) {
   if (!extra || !btn) return;
   if (which === 'new') {
     extra.innerHTML = `
-      <label class="field-label">School name</label>
-      <input class="form-input" id="signupSchoolName" type="text" placeholder="e.g. Vavida ISB">`;
-    btn.textContent = 'School စတင်မည်';
+      <label class="field-label">${t('ga.schoolName')}</label>
+      <input class="form-input" id="signupSchoolName" type="text" placeholder="${esc(t('ga.schoolNamePh'))}">`;
+    btn.textContent = t('ga.startSchoolBtn');
   } else {
     extra.innerHTML = `
-      <label class="field-label">Invite code</label>
-      <input class="form-input" id="signupInviteCode" type="text" placeholder="e.g. AC3F79"
+      <label class="field-label">${t('ga.inviteCode')}</label>
+      <input class="form-input" id="signupInviteCode" type="text" placeholder="${esc(t('ga.inviteCodePh'))}"
              autocapitalize="characters" style="text-transform:uppercase">`;
-    btn.textContent = 'Join ဝင်မည်';
+    btn.textContent = t('ga.join');
   }
   btn.disabled = false;
 };
@@ -411,9 +411,9 @@ window.submitEmailSignup = async function () {
   const name = document.getElementById('emailSignupName')?.value.trim();
   const email = document.getElementById('emailSignupEmail')?.value.trim();
   const pw = document.getElementById('emailSignupPw')?.value;
-  if (!name) { _setGoogleStatus('နာမည် ထည့်ပါ', true); return; }
-  if (!email) { _setGoogleStatus('Email ထည့်ပါ', true); return; }
-  if (!pw || pw.length < 6) { _setGoogleStatus('Password အနည်းဆုံး ၆ လုံး ထည့်ပါ', true); return; }
+  if (!name) { _setGoogleStatus(t('ga.enterName'), true); return; }
+  if (!email) { _setGoogleStatus(t('ga.enterEmail'), true); return; }
+  if (!pw || pw.length < 6) { _setGoogleStatus(t('ga.pwAtLeast6'), true); return; }
 
   const payload = {
     p_email: email, p_password: pw, p_teacher_name: name,
@@ -422,18 +422,18 @@ window.submitEmailSignup = async function () {
   };
   if (_emailSignupChoice === 'new') {
     const school = document.getElementById('signupSchoolName')?.value.trim();
-    if (!school) { _setGoogleStatus('School name ထည့်ပါ', true); return; }
+    if (!school) { _setGoogleStatus(t('ga.enterSchoolName'), true); return; }
     payload.p_new_school_name = school;
   } else if (_emailSignupChoice === 'invite') {
     const code = document.getElementById('signupInviteCode')?.value.trim().toUpperCase();
-    if (!code) { _setGoogleStatus('Invite code ထည့်ပါ', true); return; }
+    if (!code) { _setGoogleStatus(t('ga.enterInviteCode'), true); return; }
     payload.p_invite_code = code;
   } else {
-    _setGoogleStatus('School အသစ် (သို့) Invite code ရွေးပါ', true);
+    _setGoogleStatus(t('ga.chooseSchoolOrInvite'), true);
     return;
   }
 
-  _setGoogleStatus('Creating account…');
+  _setGoogleStatus(t('ga.creatingAccount'));
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_email_signup`, {
       method: 'POST',
@@ -446,7 +446,7 @@ window.submitEmailSignup = async function () {
     });
     const result = await resp.json();
     if (result && result.ok) { _completeLogin(result, 'email'); return; }
-    _setGoogleStatus(result?.message || 'Sign-up မအောင်မြင်ပါ', true);
+    _setGoogleStatus(result?.message || t('ga.signupFailed'), true);
   } catch (e) {
     _setGoogleStatus('Connection error', true);
   }
@@ -473,15 +473,15 @@ window.openTelegramConnectModal = function () {
   wrap.innerHTML = `
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">🔗 Telegram ချိတ်ဆက်မည်</h3>
-      <p class="modal-subtitle">Parent report များနှင့် backup login အတွက် Telegram ကို ချိတ်ဆက်ထားပါ။</p>
+      <h3 class="modal-title">${t('tg.connectTitle')}</h3>
+      <p class="modal-subtitle">${t('tg.connectSub')}</p>
 
-      <div id="tgConnectStatus" class="login-help-text">Telegram bot ကို ဖွင့်ပြီး Start နှိပ်ပါ…</div>
+      <div id="tgConnectStatus" class="login-help-text">${t('tg.waitingStart')}</div>
 
       <button class="btn-primary mt16" id="tgConnectOpenBtn" onclick="startTelegramConnect()">
-        Telegram ဖွင့်မည်
+        ${t('tg.openTelegram')}
       </button>
-      <button class="btn-secondary" onclick="closeTelegramConnectModal()">Cancel</button>
+      <button class="btn-secondary" onclick="closeTelegramConnectModal()">${t('common.cancel')}</button>
     </div>`;
   wrap.onclick = closeTelegramConnectModal;
   document.body.appendChild(wrap);
@@ -499,7 +499,7 @@ window.startTelegramConnect = async function () {
 
   const statusEl = document.getElementById('tgConnectStatus');
   const btn = document.getElementById('tgConnectOpenBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Opening Telegram…'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('boot.openingTg'); }
 
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_telegram_connect_start`, {
@@ -513,8 +513,8 @@ window.startTelegramConnect = async function () {
     });
     const result = await resp.json();
     if (!result || !result.ok) {
-      if (statusEl) statusEl.textContent = result?.message || 'ချိတ်ဆက်မရပါ — ထပ်ကြိုးစားပါ';
-      if (btn) { btn.disabled = false; btn.textContent = 'Telegram ဖွင့်မည်'; }
+      if (statusEl) statusEl.textContent = result?.message || t('tg.connectFailed');
+      if (btn) { btn.disabled = false; btn.textContent = t('tg.openTelegram'); }
       return;
     }
 
@@ -525,14 +525,14 @@ window.startTelegramConnect = async function () {
     if (typeof _openTelegram === 'function') _openTelegram(url);
     else window.open(url, '_blank', 'noopener');
 
-    if (statusEl) statusEl.textContent = 'Telegram ထဲမှာ Start နှိပ်ပါ… စောင့်နေပါတယ်';
-    if (btn) btn.textContent = 'ထပ်ဖွင့်မည်';
+    if (statusEl) statusEl.textContent = t('tg.waitingTap');
+    if (btn) btn.textContent = t('tg.reopen');
     if (btn) btn.disabled = false;
 
     _startTelegramConnectPolling(sess.session_token, _tgConnectToken);
   } catch (e) {
-    if (statusEl) statusEl.textContent = 'Connection error';
-    if (btn) { btn.disabled = false; btn.textContent = 'Telegram ဖွင့်မည်'; }
+    if (statusEl) statusEl.textContent = t('ct.connErr');
+    if (btn) { btn.disabled = false; btn.textContent = t('tg.openTelegram'); }
   }
 };
 
@@ -544,7 +544,7 @@ function _startTelegramConnectPolling(sessionToken, connectToken) {
     if (attempts > 150) { // ~5 min at 2s
       _stopTelegramConnectPolling();
       const statusEl = document.getElementById('tgConnectStatus');
-      if (statusEl) statusEl.textContent = 'Timed out — ထပ်ကြိုးစားပါ';
+      if (statusEl) statusEl.textContent = t('tg.timedOut');
       return;
     }
     try {
@@ -561,13 +561,13 @@ function _startTelegramConnectPolling(sessionToken, connectToken) {
       if (result && result.ok) {
         _stopTelegramConnectPolling();
         if (window.APP) window.APP.telegram_id = result.telegram_id;
-        showToast?.('✓ Telegram ချိတ်ဆက်ပြီးပါပြီ');
+        showToast?.(t('tg.connected'));
         closeTelegramConnectModal();
         if (typeof window.openSettings === 'function') window.openSettings();
       } else if (result && result.error && result.error !== 'not_linked_yet') {
         _stopTelegramConnectPolling();
         const statusEl = document.getElementById('tgConnectStatus');
-        if (statusEl) statusEl.textContent = result.message || 'ချိတ်ဆက်မရပါ';
+        if (statusEl) statusEl.textContent = result.message || t('tg.connectFailed');
       }
       // 'not_linked_yet' → keep polling silently
     } catch (e) { /* keep polling */ }
@@ -589,11 +589,11 @@ window.disconnectTelegram = function () {
   wrap.innerHTML = `
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:360px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">🔌 Telegram ဖြုတ်မှာလား?</h3>
-      <p class="modal-subtitle">Parent report/backup login အတွက် Telegram ချိတ်ဆက်မှု ပြတ်သွားပါမယ်။</p>
+      <h3 class="modal-title">${t('tg.disconnectTitle')}</h3>
+      <p class="modal-subtitle">${t('tg.disconnectSub')}</p>
 
-      <button class="btn-danger solid mt16" onclick="_doDisconnectTelegramConfirmed()">ဖြုတ်မည်</button>
-      <button class="btn-secondary mt8" onclick="_closeTgDisconnectConfirm()">Cancel</button>
+      <button class="btn-danger solid mt16" onclick="_doDisconnectTelegramConfirmed()">${t('tg.disconnect')}</button>
+      <button class="btn-secondary mt8" onclick="_closeTgDisconnectConfirm()">${t('common.cancel')}</button>
     </div>`;
   wrap.onclick = _closeTgDisconnectConfirm;
   document.body.appendChild(wrap);
@@ -622,7 +622,7 @@ window._doDisconnectTelegramConfirmed = async function () {
     const result = await resp.json();
     if (result && result.ok) {
       if (window.APP) window.APP.telegram_id = null;
-      showToast?.('Telegram ဖြုတ်ပြီးပါပြီ');
+      showToast?.(t('tg.disconnected'));
       if (typeof window.openSettings === 'function') window.openSettings();
     }
   } catch (e) { /* best effort */ }

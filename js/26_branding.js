@@ -95,8 +95,8 @@ function _brandRefreshViews() {
 window.openBrandingModal = function (kind) {
   const K = _BRAND_KINDS[kind];
   if (!K) return;
-  if (K.adminOnly && !window.APP.is_admin) { showToast('Only admins can change this'); return; }
-  if (window.APP.platform !== 'web') { showToast('Please sign in on the web app to change this'); return; }
+  if (K.adminOnly && !window.APP.is_admin) { showToast(t('branding.adminOnly')); return; }
+  if (window.APP.platform !== 'web') { showToast(t('modules.needWeb')); return; }
 
   const cur = _brandCurrent(kind);
   openModal(`
@@ -109,8 +109,8 @@ window.openBrandingModal = function (kind) {
 
       <input type="file" id="brandFileInput" accept="image/png,image/jpeg,image/webp" style="display:none">
       <div class="logo-actions">
-        <button class="btn-secondary" id="btnBrandPick">📷 Choose image</button>
-        ${cur ? '<button class="btn-danger" id="btnBrandRemove">Remove</button>' : ''}
+        <button class="btn-secondary" id="btnBrandPick">${t('branding.chooseImage')}</button>
+        ${cur ? `<button class="btn-danger" id="btnBrandRemove">${t('picker.remove')}</button>` : ''}
       </div>
 
       <div class="info-tip" style="margin-top:14px">
@@ -120,7 +120,7 @@ window.openBrandingModal = function (kind) {
       <div id="brandStatus" class="brand-status" style="display:none"></div>
 
       <div class="modal-actions" style="margin-top:18px">
-        <button class="btn-secondary" onclick="closeModal()">Done</button>
+        <button class="btn-secondary" onclick="closeModal()">${t('common.done')}</button>
       </div>
     </div>`);
 
@@ -143,8 +143,8 @@ function _brandStatus(msg, ok) {
 
 async function _brandHandlePick(kind, file) {
   if (!file) return;
-  if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) { showToast('Please choose a PNG, JPG or WebP image'); return; }
-  if (file.size > _BRAND_MAX_BYTES) { showToast('Image is too large (max 8 MB)'); return; }
+  if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) { showToast(t('branding.imageTypes')); return; }
+  if (file.size > _BRAND_MAX_BYTES) { showToast(t('branding.imageTooBig')); return; }
   try {
     _brandStatus('Processing…');
     const blob = await _brandImageToBlob(file, _BRAND_KINDS[kind]);
@@ -154,7 +154,7 @@ async function _brandHandlePick(kind, file) {
   } catch (err) {
     console.error('[branding] failed', err);
     _brandStatus(err.message || 'Failed', false);
-    showToast('Could not save — ' + (err.message || 'try again'));
+    showToast(t('modules.saveFailed', { err: err.message || t('branding.tryAgain') }));
   }
 }
 
@@ -188,7 +188,7 @@ async function _brandSave(kind, blob) {
   } catch (err) {
     console.error('[branding] save failed', err);
     _brandStatus(err.message || 'Save failed', false);
-    showToast('Could not save — ' + (err.message || 'try again'));
+    showToast(t('modules.saveFailed', { err: err.message || t('branding.tryAgain') }));
   }
 }
 

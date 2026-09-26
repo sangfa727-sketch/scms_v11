@@ -6,10 +6,10 @@
 'use strict';
 
 function _loginMethodLabel(isWeb) {
-  if (!isWeb) return 'Telegram';
+  if (!isWeb) return t('settings.telegram');
   const mode = window.APP.webSession?.auth_mode;
-  if (mode === 'google') return 'Google account';
-  return 'Web (password)';
+  if (mode === 'google') return t('settings.googleAccount');
+  return t('settings.webPassword');
 }
 
 window.openSettings = function() {
@@ -19,49 +19,49 @@ window.openSettings = function() {
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">⚙️ Settings</h3>
+      <h3 class="modal-title">${t('settings.title')}</h3>
 
-      <div class="info-row"><span>Version</span><span>v${esc(SCMS_CONFIG.VERSION)}</span></div>
-      <div class="info-row"><span>Platform</span><span>${esc(window.APP.platform)}</span></div>
-      <div class="info-row"><span>School</span><span>${esc(window.APP.school_name)}</span></div>
-      <div class="info-row"><span>Teacher</span><span>${esc(window.APP.teacher_name)}</span></div>
-      <div class="info-row"><span>Role</span><span>${esc(window.APP.teacher_role)}</span></div>
-      <div class="info-row"><span>Login</span><span>${esc(_loginMethodLabel(isWeb))}</span></div>
-      <div class="info-row"><span>Telegram</span><span>${window.APP.telegram_id ? '🟢 Connected' : '⚪ Not connected'}</span></div>
+      <div class="info-row"><span>${t('settings.version')}</span><span>v${esc(SCMS_CONFIG.VERSION)}</span></div>
+      <div class="info-row"><span>${t('settings.platform')}</span><span>${esc(window.APP.platform)}</span></div>
+      <div class="info-row"><span>${t('settings.school')}</span><span>${esc(window.APP.school_name)}</span></div>
+      <div class="info-row"><span>${t('settings.teacher')}</span><span>${esc(window.APP.teacher_name)}</span></div>
+      <div class="info-row"><span>${t('settings.role')}</span><span>${esc(window.APP.teacher_role)}</span></div>
+      <div class="info-row"><span>${t('settings.login')}</span><span>${esc(_loginMethodLabel(isWeb))}</span></div>
+      <div class="info-row"><span>${t('settings.telegram')}</span><span>${window.APP.telegram_id ? t('settings.connected') : t('settings.notConnected')}</span></div>
 
       ${isAdmin ? `
         <button class="btn-primary mt16" onclick="closeModal(); openTeacherManager()">
-          👥 Manage Teachers
+          ${t('settings.manageTeachers')}
         </button>
       ` : ''}
 
       ${isWeb && !window.APP.telegram_id ? `
         <button class="btn-secondary mt8" onclick="closeModal(); openTelegramConnectModal()">
-          🔗 Connect Telegram
+          ${t('settings.connectTelegram')}
         </button>
       ` : ''}
       ${isWeb && window.APP.telegram_id ? `
         <button class="btn-secondary mt8" onclick="disconnectTelegram()">
-          🔌 Disconnect Telegram
+          ${t('settings.disconnectTelegram')}
         </button>
       ` : ''}
 
       ${isWeb && window.APP.webSession?.auth_mode !== 'google' ? `
         <button class="btn-secondary mt8" onclick="closeModal(); openChangePasswordModal()">
-          🔑 Change my password
+          ${t('settings.changePassword')}
         </button>
       ` : ''}
       ${isWeb ? `
         <button class="btn-secondary mt8" onclick="webLogout()">
-          🚪 Sign out
+          ${t('sb.signout')}
         </button>
       ` : ''}
 
       <p class="settings-footer-note">
-        SCMS is managed by your school administrator.
+        ${t('settings.footerNote')}
       </p>
 
-      <button class="btn-secondary mt16" onclick="closeModal()">Close</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.close')}</button>
     </div>`;
 
   openModal(html);
@@ -75,17 +75,17 @@ window.openTeacherManager = async function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:480px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">👥 Manage Teachers</h3>
-      <p class="modal-subtitle">Create login accounts for your teachers.</p>
+      <h3 class="modal-title">${t('tm.title')}</h3>
+      <p class="modal-subtitle">${t('tm.subtitle')}</p>
 
-      <button class="btn-primary" onclick="openCreateTeacherModal()">+ Add new teacher (Teacher ID + password)</button>
-      <button class="btn-secondary mt8" onclick="openInviteCodeModal()">✉️ Invite via Google (share a code)</button>
+      <button class="btn-primary" onclick="openCreateTeacherModal()">${t('tm.addNew')}</button>
+      <button class="btn-secondary mt8" onclick="openInviteCodeModal()">${t('tm.inviteGoogle')}</button>
 
       <div id="teacherList" class="teacher-list mt16">
-        <div class="text-center text-muted">Loading…</div>
+        <div class="text-center text-muted">${t('tm.loading')}</div>
       </div>
 
-      <button class="btn-secondary mt16" onclick="closeModal()">Close</button>
+      <button class="btn-secondary mt16" onclick="closeModal()">${t('common.close')}</button>
     </div>
   `);
 
@@ -97,7 +97,7 @@ window.openTeacherManager = async function() {
     _renderTeacherList(res.rows || []);
   } catch (e) {
     document.getElementById('teacherList').innerHTML =
-      '<div class="form-error">Failed to load teachers</div>';
+      `<div class="form-error">${t('tm.loadFailed')}</div>`;
   }
 };
 
@@ -105,22 +105,22 @@ function _renderTeacherList(teachers) {
   const el = document.getElementById('teacherList');
   if (!el) return;
   if (!teachers.length) {
-    el.innerHTML = '<div class="text-muted text-center">No teachers yet.</div>';
+    el.innerHTML = `<div class="text-muted text-center">${t('tm.none')}</div>`;
     return;
   }
   el.innerHTML = teachers.map(t => {
     const lastLogin = t.last_web_login_at
-      ? new Date(t.last_web_login_at).toLocaleDateString()
-      : 'Never';
+      ? new Date(t.last_web_login_at).toLocaleDateString(I18N.dateLocale())
+      : t('tm.never');
     const roleBadge = (t.role === 'admin' || t.role === 'super_admin') ? ' 👑' : '';
     const statusDot = t.status === 'active' ? '🟢' : '⚪';
     return `
       <div class="teacher-row" data-tid="${esc(t.teacher_id)}">
         <div class="teacher-row-info">
           <div class="teacher-row-name">${statusDot} ${esc(t.teacher_name)}${roleBadge}</div>
-          <div class="teacher-row-sub">${esc(t.teacher_id)} · ${esc(t.role || 'teacher')} · Last login: ${esc(lastLogin)}</div>
+          <div class="teacher-row-sub">${esc(t.teacher_id)} · ${esc(t.role ? tv('roleName', t.role) : t('inv.roleTeacher'))} · ${t('tm.lastLogin', { date: lastLogin })}</div>
         </div>
-        <button class="icon-btn-mini" onclick="resetTeacherPassword('${esc(t.teacher_id)}', '${esc(t.teacher_name)}')" title="Reset password">🔑</button>
+        <button class="icon-btn-mini" onclick="resetTeacherPassword('${esc(t.teacher_id)}', '${esc(t.teacher_name)}')" title="${esc(t('tm.resetPassword'))}">🔑</button>
       </div>`;
   }).join('');
 }
@@ -135,28 +135,28 @@ window.openInviteCodeModal = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">✉️ Invite via Google</h3>
-      <p class="modal-subtitle">Teacher သူ့ဖာသာ Google account နဲ့ login ဝင်ပြီး ဒီ code နဲ့ join နိုင်ပါမယ်။</p>
+      <h3 class="modal-title">${t('inv.title')}</h3>
+      <p class="modal-subtitle">${t('inv.subtitle')}</p>
 
-      <label class="field-label">Name (optional)</label>
-      <input class="form-input" id="invTName" placeholder="e.g. Daw Hla Hla">
+      <label class="field-label">${t('inv.name')}</label>
+      <input class="form-input" id="invTName" placeholder="${esc(t('inv.namePh'))}">
 
-      <label class="field-label">Role *</label>
+      <label class="field-label">${t('inv.role')}</label>
       <select class="form-input" id="invTRole">
-        <option value="teacher">Teacher</option>
-        <option value="admin">Admin</option>
+        <option value="teacher">${t('inv.roleTeacher')}</option>
+        <option value="admin">${t('inv.roleAdmin')}</option>
       </select>
 
-      <button class="btn-primary mt16" id="invGenBtn" onclick="doGenerateInvite()">Code ထုတ်မည်</button>
+      <button class="btn-primary mt16" id="invGenBtn" onclick="doGenerateInvite()">${t('inv.generate')}</button>
 
       <div id="invCodeResult" style="display:none" class="mt16">
-        <div class="info-row"><span>Invite code</span><span id="invCodeValue" style="font-weight:700;letter-spacing:2px"></span></div>
-        <p class="form-help">ဒီ code ကို teacher ဆီ ပို့ပေးပါ (14 ရက် အတွင်း သုံးရပါမယ်)။ Teacher က Google Sign-In ကနေ "Invite code ရှိပါတယ်" ရွေးပြီး ဒီ code ရိုက်ထည့်ရင် ရပါပြီ။</p>
+        <div class="info-row"><span>${t('inv.codeLabel')}</span><span id="invCodeValue" style="font-weight:700;letter-spacing:2px"></span></div>
+        <p class="form-help">${t('inv.hint')}</p>
       </div>
 
       <div id="invPastList" class="mt16"></div>
 
-      <button class="btn-secondary mt16" onclick="closeModal(); openTeacherManager()">Back</button>
+      <button class="btn-secondary mt16" onclick="closeModal(); openTeacherManager()">${t('inv.back')}</button>
     </div>
   `);
   _loadPastInvites();
@@ -167,15 +167,15 @@ window.doGenerateInvite = async function() {
   const role = document.getElementById('invTRole')?.value;
   const btn = document.getElementById('invGenBtn');
   btn.disabled = true;
-  btn.textContent = 'ထုတ်နေသည်…';
+  btn.textContent = t('inv.generating');
 
   const result = await createTeacherInvite(role, name);
 
   btn.disabled = false;
-  btn.textContent = 'Code ထုတ်မည်';
+  btn.textContent = t('inv.generate');
 
   if (!result || !result.ok) {
-    showToast('Invite ထုတ်မရပါ: ' + (result?.message || result?.error || 'unknown'));
+    showToast(t('inv.failed', { err: result?.message || result?.error || t('common.unknown') }));
     return;
   }
 
@@ -192,10 +192,10 @@ async function _loadPastInvites() {
     el.innerHTML = '';
     return;
   }
-  el.innerHTML = '<div class="field-label">အရင် invites</div>' + result.invites.map(inv => {
+  el.innerHTML = `<div class="field-label">${t('inv.pastInvites')}</div>` + result.invites.map(inv => {
     const status = inv.redeemed_at
-      ? `✅ Used by ${esc(inv.redeemed_by_teacher_id || '')}`
-      : (new Date(inv.expires_at) < new Date() ? '⌛ Expired' : '⏳ Pending');
+      ? t('inv.usedBy', { id: esc(inv.redeemed_by_teacher_id || '') })
+      : (new Date(inv.expires_at) < new Date() ? t('inv.expired') : t('inv.pending'));
     return `<div class="info-row"><span>${esc(inv.invite_code)} (${esc(inv.role)})</span><span>${status}</span></div>`;
   }).join('');
 }
@@ -204,32 +204,32 @@ window.openCreateTeacherModal = function() {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()" style="max-width:380px">
       <div class="modal-handle"></div>
-      <h3 class="modal-title">+ New teacher</h3>
-      <p class="modal-subtitle">Create a login. They'll be forced to change the starter password.</p>
+      <h3 class="modal-title">${t('ct.title')}</h3>
+      <p class="modal-subtitle">${t('ct.subtitle')}</p>
 
-      <label class="field-label">Teacher ID *</label>
-      <input class="form-input" id="newTId" placeholder="e.g. T1001" autocapitalize="off">
+      <label class="field-label">${t('ct.teacherId')}</label>
+      <input class="form-input" id="newTId" placeholder="${esc(t('ct.teacherIdPh'))}" autocapitalize="off">
 
-      <label class="field-label">Teacher name *</label>
-      <input class="form-input" id="newTName" placeholder="e.g. Daw Hla Hla">
+      <label class="field-label">${t('ct.teacherName')}</label>
+      <input class="form-input" id="newTName" placeholder="${esc(t('inv.namePh'))}">
 
-      <label class="field-label">Email (optional)</label>
+      <label class="field-label">${t('ct.email')}</label>
       <input class="form-input" id="newTEmail" type="email" placeholder="teacher@school.edu">
 
-      <label class="field-label">Role *</label>
+      <label class="field-label">${t('inv.role')}</label>
       <select class="form-input" id="newTRole">
-        <option value="teacher">Teacher</option>
-        <option value="admin">Admin (can manage other teachers)</option>
+        <option value="teacher">${t('inv.roleTeacher')}</option>
+        <option value="admin">${t('ct.roleAdmin')}</option>
       </select>
 
-      <label class="field-label">Starting password (≥ 6 characters) *</label>
+      <label class="field-label">${t('ct.startPw')}</label>
       <input class="form-input" id="newTPw" type="text" placeholder="temp1234" value="temp1234">
-      <p class="form-help">Share this password securely with the teacher. They'll change it on first login.</p>
+      <p class="form-help">${t('ct.startPwHint')}</p>
 
       <div id="newTError" class="form-error" style="display:none"></div>
 
-      <button class="btn-primary mt16" id="newTBtn" onclick="doCreateTeacher()">Create account</button>
-      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary mt16" id="newTBtn" onclick="doCreateTeacher()">${t('ct.create')}</button>
+      <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
     </div>
   `);
 };
@@ -245,25 +245,25 @@ window.doCreateTeacher = async function() {
   errEl.style.display = 'none';
 
   if (!id || !name || !pw) {
-    errEl.textContent = 'Teacher ID, name, password ၃ ခုလုံး ထည့်ပါ';
+    errEl.textContent = t('ct.needFields');
     errEl.style.display = 'block';
     return;
   }
   if (pw.length < 6) {
-    errEl.textContent = 'Password က ၆ လုံး အနည်းဆုံး လိုပါမယ်';
+    errEl.textContent = t('ct.pwTooShort');
     errEl.style.display = 'block';
     return;
   }
 
   const sess = getWebSession();
   if (!sess || !sess.session_token) {
-    errEl.textContent = 'Admin session expired. Please sign in again.';
+    errEl.textContent = t('ct.sessionExpired');
     errEl.style.display = 'block';
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = 'Creating…';
+  btn.textContent = t('ct.creating');
 
   try {
     const resp = await fetch(`${SCMS_CONFIG.SUPABASE_URL}/rest/v1/rpc/rpc_admin_create_teacher`, {
@@ -284,35 +284,35 @@ window.doCreateTeacher = async function() {
     });
     const result = await resp.json();
     if (!result || !result.ok) {
-      errEl.textContent = (result && result.message) || 'Create failed';
+      errEl.textContent = (result && result.message) || t('ct.createFailed');
       errEl.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Create account';
+      btn.textContent = t('ct.create');
       return;
     }
     closeModal();
-    showToast('✓ Teacher account ဖန်တီးပြီးပါပြီ');
+    showToast(t('ct.created'));
     // Reopen the manager to show the new teacher
     setTimeout(() => openTeacherManager(), 200);
   } catch (e) {
-    errEl.textContent = 'Connection error';
+    errEl.textContent = t('ct.connErr');
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Create account';
+    btn.textContent = t('ct.create');
   }
 };
 
 window.resetTeacherPassword = async function(teacherId, teacherName) {
-  const newPw = prompt(`Reset password for ${teacherName} (${teacherId}).\n\nNew password (≥ 6 characters):`);
+  const newPw = prompt(t('rp.prompt', { name: teacherName, id: teacherId }));
   if (!newPw) return;
   if (newPw.length < 6) {
-    showToast('Password က ၆ လုံး အနည်းဆုံး လိုပါမယ်');
+    showToast(t('ct.pwTooShort'));
     return;
   }
 
   const sess = getWebSession();
   if (!sess || !sess.session_token) {
-    showToast('Admin session expired');
+    showToast(t('rp.sessionExpired'));
     return;
   }
 
@@ -332,11 +332,11 @@ window.resetTeacherPassword = async function(teacherId, teacherName) {
     });
     const result = await resp.json();
     if (!result || !result.ok) {
-      showToast('Reset failed: ' + (result?.error || 'unknown'));
+      showToast(t('rp.failed', { err: result?.error || t('common.unknown') }));
       return;
     }
-    showToast(`✓ ${teacherName} ၏ password အသစ်: ${newPw}\nshare ပြုလုပ်ပါ`);
+    showToast(t('rp.done', { name: teacherName, pw: newPw }));
   } catch (e) {
-    showToast('Connection error');
+    showToast(t('ct.connErr'));
   }
 };
