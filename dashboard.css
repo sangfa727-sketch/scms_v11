@@ -74,3 +74,77 @@
 @media (min-width: 900px) {
   .dashboard-glance-card { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
+/* ============================================
+   DASHBOARD BANNER — Polished notification card
+   ============================================ */
+
+.dashboard-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  margin: 16px 0;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Icon column */
+.dashboard-banner .banner-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-banner .banner-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Text column */
+.dashboard-banner .banner-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-banner .banner-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+}
+
+.dashboard-banner .banner-text {
+  font-size: 13px;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+/* ─── Warning variant (amber) ─── */
+.dashboard-banner-warn {
+  background: #FFF9EC;
+  border-color: #F5D58A;
+  color: #7A4E00;
+}
+
+.dashboard-banner-warn .banner-icon {
+  background: #FBE4A8;
+  color: #B47200;
+}
+
+/* ─── Dark mode ─── */
+[data-theme="dark"] .dashboard-banner-warn {
+  background: #2A2210;
+  border-color: #5C4718;
+  color: #F5D58A;
+}
+
+[data-theme="dark"] .dashboard-banner-warn .banner-icon {
+  background: #3D3018;
+  color: #F5D58A;
+}
