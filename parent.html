@@ -64,6 +64,8 @@
   .b-absent, .b-overdue { background: rgba(220,38,38,0.14); color: var(--red); }
   .b-late, .b-partial   { background: rgba(217,119,6,0.14); color: var(--amber); }
   .b-unpaid              { background: rgba(8,145,178,0.14); color: var(--blue); }
+  .b-exam-date           { background: rgba(8,145,178,0.14); color: var(--blue); }
+  .exam-card-title { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
   .empty { text-align: center; color: var(--muted); font-size: 13.5px; padding: 20px 0; }
   .signout { text-align: center; margin-top: 18px; }
   .signout a { color: var(--muted); font-size: 12.5px; text-decoration: underline; cursor: pointer; }
@@ -209,7 +211,7 @@ async function showDashboard(sessionToken) {
   appEl.innerHTML = `<div class="card center"><div class="skeleton" style="width:60%;margin:0 auto"></div><div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:80%"></div></div>`;
 
   const res = await rpc('rpc_parent_get_dashboard', { p_session_token: sessionToken });
-  const { student, attendance, grades, invoices } = res;
+  const { student, attendance, grades, invoices, upcoming_exams } = res;
 
   const presentCount = attendance.filter(a => a.status === 'Present').length;
   const absentCount  = attendance.filter(a => a.status === 'Absent').length;
@@ -221,6 +223,16 @@ async function showDashboard(sessionToken) {
       <div class="student-name">${esc(student.name_en)}</div>
       <div class="student-sub">${esc(student.class || '')} · ID ${esc(student.student_id)}</div>
     </div>
+
+    ${upcoming_exams && upcoming_exams.length ? `
+    <div class="card">
+      <div class="exam-card-title">📝 Upcoming Exams</div>
+      ${upcoming_exams.map(x => `
+        <div class="row">
+          <span>${esc(x.subject)} <span class="r-sub">— ${esc(x.title)}</span></span>
+          <span class="badge b-exam-date">${esc(fmtDate(x.date))}</span>
+        </div>`).join('')}
+    </div>` : ''}
 
     <div class="tabs">
       <div class="tab active" data-tab="attendance">Attendance</div>
