@@ -1698,23 +1698,27 @@ html[data-platform="web"] .tab-btn-chat {
 }
 .btn-pill-action {
   padding: 7px 14px;
-  background: var(--accent);
-  color: var(--bg);
+  background: #1A1A18;
+  color: #FFFFFF;
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 600;
   display: inline-flex; align-items: center; gap: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s;
 }
 .btn-pill-action.ghost {
   background: var(--bg2);
   color: var(--text);
   border: 1px solid var(--border);
 }
-.btn-pill-action:hover { opacity: 0.9; }
-.dot-mini {
-  display: inline-block;
-  width: 8px; height: 8px;
-  border-radius: 50%;
+.btn-pill-action:hover {
+  background: #2A2A26;
+}
+.btn-pill-action.ghost:hover {
+  background: var(--bg3, var(--bg2));
+  opacity: 1;
 }
 
 .attend-list-wrap {
