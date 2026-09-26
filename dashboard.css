@@ -17,14 +17,6 @@
   --hover: #F6F6F3;
 }
 
-[data-theme="dark"] {
-  --card: #1C1C1A;
-  --border: #2E2E2A;
-  --text: #F5F5F0;
-  --muted: #9A9A92;
-  --hover: #252522;
-}
-
 
 /* ────────────────────────────────────────────────────────────
    1. Page wrapper — same shell as Students page
