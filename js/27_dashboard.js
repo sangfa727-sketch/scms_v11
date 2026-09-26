@@ -202,8 +202,13 @@ function _paintDashboard(container) {
 
 function _dashboardGoToAttendance(className) {
   window.goToPage('attend');
+  if (className && typeof window.selectAttendClass === 'function') {
+    window.selectAttendClass(className);
+    // Sync the <select> dropdown to the clicked class
+    const sel = document.querySelector('.attend-class-select');
+    if (sel) sel.value = className;
+  }
 }
-
 
 function _isoDaysAgo(n) {
   const d = new Date();
