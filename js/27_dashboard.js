@@ -47,29 +47,27 @@ function renderDashboard() {
 }
 
 async function _loadDashboardData() {
-  const token = _getSessionToken(); // TODO confirm this is the real helper name in 02_api.js
-
   const [timetable, attendance, homework, incidents, comms] = await Promise.all([
-    _webRpc('rpc_get_timetable', { p_session_token: token }),
-    _webRpc('rpc_get_attendance', { p_session_token: token, p_days_back: 14 }),
-    _webRpc('rpc_get_homework', { p_session_token: token, p_days_back: 14 }),
-    _webRpc('rpc_get_incidents', { p_session_token: token, p_days_back: 14 }),
-    _webRpc('rpc_get_parent_comms', { p_session_token: token, p_days_back: 14 }),
+    API.getTimetable().catch(() => []),
+    API.getAttendance(14).catch(() => []),
+    API.getHomework(14).catch(() => []),
+    API.getIncidents(14).catch(() => []),
+    API.getParentComms(14).catch(() => []),
   ]);
 
   _dashboardCache = {
-    timetable: timetable.rows || [],
-    attendance: attendance.rows || [],
-    homework: homework.rows || [],
-    incidents: incidents.rows || [],
-    comms: comms.rows || [],
+    timetable: timetable || [],
+    attendance: attendance || [],
+    homework: homework || [],
+    incidents: incidents || [],
+    comms: comms || [],
     loadedAt: new Date(),
   };
 }
 
 function _dashboardScopedRows(rows) {
   if (!_dashboardScopeMine) return rows;
-  const myId = _getCurrentTeacherId(); // TODO confirm real helper name (session/profile state)
+  const myId = window.APP?.teacher_id || '';
   return rows.filter(r => r.teacher_id === myId);
 }
 
@@ -163,10 +161,10 @@ function _paintDashboard(container) {
     <div class="dashboard-section">
       <h3>Quick Actions</h3>
       <div class="dashboard-actions">
-        <button onclick="window.goToPage('attendance')">Take Attendance</button>
-        <button onclick="window.goToPage('homework')">Log Homework</button>
-        <button onclick="window.goToPage('comms')">Message a Parent</button>
-        <button onclick="window.goToPage('incidents')">Record Incident</button>
+<button onclick="window.goToPage('attend')">Take Attendance</button>
+<button onclick="window.goToPage('hw')">Log Homework</button>
+<button onclick="window.goToPage('parents')">Message a Parent</button>
+<button onclick="window.goToPage('incidents')">Record Incident</button>
       </div>
     </div>
 
@@ -203,9 +201,9 @@ function _paintDashboard(container) {
 }
 
 function _dashboardGoToAttendance(className) {
-  // TODO confirm real hand-off pattern — e.g. window.goToPage('attendance', { class: className })
-  window.goToPage('attendance');
+  window.goToPage('attend');
 }
+
 
 function _isoDaysAgo(n) {
   const d = new Date();
