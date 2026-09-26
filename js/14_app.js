@@ -380,6 +380,10 @@ window.signOut = function () {
   window.location.reload();
 };
 
+    // ── Step 9: Show dashboard as landing page ──────────────────────────
+    window.APP.currentPage = 'dashboard';
+    if (typeof goToPage === 'function') goToPage('dashboard');
+
 // ─── PAGE NAVIGATION ────────────────────────────────────────────────────────
 
 window.goToPage = function(pageId) {
