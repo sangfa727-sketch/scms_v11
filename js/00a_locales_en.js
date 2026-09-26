@@ -352,6 +352,9 @@ window.I18N_EN = {
   'login.help': 'Don\'t have a Teacher ID? Ask your school admin to create one for you, or use <b>Sign in with Telegram</b> instead.',
 
   // ── Added: Batch A: shell, navigation, More, chat, index.html (v11.8) ──
+      'page.dashboard.eyebrow': 'Overview',
+  'page.dashboard.title': 'Today\'s <em>dashboard</em>',
+  'page.dashboard.sub': 'Your daily snapshot at a glance.',
   'page.students.eyebrow': 'Roster',
   'page.students.title': 'My <em>students</em>',
   'page.attend.eyebrow': 'Daily check-in',
@@ -420,6 +423,7 @@ window.I18N_EN = {
   'module.parents': 'Parent messages',
   'module.timetable': 'Timetable',
   'module.summary': 'Monthly summary',
+  'sb.dashboard': 'Dashboard',
   'sb.students': 'Students',
   'sb.attend': 'Attendance',
   'sb.daily': 'Daily Reports',
