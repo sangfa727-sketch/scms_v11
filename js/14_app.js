@@ -278,6 +278,7 @@ async function initApp() {
     // ── Step 7: Render modules ───────────────────────────────────────────
     setStatus(t('boot.building'), '');
 
+    if (typeof renderDashboard  === 'function') renderDashboard();
     if (typeof renderStudents   === 'function') renderStudents();
     if (typeof renderAttendance === 'function') renderAttendance();
     if (typeof renderDaily      === 'function') renderDaily();
