@@ -78,7 +78,7 @@
 }
 
 .scope-toggle input[type="checkbox"] {
-  accent-color: var(--accent, #4F46E5);
+  accent-color: #1A1A18;    /* ← အနက်ရောင် */
   width: 15px;
   height: 15px;
   cursor: pointer;
@@ -342,7 +342,7 @@
 .dashboard-actions button {
   flex: 1 1 auto;
   min-width: 130px;
-  background: var(--accent, #4F46E5);
+  background: #1A1A18;              /* ← အနက်ရောင် */
   color: #FFFFFF;
   border: none;
   border-radius: 10px;
@@ -356,13 +356,12 @@
 }
 
 .dashboard-actions button:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.15);
 }
 
 .dashboard-actions button:active {
   transform: scale(0.985);
 }
-
 
 /* ────────────────────────────────────────────────────────────
    8. Empty state — matches the app's .empty-state
