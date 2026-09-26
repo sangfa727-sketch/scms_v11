@@ -90,22 +90,73 @@
 
 .glance-item {
   background: var(--card, #FFFFFF);
-  border: 1px solid var(--border, #E8E8E3);
-  border-radius: 14px;
-  padding: 16px 14px;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 92px;
-  transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 96px;
   box-sizing: border-box;
+  /* ⭐ Floating look — layered shadows */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glance-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transform: translateY(-3px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 8px 20px rgba(0, 0, 0, 0.09),
+    0 16px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Warn state — soft amber glow */
+.glance-item.glance-warn {
+  background: linear-gradient(180deg, #FFFDF6 0%, #FFF9EC 100%);
+}
+.glance-item.glance-warn:hover {
+  box-shadow:
+    0 2px 4px rgba(180, 114, 0, 0.06),
+    0 8px 20px rgba(180, 114, 0, 0.12),
+    0 16px 40px rgba(180, 114, 0, 0.08);
+}
+
+/* OK state — soft green glow */
+.glance-item.glance-ok {
+  background: linear-gradient(180deg, #FAFEFB 0%, #F3FBF6 100%);
+}
+.glance-item.glance-ok:hover {
+  box-shadow:
+    0 2px 4px rgba(15, 123, 63, 0.06),
+    0 8px 20px rgba(15, 123, 63, 0.10),
+    0 16px 40px rgba(15, 123, 63, 0.06);
+}
+
+/* Dark mode — shadows ကို ပိုမှောင်စေ */
+[data-theme="dark"] .glance-item {
+  background: #1E1E1C;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.28),
+    0 8px 24px rgba(0, 0, 0, 0.18);
+}
+[data-theme="dark"] .glance-item:hover {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    0 16px 40px rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] .glance-item.glance-warn {
+  background: linear-gradient(180deg, #2E2514 0%, #2A2210 100%);
+}
+[data-theme="dark"] .glance-item.glance-ok {
+  background: linear-gradient(180deg, #16291E 0%, #13241A 100%);
 }
 
 .glance-num {
