@@ -140,10 +140,23 @@ function _paintDashboard(container) {
     </div>
 
     ${queuedComms.length ? `
-    <div class="dashboard-banner dashboard-banner-warn">
-      ⚠️ ${queuedComms.length} parent message(s) are stuck in "Queued" — the Telegram delivery bot
-      is currently offline, these have not actually reached parents yet.
-    </div>` : ''}
+<div class="dashboard-banner dashboard-banner-warn">
+  <div class="banner-icon">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  </div>
+  <div class="banner-body">
+    <div class="banner-title">
+      ${queuedComms.length} message${queuedComms.length > 1 ? 's' : ''} not delivered
+    </div>
+    <div class="banner-text">
+      The Telegram delivery bot is currently offline. These parent messages are stuck in the queue and haven't reached parents yet.
+    </div>
+  </div>
+</div>` : ''}
 
     <div class="dashboard-section">
       <h3>Today's Schedule</h3>
