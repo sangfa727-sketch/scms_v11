@@ -4,17 +4,17 @@
    Last updated: 2026-09-27
    ============================================================ */
 
+/* NOTE: No :root overrides here — style.css already defines
+   --card, --border, --text, --muted, --accent, --hover. */
+
 /* ────────────────────────────────────────────────────────────
-   0. Fallback CSS variables
-   (only used if style.css doesn't already define them)
+   1. Page wrapper — same shell as Students page
    ──────────────────────────────────────────────────────────── */
-:root {
-  --card: #FFFFFF;
-  --border: #E8E8E3;
-  --text: #0F0F0F;
-  --muted: #8A8A82;
-  --accent: #4F46E5;
-  --hover: #F6F6F3;
+#page-dashboard {
+  padding: 20px 18px 90px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 
