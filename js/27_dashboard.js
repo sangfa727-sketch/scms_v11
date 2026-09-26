@@ -1,48 +1,44 @@
-/* ============================================================
-   js/27_dashboard.js — "Today at a Glance" teacher dashboard
-   Built 2026-09-27, verified directly against live schema
-   (project rszgbryucqwmrdbsgwbb) before writing a line of this:
-   every RPC called below already exists — no new backend RPC,
-   no new attack surface.
+/**
+ * SCMS v11 — js/27_dashboard.js
+ * "Today at a Glance" teacher dashboard.
+ *
+ * v2 (2026-09-27 revision): rebuilt to REUSE the app's existing
+ * components instead of inventing parallel ones — .stats-grid/
+ * .stat-card (same as Students), .list-card/.card-row/.card-avatar
+ * (same as Students), .chips-row/.chip (same class filter used on
+ * Students), emptyState()/avatarContent()/esc() globals. The
+ * page-header (eyebrow + Fraunces page-title) is already in
+ * index.html, so this only ever renders into #dashboardContent —
+ * it does not render its own h2/title.
+ *
+ * Data-model notes (unchanged from v1, still true):
+ * - homework_log has no per-student submission tracking, so this
+ *   shows "homework logged recently", not "who hasn't submitted".
+ * - parent_comms is outbound-only logging, so this shows "N stuck
+ *   in Queued" (meaningful while the Telegram bot is down), not
+ *   "unread messages".
+ * - Health/Library/Transport widgets intentionally left out — no
+ *   bulk RPC exists yet (would be N+1 per-student/book calls).
+ */
 
-   Scope decisions made against REAL data, not assumption:
-   - Homework: homework_log has NO per-student submission tracking
-     (no student_id, no "submitted" flag) — this shows "homework
-     logged recently", not "who hasn't submitted", because the
-     latter is not a thing the data model can answer yet.
-   - Parent Comms: parent_comms is OUTBOUND-ONLY logging (teacher
-     -> parent), not a two-way inbox — this shows "messages stuck
-     in Queued" (meaningful right now, since the n8n bot is down),
-     not "unread messages from parents" (that concept doesn't
-     exist in this system).
-   - Left OUT for v1: Health Records / Library / Transport alerts.
-     rpc_get_health_profile takes a single p_student_id — there is
-     no bulk "all students with allergy alerts" RPC, so a real
-     version of that widget would mean one RPC call per student
-     (N+1). Not worth the load time until a bulk RPC exists.
-   - Every RPC here is school_id-scoped only (not teacher_id), so
-     "my classes" vs "whole school" is a CLIENT-SIDE filter on
-     each row's own teacher_id column (every table used here has
-     one). Toggle state is not persisted — reload = whole-school
-     default, matches read-only nature of the page.
-   ============================================================ */
+'use strict';
 
 let _dashboardLoadedOnce = false;
-let _dashboardScopeMine = false; // false = whole school, true = my classes only
-let _dashboardCache = null;      // module-level cache, never put row data in onclick attrs
+let _dashboardScopeMine  = false; // false = whole school, true = my classes only
+let _dashboardCache      = null;
 
 function renderDashboard() {
   const container = document.getElementById('dashboardContent');
   if (!container) return;
 
   if (!_dashboardLoadedOnce) {
-    container.innerHTML = `<div class="skeleton-loading">Loading dashboard…</div>`;
+    container.innerHTML = `<div class="skeleton-loading">${t('dash.loading')}</div>`;
   }
   _loadDashboardData().then(() => {
     _dashboardLoadedOnce = true;
     _paintDashboard(container);
   }).catch(err => {
-    container.innerHTML = `<div class="empty-state">Dashboard failed to load: ${_escape(err.message || String(err))}</div>`;
+    container.innerHTML = emptyState('⚠️', t('dash.loadError'), err.message || String(err));
   });
 }
 
@@ -54,15 +50,8 @@ async function _loadDashboardData() {
     API.getIncidents(14).catch(() => []),
     API.getParentComms(14).catch(() => []),
   ]);
-
-  _dashboardCache = {
-    timetable: timetable || [],
-    attendance: attendance || [],
-    homework: homework || [],
-    incidents: incidents || [],
-    comms: comms || [],
-    loadedAt: new Date(),
-  };
+  _dashboardCache = { timetable: timetable || [], attendance: attendance || [],
+    homework: homework || [], incidents: incidents || [], comms: comms || [] };
 }
 
 function _dashboardScopedRows(rows) {
@@ -71,30 +60,34 @@ function _dashboardScopedRows(rows) {
   return rows.filter(r => r.teacher_id === myId);
 }
 
+window.setDashboardScope = function(mine) {
+  _dashboardScopeMine = mine;
+  document.querySelectorAll('#dashboardScopeChips .chip').forEach(b =>
+    b.classList.toggle('active', (b.dataset.scope === 'mine') === mine)
+  );
+  const container = document.getElementById('dashboardContent');
+  if (container) _paintDashboard(container); // re-render from cache, no re-fetch
+};
+
 function _paintDashboard(container) {
   const d = _dashboardCache;
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO  = new Date().toISOString().slice(0, 10);
 
   const todaysClasses = _dashboardScopedRows(d.timetable)
-    .filter(t => t.day === todayName)
+    .filter(x => x.day === todayName)
     .sort((a, b) => (a.period ?? 0) - (b.period ?? 0));
 
-  const classesToday = [...new Set(todaysClasses.map(t => t.class))];
-  const attendanceMarkedToday = new Set(
-    d.attendance.filter(a => a.date === todayISO).map(a => a.class)
-  );
-  const classesMissingAttendance = classesToday.filter(c => !attendanceMarkedToday.has(c));
+  const classesToday = [...new Set(todaysClasses.map(x => x.class))];
+  const markedToday  = new Set(d.attendance.filter(a => a.date === todayISO).map(a => a.class));
+  const missingAttendance = classesToday.filter(c => !markedToday.has(c));
 
   const recentHomework = _dashboardScopedRows(d.homework)
-    .filter(h => h.date === todayISO || h.date === _isoDaysAgo(1))
-    .slice(0, 8);
+    .filter(h => h.date === todayISO || h.date === _isoDaysAgo(1));
 
   const recentIncidents = _dashboardScopedRows(d.incidents).slice(0, 6);
+  const queuedComms     = d.comms.filter(c => c.status === 'Queued');
 
-  const queuedComms = d.comms.filter(c => c.status === 'Queued');
-
-  // Students needing attention: >=3 Absent in the last 14 days
   const absenceCounts = {};
   for (const a of d.attendance) {
     if (a.status !== 'P') {
@@ -107,117 +100,103 @@ function _paintDashboard(container) {
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 8);
 
-    container.innerHTML = `
-    <div class="dashboard-header">
-      <h2>${t('dash.todayLabel')} — ${todayName}</h2>
-      <label class="scope-toggle">
-        <input type="checkbox" id="dashboardScopeToggle" ${_dashboardScopeMine ? 'checked' : ''}>
-        ${t('dash.myClassesOnly')}
-      </label>
+  container.innerHTML = `
+    <div class="chips-row" id="dashboardScopeChips">
+      <button class="chip${!_dashboardScopeMine ? ' active' : ''}" data-scope="all" onclick="setDashboardScope(false)">${t('dash.wholeSchool')}</button>
+      <button class="chip${_dashboardScopeMine ? ' active' : ''}" data-scope="mine" onclick="setDashboardScope(true)">${t('dash.myClassesOnly')}</button>
     </div>
 
-    <div class="dashboard-glance-card">
-      <div class="glance-item ${classesMissingAttendance.length ? 'glance-warn' : 'glance-ok'}">
-        <span class="glance-num">${classesToday.length}</span>
-        <span class="glance-label">${t('dash.classesToday')}</span>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num">${classesToday.length}</div>
+        <div class="stat-lbl">${t('dash.classesToday')}</div>
       </div>
-      <div class="glance-item ${classesMissingAttendance.length ? 'glance-warn' : 'glance-ok'}">
-        <span class="glance-num">${classesMissingAttendance.length}</span>
-        <span class="glance-label">${t('dash.notYetMarked')}</span>
+      <div class="stat-card${missingAttendance.length ? ' red' : ' green'}">
+        <div class="stat-num">${missingAttendance.length}</div>
+        <div class="stat-lbl">${t('dash.notYetMarked')}</div>
       </div>
-      <div class="glance-item">
-        <span class="glance-num">${recentHomework.length}</span>
-        <span class="glance-label">${t('dash.homeworkLogged2d')}</span>
+      <div class="stat-card">
+        <div class="stat-num">${recentHomework.length}</div>
+        <div class="stat-lbl">${t('dash.homeworkLogged2d')}</div>
       </div>
-      <div class="glance-item ${recentIncidents.length ? 'glance-warn' : ''}">
-        <span class="glance-num">${recentIncidents.length}</span>
-        <span class="glance-label">${t('dash.recentIncidents')}</span>
+      <div class="stat-card${recentIncidents.length ? ' red' : ''}">
+        <div class="stat-num">${recentIncidents.length}</div>
+        <div class="stat-lbl">${t('dash.recentIncidents')}</div>
       </div>
-      <div class="glance-item ${queuedComms.length ? 'glance-warn' : ''}">
-        <span class="glance-num">${queuedComms.length}</span>
-        <span class="glance-label">${t('dash.messagesQueued')}</span>
+      <div class="stat-card${queuedComms.length ? ' red' : ''}">
+        <div class="stat-num">${queuedComms.length}</div>
+        <div class="stat-lbl">${t('dash.messagesQueued')}</div>
       </div>
     </div>
 
     ${queuedComms.length ? `
-    <div class="dashboard-banner dashboard-banner-warn">
-      <div class="banner-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      </div>
-      <div class="banner-body">
-        <div class="banner-title">
-          ${t('dash.bannerTitle', { n: queuedComms.length })}
-        </div>
-        <div class="banner-text">
-          ${t('dash.bannerText')}
-        </div>
+    <div class="dashboard-banner">
+      <span class="dashboard-banner-icon">⚠️</span>
+      <div>
+        <div class="dashboard-banner-title">${t('dash.bannerTitle', { n: queuedComms.length })}</div>
+        <div class="dashboard-banner-text">${t('dash.bannerText')}</div>
       </div>
     </div>` : ''}
 
-    <div class="dashboard-section">
-      <h3>${t('dash.todaysSchedule')}</h3>
-      ${todaysClasses.length ? `
-        <div class="dashboard-list">
-          ${todaysClasses.map(t2 => `
-            <div class="dashboard-row" data-class="${_escapeAttr(t2.class)}" onclick="_dashboardGoToAttendance(this.dataset.class)">
-              <span class="row-time">${_escape(t2.start_time || '')}</span>
-              <span class="row-main">${_escape(t2.class)} — ${_escape(t2.subject || '')}</span>
-              <span class="row-meta">${_escape(t2.room || '')}</span>
-            </div>`).join('')}
-        </div>` : `<div class="empty-state">${t('dash.noClassesToday')}</div>`}
-    </div>
+    <div class="more-section-title">${t('dash.todaysSchedule')}</div>
+    ${todaysClasses.length ? todaysClasses.map(x => `
+      <div class="list-card" data-class="${esc(x.class)}" onclick="_dashboardGoToAttendance(this.dataset.class)">
+        <div class="card-row">
+          <div class="card-avatar" style="background:${_classColor(x.class)}">${x.period ?? '·'}</div>
+          <div class="card-info">
+            <div class="card-name">${esc(x.class)} — ${esc(x.subject || '')}</div>
+            <div class="card-sub">
+              <span class="class-tag">${esc(x.start_time || '')}</span>
+              ${x.room ? `<span>${esc(x.room)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`).join('') : emptyState('📅', t('dash.noClassesToday'))}
 
-    <div class="dashboard-section">
-      <h3>${t('dash.quickActions')}</h3>
-      <div class="dashboard-actions">
-        <button onclick="window.goToPage('attend')">${t('dash.takeAttendance')}</button>
-        <button onclick="window.goToPage('hw')">${t('dash.logHomework')}</button>
-        <button onclick="window.goToPage('parents')">${t('dash.messageParent')}</button>
-        <button onclick="window.goToPage('incidents')">${t('dash.recordIncident')}</button>
-      </div>
+    <div class="more-section-title">${t('dash.quickActions')}</div>
+    <div class="dashboard-actions">
+      <button onclick="window.goToPage('attend')">${t('dash.takeAttendance')}</button>
+      <button onclick="window.goToPage('hw')">${t('dash.logHomework')}</button>
+      <button onclick="window.goToPage('parents')">${t('dash.messageParent')}</button>
+      <button onclick="window.goToPage('incidents')">${t('dash.recordIncident')}</button>
     </div>
 
     ${attentionList.length ? `
-    <div class="dashboard-section">
-      <h3>${t('dash.studentsAttention')}</h3>
-      <div class="dashboard-list">
-        ${attentionList.map(([id, v]) => `
-          <div class="dashboard-row">
-            <span class="row-main">${_escape(v.name)}</span>
-            <span class="row-meta">${t('dash.absences14', { n: v.count })}</span>
-          </div>`).join('')}
-      </div>
-    </div>` : ''}
+    <div class="more-section-title">${t('dash.studentsAttention')}</div>
+    ${attentionList.map(([, v]) => `
+      <div class="list-card">
+        <div class="card-row">
+          <div class="card-avatar">${avatarContent({ name_en: v.name })}</div>
+          <div class="card-info">
+            <div class="card-name">${esc(v.name)}</div>
+            <div class="card-sub"><span class="card-sub-pending">${t('dash.absences14', { n: v.count })}</span></div>
+          </div>
+        </div>
+      </div>`).join('')}` : ''}
 
     ${recentIncidents.length ? `
-    <div class="dashboard-section">
-      <h3>${t('dash.recentIncidentsTitle')}</h3>
-      <div class="dashboard-list">
-        ${recentIncidents.map(i => `
-          <div class="dashboard-row">
-            <span class="row-main">${_escape(i.name_en)} — ${_escape(i.type)}</span>
-            <span class="row-meta">${_escape(i.date)}</span>
-          </div>`).join('')}
-      </div>
-    </div>` : ''}
+    <div class="more-section-title">${t('dash.recentIncidentsTitle')}</div>
+    ${recentIncidents.map(i => `
+      <div class="list-card">
+        <div class="card-row">
+          <div class="card-avatar" style="background:${_classColor(i.class)}">${avatarContent({ name_en: i.name_en })}</div>
+          <div class="card-info">
+            <div class="card-name">${esc(i.name_en)} — ${esc(i.type)}</div>
+            <div class="card-sub">${esc(i.date)}</div>
+          </div>
+        </div>
+      </div>`).join('')}` : ''}
   `;
-
-  const toggle = document.getElementById('dashboardScopeToggle');
-  if (toggle) toggle.onchange = () => {
-    _dashboardScopeMine = toggle.checked;
-    _paintDashboard(container); // re-render from cache, no re-fetch needed
-  };
 }
+
+// _classColor(cls) is reused as-is from js/04_students.js — same
+// global scope, no re-declaration here (they're identical logic;
+// duplicating it would just be two places to keep in sync).
 
 function _dashboardGoToAttendance(className) {
   window.goToPage('attend');
   if (className && typeof window.selectAttendClass === 'function') {
     window.selectAttendClass(className);
-    // Sync the <select> dropdown to the clicked class
     const sel = document.querySelector('.attend-class-select');
     if (sel) sel.value = className;
   }
@@ -228,8 +207,3 @@ function _isoDaysAgo(n) {
   d.setDate(d.getDate() - n);
   return d.toISOString().slice(0, 10);
 }
-
-function _escape(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-function _escapeAttr(s) { return _escape(s); }
