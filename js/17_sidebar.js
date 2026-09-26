@@ -16,6 +16,7 @@
 'use strict';
 
 const SIDEBAR_ITEMS = [
+   { id: 'dashboard',  icon: '💻', key: 'sb.dashboard',   hideInTWA: false },
   { id: 'students',  icon: '👥', key: 'sb.students',   hideInTWA: false },
   { id: 'attend',    icon: '✓',  key: 'sb.attend', hideInTWA: false },
   { id: 'daily',     icon: '📋', key: 'sb.daily', hideInTWA: false },
