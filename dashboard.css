@@ -71,3 +71,91 @@
   color: var(--muted);
   font-size: 13px;
 }
+
+/* ────────────────────────────────────────────────────────────
+   Floating cards — dashboard-only override
+   Targets .stat-card + .list-card ONLY inside #page-dashboard,
+   so Students/Attendance/etc. keep their original flat look.
+   ──────────────────────────────────────────────────────────── */
+
+/* 1. Stat cards (glance summary) — lift + soft layered shadow */
+#page-dashboard .stat-card {
+  border: none;
+  border-radius: 16px;
+  padding: 14px 12px;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#page-dashboard .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 8px 20px rgba(0, 0, 0, 0.09),
+    0 16px 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Colored glow on hover — matches the stat's semantic color */
+#page-dashboard .stat-card.green:hover {
+  box-shadow:
+    0 2px 4px rgba(5, 150, 105, 0.06),
+    0 8px 20px rgba(5, 150, 105, 0.12),
+    0 16px 40px rgba(5, 150, 105, 0.08);
+}
+#page-dashboard .stat-card.red:hover {
+  box-shadow:
+    0 2px 4px rgba(220, 38, 38, 0.06),
+    0 8px 20px rgba(220, 38, 38, 0.12),
+    0 16px 40px rgba(220, 38, 38, 0.08);
+}
+
+/* 2. List cards (Today's Schedule, Incidents, etc.) — lift too */
+#page-dashboard .list-card {
+  border: none;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 3px 10px rgba(0, 0, 0, 0.05),
+    0 8px 24px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#page-dashboard .list-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 20px rgba(0, 0, 0, 0.08),
+    0 14px 36px rgba(0, 0, 0, 0.05);
+}
+
+/* 3. Dark mode — heavier shadows so they read on the dark bg */
+[data-theme="dark"] #page-dashboard .stat-card {
+  background: #1E1E1C;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.28),
+    0 8px 24px rgba(0, 0, 0, 0.18);
+}
+[data-theme="dark"] #page-dashboard .stat-card:hover {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    0 16px 40px rgba(0, 0, 0, 0.25);
+}
+[data-theme="dark"] #page-dashboard .list-card {
+  background: #1E1E1C;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 3px 10px rgba(0, 0, 0, 0.28),
+    0 8px 24px rgba(0, 0, 0, 0.18);
+}
+[data-theme="dark"] #page-dashboard .list-card:hover {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    0 14px 36px rgba(0, 0, 0, 0.25);
+}
