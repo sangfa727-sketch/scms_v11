@@ -325,7 +325,9 @@ async function initApp() {
       // First-launch coachmark tour (runs once for new users)
       if (typeof maybeStartTour === 'function') maybeStartTour();
     }, 400);
-
+// ── Step 9: Show dashboard as landing page ──────────────────────────
+    window.APP.currentPage = 'dashboard';
+    if (typeof goToPage === 'function') goToPage('dashboard');
     // Online/offline detection
     window.addEventListener('online',  () => {
       document.getElementById('offlineBanner').style.display = 'none';
@@ -380,9 +382,7 @@ window.signOut = function () {
   window.location.reload();
 };
 
-    // ── Step 9: Show dashboard as landing page ──────────────────────────
-    window.APP.currentPage = 'dashboard';
-    if (typeof goToPage === 'function') goToPage('dashboard');
+    
 
 // ─── PAGE NAVIGATION ────────────────────────────────────────────────────────
 
