@@ -1,83 +1,178 @@
 /* ============================================================
-   Dashboard styles — paste into style.css.
-   Reuses the app's existing card/grid look; does not introduce
-   a new visual language. Adjust colors to match your existing
-   CSS variables if you have them (e.g. var(--warn), var(--card-bg)).
+   dashboard.css — SCMS v11 Dashboard Styles
+   Matches the Students page look & feel.
+   Last updated: 2026-09-27
    ============================================================ */
 
+/* ────────────────────────────────────────────────────────────
+   0. Fallback CSS variables
+   (only used if style.css doesn't already define them)
+   ──────────────────────────────────────────────────────────── */
+:root {
+  --card: #FFFFFF;
+  --border: #E8E8E3;
+  --text: #0F0F0F;
+  --muted: #8A8A82;
+  --accent: #4F46E5;
+  --hover: #F6F6F3;
+}
+
+[data-theme="dark"] {
+  --card: #1C1C1A;
+  --border: #2E2E2A;
+  --text: #F5F5F0;
+  --muted: #9A9A92;
+  --hover: #252522;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   1. Page wrapper — same shell as Students page
+   ──────────────────────────────────────────────────────────── */
+#page-dashboard {
+  padding: 20px 18px 90px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   2. Dashboard header (title + "My classes only" toggle)
+   ──────────────────────────────────────────────────────────── */
 .dashboard-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
+  flex-wrap: wrap;
 }
-.scope-toggle { font-size: 0.85em; display: flex; align-items: center; gap: 6px; }
 
+.dashboard-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text, #0F0F0F);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.scope-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--muted, #8A8A82);
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+
+.scope-toggle:hover {
+  background: var(--hover, #F6F6F3);
+}
+
+.scope-toggle input[type="checkbox"] {
+  accent-color: var(--accent, #4F46E5);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  margin: 0;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   3. Glance cards — same look as Students .stats-grid
+   ──────────────────────────────────────────────────────────── */
 .dashboard-glance-card {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
 }
+
 .glance-item {
-  background: #f5f5f5;
-  border-radius: 10px;
-  padding: 12px;
-  text-align: center;
-}
-.glance-item.glance-ok { background: #e8f5e9; }
-.glance-item.glance-warn { background: #fff3e0; }
-.glance-num { display: block; font-size: 1.6em; font-weight: 700; }
-.glance-label { display: block; font-size: 0.75em; color: #666; margin-top: 2px; }
-
-.dashboard-banner {
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 0.9em;
-}
-.dashboard-banner-warn { background: #fff3e0; border-left: 4px solid #f57c00; }
-
-.dashboard-section { margin-bottom: 20px; }
-.dashboard-section h3 { font-size: 1em; margin-bottom: 8px; }
-
-.dashboard-list { display: flex; flex-direction: column; gap: 6px; }
-.dashboard-row {
+  background: var(--card, #FFFFFF);
+  border: 1px solid var(--border, #E8E8E3);
+  border-radius: 14px;
+  padding: 16px 14px;
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 12px;
-  background: #fafafa;
-  border-radius: 8px;
-  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 92px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
 }
-.dashboard-row .row-time { font-weight: 600; min-width: 60px; }
-.dashboard-row .row-main { flex: 1; }
-.dashboard-row .row-meta { color: #888; font-size: 0.85em; }
 
-.dashboard-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.dashboard-actions button {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  background: #1976d2;
-  color: #fff;
-  cursor: pointer;
+.glance-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
-.dashboard-note { font-size: 0.75em; color: #d32f2f; margin-top: 6px; }
 
-/* Desktop grid — follows the existing convention noted for
-   #studentList/#admissionsList/#billingInvoiceList/#dailyList:
-   extend that shared selector to include .dashboard-glance-card
-   instead of duplicating a new media query, if that selector
-   is a single shared rule in your actual style.css. */
-@media (min-width: 900px) {
-  .dashboard-glance-card { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.glance-num {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text, #0F0F0F);
+  letter-spacing: -0.02em;
 }
-/* ============================================================
-   DASHBOARD BANNER — Clean, compact, responsive notification
-   ============================================================ */
 
+.glance-label {
+  font-size: 12px;
+  color: var(--muted, #8A8A82);
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+/* Warn state (amber) */
+.glance-item.glance-warn {
+  background: #FFF9EC;
+  border-color: #F5D58A;
+}
+.glance-item.glance-warn .glance-num {
+  color: #B47200;
+}
+
+/* OK state (soft green) */
+.glance-item.glance-ok {
+  background: #F3FBF6;
+  border-color: #C9EBD5;
+}
+.glance-item.glance-ok .glance-num {
+  color: #0F7B3F;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .glance-item {
+  background: #1C1C1A;
+  border-color: #2E2E2A;
+}
+[data-theme="dark"] .glance-item.glance-warn {
+  background: #2A2210;
+  border-color: #5C4718;
+}
+[data-theme="dark"] .glance-item.glance-warn .glance-num {
+  color: #F5D58A;
+}
+[data-theme="dark"] .glance-item.glance-ok {
+  background: #13241A;
+  border-color: #295C3C;
+}
+[data-theme="dark"] .glance-item.glance-ok .glance-num {
+  color: #6DD49A;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   4. Warning banner — polished notification card
+   ──────────────────────────────────────────────────────────── */
 .dashboard-banner {
   display: flex;
   align-items: flex-start;
@@ -91,7 +186,6 @@
   box-sizing: border-box;
 }
 
-/* ─── Icon box ─── */
 .dashboard-banner .banner-icon {
   flex-shrink: 0;
   width: 32px;
@@ -108,10 +202,9 @@
   display: block;
 }
 
-/* ─── Text column ─── */
 .dashboard-banner .banner-body {
   flex: 1;
-  min-width: 0;   /* prevents flex overflow on long words */
+  min-width: 0;
 }
 
 .dashboard-banner .banner-title {
@@ -130,34 +223,241 @@
   overflow-wrap: break-word;
 }
 
-/* ─── Warning variant (amber) ─── */
+/* Warning variant (amber) */
 .dashboard-banner-warn {
   background: #FFF9EC;
   border-color: #F5D58A;
   color: #7A4E00;
 }
-
 .dashboard-banner-warn .banner-icon {
   background: #FBE4A8;
   color: #B47200;
 }
 
-/* ─── Dark mode ─── */
+/* Dark mode */
 [data-theme="dark"] .dashboard-banner-warn {
   background: #2A2210;
   border-color: #5C4718;
   color: #F5D58A;
 }
-
 [data-theme="dark"] .dashboard-banner-warn .banner-icon {
   background: #3D3018;
   color: #F5D58A;
 }
 
-/* ============================================================
-   RESPONSIVE — Mobile / TWA (≤ 480px)
-   ============================================================ */
+
+/* ────────────────────────────────────────────────────────────
+   5. Section boxes — same feel as a Students list card
+   ──────────────────────────────────────────────────────────── */
+.dashboard-section {
+  background: var(--card, #FFFFFF);
+  border: 1px solid var(--border, #E8E8E3);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin: 0 0 16px;
+  box-sizing: border-box;
+}
+
+.dashboard-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #0F0F0F);
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .dashboard-section {
+  background: #1C1C1A;
+  border-color: #2E2E2A;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   6. Rows — same feel as a Student list item
+   ──────────────────────────────────────────────────────────── */
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.dashboard-row:hover {
+  background: var(--hover, #F6F6F3);
+}
+
+.dashboard-row .row-time {
+  font-size: 12px;
+  color: var(--muted, #8A8A82);
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 52px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.dashboard-row .row-main {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text, #0F0F0F);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-row .row-meta {
+  font-size: 12px;
+  color: var(--muted, #8A8A82);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .dashboard-row:hover {
+  background: #252522;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   7. Quick Actions — pill buttons
+   ──────────────────────────────────────────────────────────── */
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-actions button {
+  flex: 1 1 auto;
+  min-width: 130px;
+  background: var(--accent, #4F46E5);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 0.12s, transform 0.12s;
+  font-family: inherit;
+  line-height: 1.3;
+}
+
+.dashboard-actions button:hover {
+  filter: brightness(1.08);
+}
+
+.dashboard-actions button:active {
+  transform: scale(0.985);
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   8. Empty state — matches the app's .empty-state
+   ──────────────────────────────────────────────────────────── */
+.dashboard-section .empty-state {
+  padding: 26px 10px;
+  text-align: center;
+  color: var(--muted, #8A8A82);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* Skeleton loading (used at first paint) */
+.skeleton-loading {
+  padding: 40px 10px;
+  text-align: center;
+  color: var(--muted, #8A8A82);
+  font-size: 13.5px;
+}
+
+
+/* ────────────────────────────────────────────────────────────
+   9. Responsive — Mobile / TWA
+   ──────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
+  #page-dashboard {
+    padding: 16px 14px 90px;
+  }
+
+  .dashboard-header {
+    margin-bottom: 14px;
+  }
+
+  .dashboard-header h2 {
+    font-size: 18px;
+  }
+
+  .dashboard-glance-card {
+    grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+    gap: 9px;
+    margin-bottom: 16px;
+  }
+
+  .glance-item {
+    padding: 13px 10px;
+    min-height: 82px;
+    border-radius: 12px;
+  }
+
+  .glance-num {
+    font-size: 22px;
+  }
+
+  .glance-label {
+    font-size: 11px;
+    margin-top: 5px;
+  }
+
+  .dashboard-section {
+    padding: 14px 15px;
+    border-radius: 14px;
+    margin-bottom: 13px;
+  }
+
+  .dashboard-section h3 {
+    font-size: 13.5px;
+    margin-bottom: 10px;
+  }
+
+  .dashboard-row {
+    padding: 10px 7px;
+    gap: 9px;
+  }
+
+  .dashboard-row .row-time {
+    min-width: 44px;
+    font-size: 11px;
+  }
+
+  .dashboard-row .row-main {
+    font-size: 13.5px;
+  }
+
+  .dashboard-row .row-meta {
+    font-size: 11px;
+  }
+
+  .dashboard-actions button {
+    min-width: 0;
+    flex: 1 1 calc(50% - 4px);
+    font-size: 13px;
+    padding: 10px 8px;
+  }
+
+  /* Banner — compact on mobile */
   .dashboard-banner {
     padding: 12px 14px;
     gap: 10px;
@@ -188,8 +488,37 @@
   }
 }
 
-/* ─── Very small screens (≤ 360px) — e.g. iPhone SE ─── */
+
+/* ────────────────────────────────────────────────────────────
+   10. Very small screens (iPhone SE etc.)
+   ──────────────────────────────────────────────────────────── */
 @media (max-width: 360px) {
+  #page-dashboard {
+    padding: 14px 12px 90px;
+  }
+
+  .dashboard-header h2 {
+    font-size: 17px;
+  }
+
+  .glance-item {
+    padding: 11px 8px;
+    min-height: 76px;
+  }
+
+  .glance-num {
+    font-size: 20px;
+  }
+
+  .glance-label {
+    font-size: 10.5px;
+  }
+
+  .dashboard-actions button {
+    font-size: 12.5px;
+    padding: 9px 6px;
+  }
+
   .dashboard-banner {
     padding: 11px 12px;
     gap: 9px;
@@ -209,12 +538,21 @@
   }
 }
 
-/* ─── Telegram WebApp (TWA) — full-width feel ─── */
+
+/* ────────────────────────────────────────────────────────────
+   11. Platform-specific tweaks
+   ──────────────────────────────────────────────────────────── */
+
+/* Telegram WebApp — softer radius to match TG UI */
 [data-platform="twa"] .dashboard-banner {
   border-radius: 10px;
 }
 
-/* ─── Native (Capacitor) — slightly bigger tap targets ─── */
+/* Native (Capacitor) — bigger tap targets */
 [data-platform="native"] .dashboard-banner {
   padding: 15px 16px;
+}
+
+[data-platform="native"] .dashboard-actions button {
+  padding: 12px 14px;
 }
