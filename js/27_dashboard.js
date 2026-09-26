@@ -32,7 +32,7 @@ let _dashboardScopeMine = false; // false = whole school, true = my classes only
 let _dashboardCache = null;      // module-level cache, never put row data in onclick attrs
 
 function renderDashboard() {
-  const container = document.getElementById('page-dashboard');
+  const container = document.getElementById('dashboardContent');
   if (!container) return;
 
   if (!_dashboardLoadedOnce) {
