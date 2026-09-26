@@ -138,8 +138,9 @@ function _paintDashboard(container) {
       </div>
     </div>` : ''}
 
+       ${todaysClasses.length ? `
     <div class="more-section-title">${t('dash.todaysSchedule')}</div>
-    ${todaysClasses.length ? todaysClasses.map(x => `
+    ${todaysClasses.map(x => `
       <div class="list-card" data-class="${esc(x.class)}" onclick="_dashboardGoToAttendance(this.dataset.class)">
         <div class="card-row">
           <div class="card-avatar" style="background:${_classColor(x.class)}">${x.period ?? '·'}</div>
@@ -151,7 +152,7 @@ function _paintDashboard(container) {
             </div>
           </div>
         </div>
-      </div>`).join('') : emptyState('📅', t('dash.noClassesToday'))}
+      </div>`).join('')}` : ''}
 
     <div class="more-section-title">${t('dash.quickActions')}</div>
     <div class="dashboard-actions">
