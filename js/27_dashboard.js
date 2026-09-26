@@ -1,5 +1,5 @@
 /* ============================================================
-   js/26_dashboard.js — "Today at a Glance" teacher dashboard
+   js/27_dashboard.js — "Today at a Glance" teacher dashboard
    Built 2026-09-27, verified directly against live schema
    (project rszgbryucqwmrdbsgwbb) before writing a line of this:
    every RPC called below already exists — no new backend RPC,
@@ -168,7 +168,6 @@ function _paintDashboard(container) {
         <button onclick="window.goToPage('comms')">Message a Parent</button>
         <button onclick="window.goToPage('incidents')">Record Incident</button>
       </div>
-      <p class="dashboard-note">⚠️ page ids above are best guesses — confirm against the real ids used in goToPage() in 14_app.js and fix any that don't match.</p>
     </div>
 
     ${attentionList.length ? `
