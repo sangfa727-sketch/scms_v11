@@ -74,55 +74,60 @@
 @media (min-width: 900px) {
   .dashboard-glance-card { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
-/* ============================================
-   DASHBOARD BANNER — Polished notification card
-   ============================================ */
+/* ============================================================
+   DASHBOARD BANNER — Clean, compact, responsive notification
+   ============================================================ */
 
 .dashboard-banner {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 16px 18px;
-  margin: 16px 0;
-  border-radius: 14px;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 14px 0;
+  border-radius: 12px;
   border: 1px solid transparent;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 13.5px;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
 
-/* Icon column */
+/* ─── Icon box ─── */
 .dashboard-banner .banner-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .dashboard-banner .banner-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
-/* Text column */
+/* ─── Text column ─── */
 .dashboard-banner .banner-body {
   flex: 1;
-  min-width: 0;
+  min-width: 0;   /* prevents flex overflow on long words */
 }
 
 .dashboard-banner .banner-title {
   font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 3px;
+  font-size: 13.5px;
+  margin: 0 0 2px 0;
   letter-spacing: -0.01em;
 }
 
 .dashboard-banner .banner-text {
-  font-size: 13px;
+  font-size: 12.5px;
   opacity: 0.85;
+  margin: 0;
   line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ─── Warning variant (amber) ─── */
@@ -147,4 +152,69 @@
 [data-theme="dark"] .dashboard-banner-warn .banner-icon {
   background: #3D3018;
   color: #F5D58A;
+}
+
+/* ============================================================
+   RESPONSIVE — Mobile / TWA (≤ 480px)
+   ============================================================ */
+@media (max-width: 480px) {
+  .dashboard-banner {
+    padding: 12px 14px;
+    gap: 10px;
+    border-radius: 10px;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+
+  .dashboard-banner .banner-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+  }
+
+  .dashboard-banner .banner-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dashboard-banner .banner-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .dashboard-banner .banner-text {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}
+
+/* ─── Very small screens (≤ 360px) — e.g. iPhone SE ─── */
+@media (max-width: 360px) {
+  .dashboard-banner {
+    padding: 11px 12px;
+    gap: 9px;
+  }
+
+  .dashboard-banner .banner-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .dashboard-banner .banner-title {
+    font-size: 12.5px;
+  }
+
+  .dashboard-banner .banner-text {
+    font-size: 11.5px;
+  }
+}
+
+/* ─── Telegram WebApp (TWA) — full-width feel ─── */
+[data-platform="twa"] .dashboard-banner {
+  border-radius: 10px;
+}
+
+/* ─── Native (Capacitor) — slightly bigger tap targets ─── */
+[data-platform="native"] .dashboard-banner {
+  padding: 15px 16px;
 }
