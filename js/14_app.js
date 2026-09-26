@@ -409,7 +409,8 @@ window.goToPage = function(pageId) {
   if (pageId === 'library' && typeof renderLibrary === 'function') renderLibrary();
   if (pageId === 'transport' && typeof renderTransport === 'function') renderTransport();
   if (pageId === 'grades' && typeof renderGrades === 'function') renderGrades();
-
+  if (pageId === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
+  
   // Update sidebar highlight
   document.querySelectorAll('.sidebar-item').forEach(b =>
     b.classList.toggle('active', b.dataset.page === pageId));
