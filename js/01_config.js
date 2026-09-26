@@ -46,7 +46,11 @@ const SCMS_CONFIG = {
   // session (same shape as rpc_teacher_web_login's response).
   GOOGLE_LOGIN_URL: 'https://rszgbryucqwmrdbsgwbb.supabase.co/functions/v1/google-login',
 
-  // App version
+  // App version — this is the single source of truth (shown in More → About,
+  // and used for the git tag / release notes). There's no build step that
+  // reads this into package.json, so when you bump this number, also update
+  // "version" in package.json to match — package.json only feeds Capacitor/npm
+  // tooling metadata, but keeping the two in sync avoids confusion later.
   VERSION: '11.7.0',
 };
 
