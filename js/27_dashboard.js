@@ -107,95 +107,95 @@ function _paintDashboard(container) {
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 8);
 
-  container.innerHTML = `
+    container.innerHTML = `
     <div class="dashboard-header">
-      <h2>Today — ${todayName}</h2>
+      <h2>${t('dash.todayLabel')} — ${todayName}</h2>
       <label class="scope-toggle">
         <input type="checkbox" id="dashboardScopeToggle" ${_dashboardScopeMine ? 'checked' : ''}>
-        My classes only
+        ${t('dash.myClassesOnly')}
       </label>
     </div>
 
     <div class="dashboard-glance-card">
       <div class="glance-item ${classesMissingAttendance.length ? 'glance-warn' : 'glance-ok'}">
         <span class="glance-num">${classesToday.length}</span>
-        <span class="glance-label">Classes today</span>
+        <span class="glance-label">${t('dash.classesToday')}</span>
       </div>
       <div class="glance-item ${classesMissingAttendance.length ? 'glance-warn' : 'glance-ok'}">
         <span class="glance-num">${classesMissingAttendance.length}</span>
-        <span class="glance-label">Not yet marked</span>
+        <span class="glance-label">${t('dash.notYetMarked')}</span>
       </div>
       <div class="glance-item">
         <span class="glance-num">${recentHomework.length}</span>
-        <span class="glance-label">Homework logged (2d)</span>
+        <span class="glance-label">${t('dash.homeworkLogged2d')}</span>
       </div>
       <div class="glance-item ${recentIncidents.length ? 'glance-warn' : ''}">
         <span class="glance-num">${recentIncidents.length}</span>
-        <span class="glance-label">Recent incidents</span>
+        <span class="glance-label">${t('dash.recentIncidents')}</span>
       </div>
       <div class="glance-item ${queuedComms.length ? 'glance-warn' : ''}">
         <span class="glance-num">${queuedComms.length}</span>
-        <span class="glance-label">Messages queued (not delivered)</span>
+        <span class="glance-label">${t('dash.messagesQueued')}</span>
       </div>
     </div>
 
     ${queuedComms.length ? `
-<div class="dashboard-banner dashboard-banner-warn">
-  <div class="banner-icon">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-      <line x1="12" y1="9" x2="12" y2="13"/>
-      <line x1="12" y1="17" x2="12.01" y2="17"/>
-    </svg>
-  </div>
-  <div class="banner-body">
-    <div class="banner-title">
-      ${queuedComms.length} message${queuedComms.length > 1 ? 's' : ''} not delivered
-    </div>
-    <div class="banner-text">
-      The Telegram delivery bot is currently offline. These parent messages are stuck in the queue and haven't reached parents yet.
-    </div>
-  </div>
-</div>` : ''}
+    <div class="dashboard-banner dashboard-banner-warn">
+      <div class="banner-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="banner-body">
+        <div class="banner-title">
+          ${t('dash.bannerTitle', { n: queuedComms.length })}
+        </div>
+        <div class="banner-text">
+          ${t('dash.bannerText')}
+        </div>
+      </div>
+    </div>` : ''}
 
     <div class="dashboard-section">
-      <h3>Today's Schedule</h3>
+      <h3>${t('dash.todaysSchedule')}</h3>
       ${todaysClasses.length ? `
         <div class="dashboard-list">
-          ${todaysClasses.map(t => `
-            <div class="dashboard-row" data-class="${_escapeAttr(t.class)}" onclick="_dashboardGoToAttendance(this.dataset.class)">
-              <span class="row-time">${_escape(t.start_time || '')}</span>
-              <span class="row-main">${_escape(t.class)} — ${_escape(t.subject || '')}</span>
-              <span class="row-meta">${_escape(t.room || '')}</span>
+          ${todaysClasses.map(t2 => `
+            <div class="dashboard-row" data-class="${_escapeAttr(t2.class)}" onclick="_dashboardGoToAttendance(this.dataset.class)">
+              <span class="row-time">${_escape(t2.start_time || '')}</span>
+              <span class="row-main">${_escape(t2.class)} — ${_escape(t2.subject || '')}</span>
+              <span class="row-meta">${_escape(t2.room || '')}</span>
             </div>`).join('')}
-        </div>` : `<div class="empty-state">No classes scheduled today.</div>`}
+        </div>` : `<div class="empty-state">${t('dash.noClassesToday')}</div>`}
     </div>
 
     <div class="dashboard-section">
-      <h3>Quick Actions</h3>
+      <h3>${t('dash.quickActions')}</h3>
       <div class="dashboard-actions">
-<button onclick="window.goToPage('attend')">Take Attendance</button>
-<button onclick="window.goToPage('hw')">Log Homework</button>
-<button onclick="window.goToPage('parents')">Message a Parent</button>
-<button onclick="window.goToPage('incidents')">Record Incident</button>
+        <button onclick="window.goToPage('attend')">${t('dash.takeAttendance')}</button>
+        <button onclick="window.goToPage('hw')">${t('dash.logHomework')}</button>
+        <button onclick="window.goToPage('parents')">${t('dash.messageParent')}</button>
+        <button onclick="window.goToPage('incidents')">${t('dash.recordIncident')}</button>
       </div>
     </div>
 
     ${attentionList.length ? `
     <div class="dashboard-section">
-      <h3>Students Needing Attention</h3>
+      <h3>${t('dash.studentsAttention')}</h3>
       <div class="dashboard-list">
         ${attentionList.map(([id, v]) => `
           <div class="dashboard-row">
             <span class="row-main">${_escape(v.name)}</span>
-            <span class="row-meta">${v.count} absences in last 14 days</span>
+            <span class="row-meta">${t('dash.absences14', { n: v.count })}</span>
           </div>`).join('')}
       </div>
     </div>` : ''}
 
     ${recentIncidents.length ? `
     <div class="dashboard-section">
-      <h3>Recent Incidents</h3>
+      <h3>${t('dash.recentIncidentsTitle')}</h3>
       <div class="dashboard-list">
         ${recentIncidents.map(i => `
           <div class="dashboard-row">
