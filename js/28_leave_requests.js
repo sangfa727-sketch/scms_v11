@@ -98,6 +98,10 @@ async function _decide(id, decision) {
   try {
     const res = await API.decideLeaveRequest(id, decision);
     showToast(t('leave.decided', { status: t('leave.status.' + decision), n: res.days_marked ?? 0 }));
+    if (typeof window.APP.pendingLeaveCount === 'number') {
+      window.APP.pendingLeaveCount = Math.max(0, window.APP.pendingLeaveCount - 1);
+      if (typeof renderSidebar === 'function') renderSidebar();
+    }
     renderLeaveRequests();
   } catch (e) {
     showToast(t('leave.decideFailed') + ': ' + (e.message || t('common.error')));

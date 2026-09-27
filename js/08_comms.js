@@ -48,7 +48,7 @@ function _renderCommsList() {
       <div class="card-row">
         <div class="comm-icon">${typeIcon[c.type] || '💬'}</div>
         <div class="card-info">
-          <div class="card-name">${esc(c.name_en || t('comms.broadcast'))}</div>
+          <div class="card-name">${esc(c.name_en || (c.class ? t('comms.classBroadcast', { class: c.class }) : t('comms.broadcast')))}</div>
           <div class="card-sub">${esc(tv('commType', c.type))} · ${esc(fmtDate(c.date))}</div>
           ${c.message_preview ? `<div class="card-note">${esc(c.message_preview.slice(0, 100))}${c.message_preview.length > 100 ? '…' : ''}</div>` : ''}
         </div>
@@ -84,11 +84,22 @@ async function doDeleteComm(id) {
 window.openParentCommModal = function() {
   _commPickedStudent = null;
   const classes  = [...new Set(window.APP.students.map(s => s.class).filter(Boolean))].sort();
+  const types    = ['General','Absent Alert','Daily Report','Praise','Incident','Homework','Broadcast'];
+  // Pre-select whichever list filter was active when "+" was tapped (a head
+  // start, not a lock-in) — but it's a real dropdown IN the form now, so
+  // typing a message no longer requires having pre-picked the right filter
+  // chip first. If the active filter is "All", default to "General".
+  const defaultType = types.includes(_commsType) ? _commsType : 'General';
 
   const html = `
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <h3 class="modal-title">${t('comms.sendTitle')}</h3>
+
+      <label class="field-label">${t('comms.purpose')}</label>
+      <select class="form-input" id="commType">
+        ${types.map(ty => `<option value="${esc(ty)}" ${ty === defaultType ? 'selected' : ''}>${esc(tv('commType', ty))}</option>`).join('')}
+      </select>
 
       <label class="field-label">${t('comms.sendTo')}</label>
       <div class="pill-group" id="commTargetPills">
@@ -169,7 +180,7 @@ window.sendParentComm = async function() {
       class:           isIndividual ? (_commPickedStudent?.class || '') : document.getElementById('commClass')?.value,
       student_id:      isIndividual ? _commPickedStudent?.student_id   : null,
       name_en:         isIndividual ? _commPickedStudent?.name_en      : null,
-      type:            'General',
+      type:            document.getElementById('commType')?.value || 'General',
       date:            new Date().toISOString().slice(0, 10),
     });
     if (res?.comm) {

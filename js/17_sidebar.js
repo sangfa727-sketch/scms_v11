@@ -81,12 +81,16 @@ function renderSidebar() {
     </div>
 
     <nav class="sidebar-nav">
-      ${items.map(it => `
+      ${items.map(it => {
+        const badgeCount = it.id === 'leave' ? (window.APP.pendingLeaveCount || 0) : 0;
+        return `
         <button class="sidebar-item ${window.APP.currentPage === it.id ? 'active' : ''}"
           data-page="${esc(it.id)}" onclick="sidebarGo('${esc(it.id)}')">
           <span class="sidebar-icon">${it.icon}</span>
           <span class="sidebar-label">${esc(t(it.key))}</span>
-        </button>`).join('')}
+          ${badgeCount ? `<span class="sidebar-badge">${badgeCount > 99 ? '99+' : badgeCount}</span>` : ''}
+        </button>`;
+      }).join('')}
     </nav>
 
     <div class="sidebar-footer">

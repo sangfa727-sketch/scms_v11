@@ -1094,7 +1094,7 @@ const API = {
   // ─── REFRESH ALL ─────────────────────────────────────────────────────────
 
   async refreshAll() {
-    const [students, attendance, dailyReports, homework, parentComms, incidents, timetable] =
+    const [students, attendance, dailyReports, homework, parentComms, incidents, timetable, pendingLeave] =
       await Promise.allSettled([
         API.getStudents(),
         API.getAttendance(30),
@@ -1103,6 +1103,7 @@ const API = {
         API.getParentComms(30),
         API.getIncidents(30),
         API.getTimetable(),
+        API.getLeaveRequests('Pending'),
       ]);
 
     if (students.status     === 'fulfilled') window.APP.students     = students.value     || [];
@@ -1112,6 +1113,9 @@ const API = {
     if (parentComms.status  === 'fulfilled') window.APP.parentComms  = parentComms.value  || [];
     if (incidents.status    === 'fulfilled') window.APP.incidents    = incidents.value    || [];
     if (timetable.status    === 'fulfilled') window.APP.timetable    = timetable.value    || [];
+    // Sidebar badge only — the Leave Requests page itself always re-fetches
+    // its own full list, this is just so the count shows before you visit it.
+    window.APP.pendingLeaveCount = pendingLeave.status === 'fulfilled' ? (pendingLeave.value?.length || 0) : 0;
 
     return window.APP;
   },
