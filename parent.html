@@ -66,6 +66,18 @@
   .b-unpaid              { background: rgba(8,145,178,0.14); color: var(--blue); }
   .b-exam-date           { background: rgba(8,145,178,0.14); color: var(--blue); }
   .exam-card-title { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+  .b-leave-pending  { background: rgba(217,119,6,0.14); color: var(--amber); }
+  .b-leave-approved { background: rgba(5,150,105,0.14); color: var(--green); }
+  .b-leave-rejected { background: rgba(220,38,38,0.14); color: var(--red); }
+  .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text2); margin: 12px 0 5px; }
+  .form-label:first-child { margin-top: 0; }
+  .form-input, .form-textarea {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 0.5px solid var(--border2);
+    font-family: inherit; font-size: 14px; background: var(--bg); color: var(--text);
+  }
+  .form-textarea { resize: vertical; min-height: 60px; }
+  .leave-date-row { display: flex; gap: 8px; }
+  .leave-date-row > div { flex: 1; }
   .empty { text-align: center; color: var(--muted); font-size: 13.5px; padding: 20px 0; }
   .signout { text-align: center; margin-top: 18px; }
   .signout a { color: var(--muted); font-size: 12.5px; text-decoration: underline; cursor: pointer; }
@@ -211,7 +223,7 @@ async function showDashboard(sessionToken) {
   appEl.innerHTML = `<div class="card center"><div class="skeleton" style="width:60%;margin:0 auto"></div><div class="skeleton" style="width:80%"></div><div class="skeleton" style="width:80%"></div></div>`;
 
   const res = await rpc('rpc_parent_get_dashboard', { p_session_token: sessionToken });
-  const { student, attendance, grades, invoices, upcoming_exams } = res;
+  const { student, attendance, grades, invoices, upcoming_exams, leave_requests } = res;
 
   const presentCount = attendance.filter(a => a.status === 'Present').length;
   const absentCount  = attendance.filter(a => a.status === 'Absent').length;
@@ -238,6 +250,7 @@ async function showDashboard(sessionToken) {
       <div class="tab active" data-tab="attendance">Attendance</div>
       <div class="tab" data-tab="grades">Grades</div>
       <div class="tab" data-tab="billing">Billing</div>
+      <div class="tab" data-tab="leave">Leave</div>
     </div>
 
     <div class="panel active" id="panel-attendance">
@@ -277,6 +290,33 @@ async function showDashboard(sessionToken) {
       </div>
     </div>
 
+    <div class="panel" id="panel-leave">
+      <div class="card">
+        <label class="form-label">Reason for leave</label>
+        <textarea class="form-textarea" id="leaveReason" placeholder="e.g. Family trip, medical appointment…"></textarea>
+        <div class="leave-date-row">
+          <div>
+            <label class="form-label">From</label>
+            <input type="date" class="form-input" id="leaveStart">
+          </div>
+          <div>
+            <label class="form-label">To</label>
+            <input type="date" class="form-input" id="leaveEnd">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="leaveSubmitBtn" style="margin-top:14px">Submit Request</button>
+        <div id="leaveFormMsg" class="muted" style="margin-top:8px;text-align:center"></div>
+      </div>
+      <div class="card">
+        ${leave_requests.length ? leave_requests.map(lr => `
+          <div class="row">
+            <span>${esc(fmtDate(lr.start_date))}${lr.start_date !== lr.end_date ? ' → ' + esc(fmtDate(lr.end_date)) : ''}
+              <span class="r-sub">${lr.reason ? '— ' + esc(lr.reason) : ''}</span></span>
+            <span class="badge b-leave-${esc((lr.status || '').toLowerCase())}">${esc(lr.status)}</span>
+          </div>`).join('') : `<div class="empty">No leave requests yet.</div>`}
+      </div>
+    </div>
+
     <div class="signout"><a id="signOutLink">Sign out of this device</a></div>
   `;
 
@@ -291,6 +331,30 @@ async function showDashboard(sessionToken) {
   document.getElementById('signOutLink').onclick = () => {
     localStorage.removeItem(sessionKey(qrToken));
     showLogin();
+  };
+
+  document.getElementById('leaveSubmitBtn').onclick = async () => {
+    const start = document.getElementById('leaveStart').value;
+    const end   = document.getElementById('leaveEnd').value;
+    const reason = document.getElementById('leaveReason').value.trim();
+    const msgEl = document.getElementById('leaveFormMsg');
+    if (!start || !end) { msgEl.textContent = 'Please choose both dates.'; return; }
+    if (end < start) { msgEl.textContent = 'End date must be on or after the start date.'; return; }
+
+    const btn = document.getElementById('leaveSubmitBtn');
+    btn.disabled = true;
+    msgEl.textContent = '';
+    try {
+      await rpc('rpc_parent_submit_leave_request', {
+        p_session_token: sessionToken, p_start_date: start, p_end_date: end, p_reason: reason || null,
+      });
+      await showDashboard(sessionToken); // simplest refresh: re-render from the server, same pattern used everywhere else here
+      document.querySelector('.tab[data-tab="leave"]').click();
+      document.getElementById('leaveFormMsg').textContent = 'Request submitted.';
+    } catch (e) {
+      msgEl.textContent = 'Could not submit (' + (e.message || 'error') + '). Please try again.';
+      btn.disabled = false;
+    }
   };
 }
 
