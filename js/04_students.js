@@ -21,8 +21,116 @@ let _removePhotoRequested = false; // "Remove photo" tapped — clear on save
 function renderStudents() {
   _renderStudentStats();
   _renderClassChips();
+  _renderIdSelectToolbar();
   _renderStudentList();
 }
+
+// ─── Select-for-print (ID cards) ────────────────────────────────────────────
+
+let _idSelectMode = false;
+let _idSelected    = new Set();
+
+window.toggleIdSelectMode = function() {
+  _idSelectMode = !_idSelectMode;
+  if (!_idSelectMode) _idSelected.clear();
+  _renderIdSelectToolbar();
+  _renderStudentList();
+};
+
+window._idToggleOne = function(studentId) {
+  if (_idSelected.has(studentId)) _idSelected.delete(studentId); else _idSelected.add(studentId);
+  _renderIdSelectToolbar();
+};
+
+window.idSelectAllVisible = function() {
+  _visibleStudentIds().forEach(id => _idSelected.add(id));
+  _renderIdSelectToolbar();
+  _renderStudentList();
+};
+
+window.idSelectNone = function() {
+  _idSelected.clear();
+  _renderIdSelectToolbar();
+  _renderStudentList();
+};
+
+function _visibleStudentIds() {
+  // Same filtering _renderStudentList uses, kept in sync deliberately —
+  // "select all" means "all in the current class/search view", not everyone.
+  let list = window.APP.students.filter(s => s.status === 'Active');
+  if (_stuClass !== 'All') list = list.filter(s => s.class === _stuClass);
+  if (_stuSearch) {
+    list = list.filter(s =>
+      (s.name_en    || '').toLowerCase().includes(_stuSearch) ||
+      (s.name_local || '').toLowerCase().includes(_stuSearch) ||
+      (s.student_id || '').toLowerCase().includes(_stuSearch) ||
+      (s.class      || '').toLowerCase().includes(_stuSearch));
+  }
+  return list.map(s => s.student_id);
+}
+
+function _renderIdSelectToolbar() {
+  const el = document.getElementById('idSelectToolbar');
+  if (!el) return;
+
+  if (!_idSelectMode) {
+    el.innerHTML = `<button class="btn-pill-action ghost" onclick="toggleIdSelectMode()">🪪 ${t('idCard.selectMode')}</button>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="id-select-count">${t('idCard.nSelected', { n: _idSelected.size })}</span>
+    <button type="button" class="id-orient-mini-btn" onclick="_toggleIdCardOrientation()"
+      title="${esc(t(_idCardOrientation === 'horizontal' ? 'idCard.orientationToVertical' : 'idCard.orientationToHorizontal'))}">
+      ${_orientIconSvg(_idCardOrientation === 'horizontal' ? 'vertical' : 'horizontal')}
+    </button>
+    <button class="btn-pill-action ghost" onclick="idSelectAllVisible()">${t('idCard.selectAllVisible')}</button>
+    ${_idSelected.size ? `<button class="btn-pill-action ghost" onclick="idSelectNone()">${t('idCard.selectNone')}</button>` : ''}
+    <button class="btn-pill-action" ${_idSelected.size ? '' : 'disabled style="opacity:.4"'} onclick="printSelectedIdCards()">🖨️ ${t('idCard.printSelected')}</button>
+    <button class="btn-pill-action ghost" onclick="toggleIdSelectMode()">${t('common.cancel')}</button>
+  `;
+}
+
+window.printSelectedIdCards = async function() {
+  const ids = [..._idSelected];
+  if (!ids.length) return;
+
+  showToast(t('idCard.preparing', { n: ids.length }));
+  let students;
+  try {
+    // Each call gets-or-creates that student's QR token (idempotent — same
+    // token returned if one already exists), same endpoint the single-card
+    // view uses, just run for everyone selected at once.
+    const results = await Promise.all(ids.map(id => API.getOrCreateStudentQr(id)));
+    students = results.map(r => r.student);
+  } catch (e) {
+    showToast(t('common.failed') + ' ' + (e.message || t('common.error')));
+    return;
+  }
+
+  const area = document.getElementById('bulkIdPrintArea');
+  if (!area) return;
+
+  const PER_PAGE = _idCardOrientation === 'vertical' ? 9 : 10; // 3x3 vertical vs 2x5 horizontal, both fit A4 with margins
+  const pageClass = _idCardOrientation === 'vertical' ? 'id-sheet-page vertical' : 'id-sheet-page';
+  const pages = [];
+  for (let i = 0; i < students.length; i += PER_PAGE) pages.push(students.slice(i, i + PER_PAGE));
+
+  area.innerHTML = pages.map((page, pi) => `
+    <div class="${pageClass}">
+      ${page.map((s, si) => _idCardHtml(s, `bulkQr_${pi}_${si}`)).join('')}
+    </div>`).join('');
+
+  // QRCode needs the target element already in the DOM — instantiate after innerHTML is set.
+  pages.forEach((page, pi) => page.forEach((s, si) => {
+    const portalUrl = new URL('parent.html?t=' + encodeURIComponent(s.qr_token), location.href).href;
+    const target = document.getElementById(`bulkQr_${pi}_${si}`);
+    if (window.QRCode && target) {
+      new QRCode(target, { text: portalUrl, width: 70, height: 70, colorDark: '#1A1A18', colorLight: '#ffffff' });
+    }
+  }));
+
+  _printArea('printing-id-bulk', 'size: A4; margin: 10mm;', () => { area.innerHTML = ''; });
+};
 
 // ─── Stats ────────────────────────────────────────────────────────────────
 
@@ -141,7 +249,8 @@ function _renderStudentList() {
     const bdaySoon = bdayDays !== null && bdayDays <= 7;
 
     return `
-      <div class="list-card stu-card" onclick="openStudentDetail('${esc(s.student_id)}')">
+      <div class="list-card stu-card${_idSelectMode ? ' id-select-mode' : ''}" onclick="${_idSelectMode ? `_idToggleOne('${esc(s.student_id)}')` : `openStudentDetail('${esc(s.student_id)}')`}">
+        ${_idSelectMode ? `<input type="checkbox" class="id-select-checkbox" ${_idSelected.has(s.student_id) ? 'checked' : ''} onclick="event.stopPropagation();_idToggleOne('${esc(s.student_id)}')">` : ''}
         <div class="card-row">
           <div class="card-avatar" style="background:${homeHex}">${avatarContent(s)}</div>
           <div class="card-info">
@@ -250,6 +359,68 @@ function _detailRow(label, value) {
  * Any Active student can get one — the QR encodes a link to parent.html
  * that resolves to this student and lets their parent sign in with the
  * Google account matching parent_email on file. */
+
+// Shared template for both the single-card modal and the bulk print sheet,
+// so the two never visually drift apart. `qrTargetId` is the id of an
+// (already-in-DOM) element the caller will instantiate a QRCode into right
+// after inserting this HTML — this function only lays out the empty slot.
+function _idCardHtml(s, qrTargetId) {
+  const homeHex = s.home_color ? homeColorHex(s.home_color) : _classColor(s.class);
+  const vertical = _idCardOrientation === 'vertical';
+  return `
+    <div class="id-card${vertical ? ' id-card-vertical' : ''}" style="--id-accent:${homeHex}">
+      <div class="id-card-accent"></div>
+      <div class="id-card-body">
+        <div class="id-card-photo" style="background:${homeHex}">${avatarContent(s)}</div>
+        <div class="id-card-info">
+          <div class="id-card-school">${esc(window.APP.school_name || '')}</div>
+          <div class="id-card-name">${esc(s.name_en)}</div>
+          <div class="id-card-sub">${esc(s.class || '')}</div>
+          <div class="id-card-id">${esc(s.student_id)}</div>
+        </div>
+        <div class="id-card-qr" id="${qrTargetId}"></div>
+      </div>
+    </div>`;
+}
+
+// Orientation is a session-wide choice (not per-student) — pick once via the
+// toggle button, it applies to the single-card preview/print AND to the
+// next bulk print, until changed again. Defaults to horizontal (the
+// original layout).
+let _idCardOrientation   = 'horizontal'; // 'horizontal' | 'vertical'
+let _idCardCurrentStudent = null;        // so the toggle button can re-render the open modal
+
+function _orientIconSvg(targetOrientation) {
+  // Shows the icon for what you'll SWITCH TO, not the current state.
+  return targetOrientation === 'vertical'
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="18" rx="2"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/></svg>`;
+}
+
+window._toggleIdCardOrientation = function() {
+  _idCardOrientation = _idCardOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+  if (_idCardCurrentStudent) _renderIdCardBody(_idCardCurrentStudent);
+  _renderIdSelectToolbar(); // keep the toolbar's own orientation icon in sync
+};
+
+// Prints exactly one DOM subtree at its true physical size, injecting the
+// @page rule fresh per print job (rather than a static stylesheet rule) so
+// the single-card size and the bulk A4 sheet size never fight each other.
+function _printArea(bodyClass, pageCss, cleanupFn) {
+  document.body.classList.add(bodyClass);
+  const style = document.createElement('style');
+  style.textContent = `@page { ${pageCss} }`;
+  document.head.appendChild(style);
+  const cleanup = () => {
+    document.body.classList.remove(bodyClass);
+    style.remove();
+    if (cleanupFn) cleanupFn();
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
+
 window.showStudentIdCard = async function(studentId) {
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
@@ -277,6 +448,7 @@ async function _loadIdCard(studentId) {
 function _renderIdCardBody(s) {
   const el = document.getElementById('idCardBody');
   if (!el) return;
+  _idCardCurrentStudent = s; // so the orientation toggle can re-render this same card
 
   // The QR encodes a random, unguessable token (not the plain STU-... ID) —
   // scanning or photographing it only gets someone to the "sign in with the
@@ -285,18 +457,18 @@ function _renderIdCardBody(s) {
   // server-side, before it ever issues a session. Card lost/stolen? Use
   // "Issue a new code" below — the old QR stops working immediately.
   const portalUrl = new URL('parent.html?t=' + encodeURIComponent(s.qr_token), location.href).href;
-  const homeHex = s.home_color ? homeColorHex(s.home_color) : '#1A1A18';
+  const nextOrientation = _idCardOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+  const pageCss = _idCardOrientation === 'vertical'
+    ? 'size: 2.125in 3.375in; margin: 0;'
+    : 'size: 3.375in 2.125in; margin: 0;';
 
   el.innerHTML = `
-    <div class="id-card" id="idCardPrintArea">
-      <div class="id-card-photo" style="background:${homeHex}">${avatarContent(s)}</div>
-      <div class="id-card-info">
-        <div class="id-card-school">${esc(window.APP.school_name || '')}</div>
-        <div class="id-card-name">${esc(s.name_en)}</div>
-        <div class="id-card-sub">${esc(s.class || '')}</div>
-        <div class="id-card-id">${esc(s.student_id)}</div>
-      </div>
-      <div class="id-card-qr" id="idCardQr"></div>
+    <div class="id-card-preview-wrap">
+      <div id="idCardPrintArea">${_idCardHtml(s, 'idCardQr')}</div>
+      <button type="button" class="id-card-orient-btn" onclick="_toggleIdCardOrientation()"
+        title="${esc(t(nextOrientation === 'vertical' ? 'idCard.orientationToVertical' : 'idCard.orientationToHorizontal'))}">
+        ${_orientIconSvg(nextOrientation)}
+      </button>
     </div>
     <p class="muted" style="font-size:12px;text-align:center;margin:10px 0 0">${t('idCard.scanHint')}</p>
     <div class="id-card-link-row">
@@ -304,7 +476,7 @@ function _renderIdCardBody(s) {
       <button type="button" class="btn-pill-action ghost" onclick="_copyIdCardLink()">${t('idCard.copyLink')}</button>
     </div>
     <p class="muted" style="font-size:11px;text-align:center">${t('idCard.testHint')}</p>
-    <button class="btn-primary mt16" onclick="window.print()">${t('idCard.print')}</button>
+    <button class="btn-primary mt16" onclick="_printArea('printing-id-single', '${pageCss}')">${t('idCard.print')}</button>
     <button class="btn-secondary" onclick="_confirmRegenerateQr('${esc(s.student_id)}')">${t('idCard.lost')}</button>
     <button class="btn-secondary" onclick="closeModal()">${t('common.close')}</button>
   `;
