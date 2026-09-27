@@ -514,6 +514,29 @@ const API = {
       `school_id=eq.${window.APP.school_id}&date=gte.${since}&order=date.desc`);
   },
 
+  // ─── LEAVE REQUESTS ──────────────────────────────────────────────────────
+  // Manual approve/reject only — deliberately not wired to n8n/AI, since
+  // that backend is not currently deployed. Approving auto-marks attendance
+  // (handled server-side in rpc_decide_leave_request).
+
+    async getLeaveRequests(status = null) {
+    if (window.APP.platform === 'web') {
+      const res = await _webRpc('rpc_get_leave_requests', {
+        p_session_token: getWebSession()?.session_token, p_status: status,
+      });
+      return res.rows;
+    }
+    return twaPost('get_leave_requests', { status });
+  },
+
+    async decideLeaveRequest(id, decision, teacherNote = null) {
+    if (window.APP.platform === 'web') return _webRpc('rpc_decide_leave_request', {
+      p_session_token: getWebSession()?.session_token, p_id: id,
+      p_decision: decision, p_teacher_note: teacherNote,
+    });
+    return twaPost('decide_leave_request', { id, decision, teacher_note: teacherNote });
+  },
+
   // ─── PARENT COMMS ────────────────────────────────────────────────────────
 
     async sendParentComm(data) {

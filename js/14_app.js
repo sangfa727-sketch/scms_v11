@@ -415,6 +415,7 @@ window.goToPage = function(pageId) {
   if (pageId === 'transport' && typeof renderTransport === 'function') renderTransport();
   if (pageId === 'grades' && typeof renderGrades === 'function') renderGrades();
   if (pageId === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
+  if (pageId === 'leave' && typeof renderLeaveRequests === 'function') renderLeaveRequests();
   
   // Update sidebar highlight
   document.querySelectorAll('.sidebar-item').forEach(b =>

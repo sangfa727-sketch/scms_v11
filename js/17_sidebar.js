@@ -28,6 +28,7 @@ const SIDEBAR_ITEMS = [
   { id: 'transport',  icon: '🚌', key: 'module.transport',  hideInTWA: false },
   { id: 'parents',   icon: '💬', key: 'module.parents', hideInTWA: false },
   { id: 'incidents', icon: '⚡', key: 'module.incidents',  hideInTWA: false },
+  { id: 'leave',     icon: '🌴', key: 'sb.leave',       hideInTWA: false },
   { id: 'timetable', icon: '📅', key: 'module.timetable',  hideInTWA: false },
   { id: 'summary',   icon: '📊', key: 'module.summary', hideInTWA: false },
   // Items below are NATIVE-ONLY — hidden inside Telegram
