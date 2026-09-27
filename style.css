@@ -3825,50 +3825,185 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
   height: 18px;
 }
 
-/* ── Student ID Card (Parent Portal QR) ──────────────────────────────────── */
-/* On-screen preview, scaled up from the CR80 card ratio (3.375in x 2.125in,
-   same as a standard plastic ID/ATM card) for legibility; print CSS below
-   shrinks it back down to the exact physical size. */
+/* ── Student ID Card (Parent Portal QR) — v2 premium redesign ────────────── */
+/* CR80 standard card ratio (3.375in x 2.125in / 85.6mm x 54mm — same as a
+   real plastic ID/ATM card). On-screen preview is scaled up for legibility;
+   print CSS renders both the single card and the bulk sheet at true
+   physical size, so nothing needs sizing in an external editor. */
 .id-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 14px;
-  border: 1px solid var(--border);
+  flex-direction: column;
+  border: 0.5px solid var(--border);
   border-radius: 16px;
-  padding: 18px;
   background: var(--surface);
+  box-shadow: var(--shadow);
   aspect-ratio: 3.375 / 2.125;
   max-width: 380px;
   margin: 0 auto;
 }
+.id-card::after {
+  /* faint watermark ring — decorative only, negligible ink when printed */
+  content: '';
+  position: absolute;
+  right: -30px; bottom: -30px;
+  width: 140px; height: 140px;
+  border: 10px solid var(--id-accent, var(--accent));
+  border-radius: 50%;
+  opacity: 0.05;
+  pointer-events: none;
+}
+.id-card-accent {
+  height: 7%;
+  min-height: 6px;
+  background: var(--id-accent, var(--accent));
+  flex: 0 0 auto;
+}
+.id-card-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8% 8% 6%;
+  min-height: 0;
+}
 .id-card-photo {
   flex: 0 0 auto;
-  width: 68px; height: 68px;
+  width: 26%;
+  aspect-ratio: 1;
   border-radius: 50%;
+  border: 2px solid var(--surface);
+  outline: 1.5px solid var(--id-accent, var(--accent));
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 22px; font-weight: 700;
   overflow: hidden;
 }
 .id-card-photo img { width: 100%; height: 100%; object-fit: cover; }
 .id-card-info { flex: 1; min-width: 0; }
-.id-card-school { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.id-card-name { font-size: 16px; font-weight: 700; line-height: 1.25; margin-top: 2px; }
-.id-card-sub { font-size: 12.5px; color: var(--text2); }
-.id-card-id { font-size: 11px; color: var(--muted); font-family: monospace; margin-top: 4px; }
-.id-card-qr { flex: 0 0 auto; }
+.id-card-school {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.id-card-name {
+  font-family: 'Fraunces', serif;
+  font-size: 17px; font-weight: 700; line-height: 1.15;
+  margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.id-card-sub { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+.id-card-id { font-size: 9.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 3px; }
+.id-card-qr {
+  flex: 0 0 auto;
+  padding: 3px;
+  background: #fff;
+  border-radius: 6px;
+  border: 0.5px solid var(--border);
+  line-height: 0;
+}
 .id-card-link-row { display: flex; gap: 6px; align-items: center; margin: 8px 0 0; }
 .id-card-link-row input { flex: 1; font-size: 11px; padding: 8px 10px; }
 .id-card-link-row button { flex: 0 0 auto; white-space: nowrap; }
+
+/* Vertical (portrait) orientation — same CR80 card, dimensions swapped */
+.id-card.id-card-vertical { aspect-ratio: 2.125 / 3.375; max-width: 240px; }
+.id-card.id-card-vertical .id-card-body {
+  flex-direction: column;
+  text-align: center;
+  padding: 6% 8% 8%;
+}
+.id-card.id-card-vertical .id-card-photo { width: 40%; margin-bottom: 4%; }
+.id-card.id-card-vertical .id-card-info { width: 100%; }
+.id-card.id-card-vertical .id-card-name,
+.id-card.id-card-vertical .id-card-sub,
+.id-card.id-card-vertical .id-card-id { white-space: normal; text-overflow: clip; }
+.id-card.id-card-vertical .id-card-qr { margin-top: 8%; }
+
+/* Orientation toggle — sits OUTSIDE #idCardPrintArea (a sibling), so it
+   never appears on the printed card; the existing print visibility rule
+   (only #idCardPrintArea and its own children are visible) hides it
+   automatically without any extra CSS. */
+.id-card-preview-wrap { position: relative; max-width: 380px; margin: 0 auto; }
+.id-card-orient-btn {
+  position: absolute; top: -10px; right: -10px; z-index: 2;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.id-card-orient-btn svg { width: 16px; height: 16px; stroke: var(--text); }
+
+/* ── Bulk ID card sheet (A4, multiple cards per page) ─────────────────────── */
+#bulkIdPrintArea { display: none; }
+.id-sheet-page {
+  display: grid;
+  grid-template-columns: repeat(2, 85.6mm);
+  grid-template-rows: repeat(5, 54mm);
+  gap: 4mm 6mm;
+  justify-content: center;
+}
+.id-sheet-page + .id-sheet-page { page-break-before: always; break-before: page; }
+.id-sheet-page.vertical {
+  grid-template-columns: repeat(3, 54mm);
+  grid-template-rows: repeat(3, 85.6mm);
+}
+.id-sheet-page .id-card {
+  max-width: none;
+  aspect-ratio: auto;
+  border-radius: 3mm;
+  box-shadow: none;
+  outline: 0.2mm dashed var(--border2, #ccc); /* cut guide */
+  outline-offset: 1mm;
+  break-inside: avoid;
+}
+
+/* ── Select-for-print toolbar (Students page) ─────────────────────────────── */
+.id-select-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.id-select-toolbar .id-select-count { font-size: 12.5px; color: var(--text2); font-weight: 600; margin-right: auto; }
+.id-orient-mini-btn {
+  width: 30px; height: 30px; flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--bg2);
+  border: 0.5px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.id-orient-mini-btn svg { width: 14px; height: 14px; stroke: var(--text); }
+.id-select-checkbox {
+  position: absolute; top: 10px; left: 10px; z-index: 2;
+  width: 22px; height: 22px;
+  accent-color: var(--accent);
+}
+.stu-card.id-select-mode { position: relative; padding-left: 40px; }
+
 @media print {
-  @page { size: 3.375in 2.125in; margin: 0; }
-  body * { visibility: hidden; }
-  #idCardPrintArea, #idCardPrintArea * { visibility: visible; }
-  #idCardPrintArea {
+  body.printing-id-single * { visibility: hidden; }
+  body.printing-id-single #idCardPrintArea,
+  body.printing-id-single #idCardPrintArea * { visibility: visible; }
+  body.printing-id-single #idCardPrintArea {
     position: fixed; top: 0; left: 0;
-    width: 3.375in; height: 2.125in;
+    width: 100%; height: 100%; /* matches whichever @page size was injected for this print job */
+  }
+  body.printing-id-single #idCardPrintArea .id-card {
+    width: 100%; height: 100%;
     max-width: none; aspect-ratio: auto;
-    border-radius: 0; border: none; padding: 0.15in;
-    margin: 0;
+    border-radius: 0; border: none; box-shadow: none; padding: 0; margin: 0;
+  }
+
+  body.printing-id-bulk * { visibility: hidden; }
+  body.printing-id-bulk #bulkIdPrintArea,
+  body.printing-id-bulk #bulkIdPrintArea * { visibility: visible; }
+  body.printing-id-bulk #bulkIdPrintArea {
+    display: block;
+    position: absolute; top: 0; left: 0;
   }
 }
 
