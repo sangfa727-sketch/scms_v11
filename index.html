@@ -20,7 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- App stylesheet -->
-<link rel="stylesheet" href="style.css?v=20260927d">
+<link rel="stylesheet" href="style.css?v=20260927e">
 <link rel="stylesheet" href="dashboard.css?v=20260924n">
 </head>
 <body>
@@ -140,6 +140,7 @@
         </button>
       </div>
       <div class="chips-row" id="classChips"></div>
+      <div class="id-select-toolbar" id="idSelectToolbar"></div>
       <div id="studentList"></div>
     </section>
 
@@ -336,6 +337,9 @@
     </section>
 
   </main>
+
+  <!-- ⭐ Bulk ID card print sheet — hidden except during printSelectedIdCards() -->
+  <div id="bulkIdPrintArea"></div>
 
   <!-- ===== FLOATING ACTION BUTTON ===== -->
   <button class="fab" id="fab" aria-label="Add new" data-i18n-aria="btn.addNew">

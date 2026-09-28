@@ -281,13 +281,35 @@ async function showDashboard(sessionToken) {
     </div>
 
     <div class="panel" id="panel-billing">
-      <div class="card">
-        ${invoices.length ? invoices.map(inv => `
+      ${invoices.length ? invoices.map(inv => {
+        const total = Number(inv.total_amount || 0);
+        const paid  = Number(inv.paid_amount || 0);
+        const bal   = Math.max(0, total - paid);
+        const fmtAmt = n => Number(n || 0).toLocaleString();
+        return `
+        <div class="card">
           <div class="row">
-            <span>${esc(inv.invoice_number || ('Invoice #' + inv.id))} <span class="r-sub">${esc(fmtDate(inv.due_date))}</span></span>
-            <span class="badge b-${esc((inv.status || '').toLowerCase())}">${esc(inv.status)} · ${esc(String(inv.total_amount))}</span>
-          </div>`).join('') : `<div class="empty">No invoices yet.</div>`}
-      </div>
+            <span><strong>${esc(inv.invoice_number || ('Invoice #' + inv.id))}</strong>
+              <span class="r-sub">Due ${esc(fmtDate(inv.due_date))}</span></span>
+            <span class="badge b-${esc((inv.status || '').toLowerCase())}">${esc(inv.status)}</span>
+          </div>
+          ${(inv.items || []).map(it => `
+          <div class="row">
+            <span>${esc(it.description || '')}</span>
+            <span>${esc(fmtAmt(it.amount))}</span>
+          </div>`).join('')}
+          <div class="row">
+            <span class="r-sub">Total</span><span><strong>${esc(fmtAmt(total))}</strong></span>
+          </div>
+          ${paid ? `<div class="row"><span class="r-sub">Paid</span><span>${esc(fmtAmt(paid))}</span></div>` : ''}
+          ${bal ? `<div class="row"><span class="r-sub">Balance due</span><span><strong>${esc(fmtAmt(bal))}</strong></span></div>` : ''}
+          ${(inv.payments || []).map(p => `
+          <div class="row">
+            <span class="r-sub">Paid ${esc(fmtDate(p.payment_date))}${p.method ? ' · ' + esc(p.method) : ''}</span>
+            <span class="r-sub">${esc(fmtAmt(p.amount))}</span>
+          </div>`).join('')}
+        </div>`;
+      }).join('') : `<div class="card"><div class="empty">No invoices yet.</div></div>`}
     </div>
 
     <div class="panel" id="panel-leave">
