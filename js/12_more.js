@@ -300,94 +300,183 @@ window.showAdminInfo = function () {
   openModal(html);
 };
 
-/* ─── Manage classes & grades (admin) ──────────────────────────── */
+/* ─── Manage classes & grades (admin) ────────────────────────────
+ * Grade = the level (G1, KG…), class = a section inside a grade (Orchid 1…).
+ * Adding a class picks its grade in the same step, classes are shown under
+ * their grade, and a grade that still has classes can't be deleted out from
+ * under them. Stored as config.classes / config.grades (unchanged plain
+ * lists, so every other screen keeps working) plus config.class_grade, the
+ * link between them. Every action saves immediately and re-renders IN PLACE —
+ * the sheet is never closed and re-opened to refresh.
+ */
+
+let _cgBusy = false;
 
 window.openManageClassesModal = function () {
   if (!window.APP.is_admin) {
     showToast(t('cg.adminOnly'));
     return;
   }
-
-  const classes = window.getClassList();
-  const grades  = window.getGradeList();
-
-  const renderList = (items, listKey) => items.length
-    ? items.map(v => `
-        <div class="cg-row">
-          <span class="cg-name">${esc(v)}</span>
-          <button class="cg-remove" onclick="_cgRemove('${esc(listKey)}','${esc(v)}')" aria-label="${esc(t('picker.remove'))}">×</button>
-        </div>`).join('')
-    : `<div class="cg-empty">${t('cg.none')}</div>`;
-
   openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <h3 class="modal-title">${t('more.classes')}</h3>
-      <p class="modal-subtitle">${t('cg.hint')}</p>
-
-      <div class="cg-section">
-        <div class="cg-section-head">
-          <span class="cg-section-title">${t('cg.classes')}</span>
-          <span class="cg-section-count">${classes.length}</span>
-        </div>
-        <div class="cg-list" id="cgClassList">${renderList(classes, 'classes')}</div>
-        <div class="cg-add-row">
-          <input type="text" class="form-input" id="cgClassInput" placeholder="${esc(t('cg.classPh'))}" maxlength="20">
-          <button class="btn-primary" onclick="_cgAdd('classes','cgClassInput')">${t('common.add')}</button>
-        </div>
-      </div>
-
-      <div class="cg-section">
-        <div class="cg-section-head">
-          <span class="cg-section-title">${t('cg.grades')}</span>
-          <span class="cg-section-count">${grades.length}</span>
-        </div>
-        <div class="cg-list" id="cgGradeList">${renderList(grades, 'grades')}</div>
-        <div class="cg-add-row">
-          <input type="text" class="form-input" id="cgGradeInput" placeholder="${esc(t('cg.gradePh'))}" maxlength="20">
-          <button class="btn-primary" onclick="_cgAdd('grades','cgGradeInput')">${t('common.add')}</button>
-        </div>
-      </div>
-
+      <p class="modal-subtitle">${t('cg.hint2')}</p>
+      <div id="cgBody"></div>
       <button class="btn-secondary mt16" onclick="closeModal()">${t('common.done')}</button>
     </div>
   `);
+  _cgRender();
 };
 
-window._cgAdd = async function (listKey, inputId) {
-  const input = document.getElementById(inputId);
-  const v = (input?.value || '').trim();
-  if (!v) { showToast(t('picker.typeName')); return; }
-  const cfg = window.APP.config || {};
-  const cur = Array.isArray(cfg[listKey]) ? cfg[listKey].slice() : window[listKey === 'classes' ? 'getClassList' : 'getGradeList']();
-  if (cur.includes(v)) { showToast(t('cg.exists')); return; }
-  cur.push(v);
-  await _cgSave(listKey, cur);
-  // Re-open to refresh
-  closeModal();
-  setTimeout(openManageClassesModal, 200);
+function _cgRender(keep = {}) {
+  const el = document.getElementById('cgBody');
+  if (!el) return;
+  const grades  = window.getGradeList();
+  const classes = window.getClassList();
+  const map     = window.getClassGradeMap();
+
+  const byGrade = {};
+  grades.forEach(g => { byGrade[g] = []; });
+  const unassigned = [];
+  classes.forEach(c => (map[c] && byGrade[map[c]] ? byGrade[map[c]] : unassigned).push(c));
+
+  const noGrades = grades.length === 0;
+  const selGrade = keep.grade !== undefined ? keep.grade : (noGrades ? '__new__' : '');
+  const newMode  = selGrade === '__new__';
+
+  const chip = (c) => `
+    <span class="cgx-chip">${esc(c)}
+      <button type="button" class="cgx-x" data-c="${esc(c)}" onclick="_cgRemoveClass(this.dataset.c)" aria-label="${esc(t('picker.remove'))}">×</button>
+    </span>`;
+
+  const groups = grades.map(g => `
+    <div class="cgx-group">
+      <div class="cgx-group-head">
+        <span class="cgx-grade">${esc(g)}</span>
+        <span class="cgx-count">${t('cg.nClasses', { n: byGrade[g].length })}</span>
+        <button type="button" class="cgx-x" data-g="${esc(g)}" onclick="_cgRemoveGrade(this.dataset.g)"
+          aria-label="${esc(t('picker.remove'))}" ${byGrade[g].length ? 'disabled title="' + esc(t('cg.gradeHasClasses')) + '"' : ''}>×</button>
+      </div>
+      ${byGrade[g].length
+        ? `<div class="cgx-chips">${byGrade[g].map(chip).join('')}</div>`
+        : `<div class="cgx-empty">${t('cg.noClassesInGrade')}</div>`}
+    </div>`).join('');
+
+  const gradeOpts = grades.map(g => `<option value="${esc(g)}"${g === selGrade ? ' selected' : ''}>${esc(g)}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="cgx-add">
+      <div class="cgx-add-title">${t('cg.addClassTitle')}</div>
+      <div class="cgx-add-row">
+        <input type="text" class="form-input" id="cgClassName" placeholder="${esc(t('cg.classPh'))}" maxlength="20" value="${esc(keep.name || '')}">
+        <select class="form-input" id="cgClassGrade" onchange="_cgGradeSelectChanged(this)">
+          <option value="" disabled ${selGrade ? '' : 'selected'}>${t('cg.chooseGrade')}</option>
+          ${gradeOpts}
+          <option value="__new__"${newMode ? ' selected' : ''}>${t('cg.newGrade')}</option>
+        </select>
+      </div>
+      <div class="collapse${newMode ? ' open' : ''}" id="cgNewGradeWrap"${newMode ? '' : ' inert'}>
+        <div class="collapse-inner">
+          <input type="text" class="form-input" id="cgNewGrade" placeholder="${esc(t('cg.gradePh'))}" maxlength="20" value="${esc(keep.newGrade || '')}">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="_cgAddClass()">${t('cg.addClass')}</button>
+    </div>
+
+    ${groups}
+
+    ${unassigned.length ? `
+      <div class="cgx-group unassigned">
+        <div class="cgx-group-head"><span class="cgx-grade">${t('cg.unassigned')}</span></div>
+        <div class="cgx-empty" style="margin-bottom:6px">${t('cg.unassignedHint')}</div>
+        ${unassigned.map(c => `
+          <div class="cgx-unassigned-row">
+            <span class="cgx-name">${esc(c)}</span>
+            <select class="form-input" data-c="${esc(c)}" onchange="_cgAssign(this.dataset.c, this.value)">
+              <option value="" selected disabled>${t('cg.assign')}</option>
+              ${grades.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('')}
+            </select>
+            <button type="button" class="cgx-x" data-c="${esc(c)}" onclick="_cgRemoveClass(this.dataset.c)" aria-label="${esc(t('picker.remove'))}">×</button>
+          </div>`).join('')}
+      </div>` : ''}
+
+    <div class="cgx-grade-add">
+      <input type="text" class="form-input" id="cgGradeOnly" placeholder="${esc(t('cg.gradePh'))}" maxlength="20">
+      <button class="btn-secondary" style="width:auto;padding:0 16px" onclick="_cgAddGrade()">${t('cg.addGrade')}</button>
+    </div>
+  `;
+}
+
+window._cgGradeSelectChanged = function (sel) {
+  const wrap = document.getElementById('cgNewGradeWrap');
+  const isNew = sel.value === '__new__';
+  wrap.classList.toggle('open', isNew);
+  wrap.toggleAttribute('inert', !isNew);
+  if (isNew) setTimeout(() => document.getElementById('cgNewGrade')?.focus(), 280);
 };
 
-window._cgRemove = async function (listKey, value) {
-  if (!confirm(t('cg.confirmRemove', { value, list: t('picker.list.' + listKey) }))) return;
-  const cfg = window.APP.config || {};
-  const cur = Array.isArray(cfg[listKey]) ? cfg[listKey] : window[listKey === 'classes' ? 'getClassList' : 'getGradeList']();
-  await _cgSave(listKey, cur.filter(x => x !== value));
-  closeModal();
-  setTimeout(openManageClassesModal, 200);
+window._cgAddClass = async function () {
+  const name = (document.getElementById('cgClassName')?.value || '').trim();
+  let grade  = document.getElementById('cgClassGrade')?.value || '';
+  if (grade === '__new__') grade = (document.getElementById('cgNewGrade')?.value || '').trim();
+  if (!name)  { showToast(t('picker.typeName')); return; }
+  if (!grade) { showToast(t('cg.chooseGrade')); return; }
+
+  const classes = window.getClassList();
+  const grades  = window.getGradeList();
+  if (classes.includes(name)) { showToast(t('cg.exists')); return; }
+
+  const patch = { classes: [...classes, name], class_grade: { ...window.getClassGradeMap(), [name]: grade } };
+  if (!grades.includes(grade)) patch.grades = [...grades, grade];
+
+  // Keep the chosen grade selected so adding several classes to one grade is quick.
+  if (await _cgSave(patch)) _cgRender({ grade });
 };
 
-async function _cgSave(listKey, updated) {
+window._cgAddGrade = async function () {
+  const g = (document.getElementById('cgGradeOnly')?.value || '').trim();
+  if (!g) { showToast(t('picker.typeName')); return; }
+  const grades = window.getGradeList();
+  if (grades.includes(g)) { showToast(t('cg.exists')); return; }
+  if (await _cgSave({ grades: [...grades, g] })) _cgRender();
+};
+
+window._cgAssign = async function (cls, grade) {
+  if (!grade) return;
+  if (await _cgSave({ class_grade: { ...window.getClassGradeMap(), [cls]: grade } })) _cgRender();
+};
+
+window._cgRemoveClass = function (cls) {
+  showConfirm(t('cg.removeClassTitle'), t('cg.removeClassBody', { value: cls }), t('picker.remove'), async () => {
+    const map = { ...window.getClassGradeMap() };
+    delete map[cls];
+    if (await _cgSave({ classes: window.getClassList().filter(c => c !== cls), class_grade: map })) _cgRender();
+  });
+};
+
+window._cgRemoveGrade = function (grade) {
+  if (Object.values(window.getClassGradeMap()).includes(grade)) { showToast(t('cg.gradeHasClasses')); return; }
+  showConfirm(t('cg.removeGradeTitle'), t('cg.removeGradeBody', { value: grade }), t('picker.remove'), async () => {
+    if (await _cgSave({ grades: window.getGradeList().filter(g => g !== grade) })) _cgRender();
+  });
+};
+
+async function _cgSave(patch) {
+  if (_cgBusy) return false;
+  _cgBusy = true;
   try {
-    const res = await API.updateSchoolConfig({ [listKey]: updated });
+    const res = await API.updateSchoolConfig(patch);
     if (res && (res.ok === true || res.success === true)) {
-      window.APP.config = window.APP.config || {};
-      window.APP.config[listKey] = updated;
+      window.APP.config = Object.assign(window.APP.config || {}, patch);
       showToast(t('common.saved'));
-    } else {
-      showToast(t('common.saveFailedShort'));
+      return true;
     }
+    showToast(t('common.saveFailedShort'));
   } catch (e) {
     showToast(t('cg.couldNotSave', { err: e.message || t('common.unknown') }));
+  } finally {
+    _cgBusy = false;
   }
+  return false;
 }

@@ -374,6 +374,8 @@ function _idCardHtml(s, qrTargetId) {
   const brand  = `<div class="idc-brand">${logo ? `<img class="idc-logo" src="${esc(logo)}" alt="">` : ''}<div class="idc-school">${school}</div></div>`;
   const photo  = `<div class="idc-photo">${avatarContent(s)}</div>`;
   const qr     = `<div class="idc-qr" id="${qrTargetId}"></div>`;
+  const grade  = esc(window.getStudentGrade(s) || '');
+  const klass  = esc(s.class || '');
 
   if (vertical) {
     return `
@@ -382,7 +384,7 @@ function _idCardHtml(s, qrTargetId) {
         ${photo}
         <div class="idc-who">
           <div class="idc-name">${esc(s.name_en)}</div>
-          <div class="idc-class">${esc(s.class || '')}</div>
+          <div class="idc-class">${[grade, klass].filter(Boolean).join(' · ')}</div>
           <div class="idc-sid">${esc(s.student_id)}</div>
         </div>
         ${qr}
@@ -401,9 +403,9 @@ function _idCardHtml(s, qrTargetId) {
           <div class="idc-value idc-sid">${esc(s.student_id)}</div>
         </div>
         <div class="idc-bottom">
-          <div class="idc-field">
-            <div class="idc-label">Class</div>
-            <div class="idc-value">${esc(s.class || '')}</div>
+          <div class="idc-fields">
+            ${grade ? `<div class="idc-field"><div class="idc-label">Grade</div><div class="idc-value">${grade}</div></div>` : ''}
+            <div class="idc-field"><div class="idc-label">Class</div><div class="idc-value">${klass}</div></div>
           </div>
           ${qr}
         </div>
@@ -1036,12 +1038,23 @@ window.pickClassValue = function(targetInputId) {
   _openValuePicker({
     title:   t('picker.class.title'),
     items:   window.getClassList(),
+    meta:    window.getClassGradeMap(),          // shows each class's grade next to it
     current: document.getElementById(targetInputId)?.value || '',
-    onPick:  (v) => _setValueAndLabel(targetInputId, v),
+    onPick:  (v) => {
+      _setValue(targetInputId, v);
+      // Class decides grade: picking "Orchid 1" fills "G1" so the two can't
+      // drift apart. (The grade can still be changed by hand afterwards.)
+      const g = window.getClassGrade(v);
+      if (g) _setValue('newStuGrade', g);
+      closeModal();
+    },
     addLabel: t('picker.class.addLabel'),
     onAdd:    (newVal) => {
-      _setValueAndLabel(targetInputId, newVal);
-      _persistConfigList('classes', newVal);
+      _setValue(targetInputId, newVal);
+      // A class created from the student form joins whichever grade is already
+      // chosen in the form, so it lands under that grade instead of "unassigned".
+      _persistNewClass(newVal, document.getElementById('newStuGrade')?.value || '');
+      closeModal();
     },
     allowEditList: true,
     listKey: 'classes',
@@ -1053,30 +1066,30 @@ window.pickGradeValue = function(targetInputId) {
     title:   t('picker.grade.title'),
     items:   window.getGradeList(),
     current: document.getElementById(targetInputId)?.value || '',
-    onPick:  (v) => _setValueAndLabel(targetInputId, v),
+    onPick:  (v) => { _setValue(targetInputId, v); closeModal(); },
     addLabel: t('picker.grade.addLabel'),
     onAdd:    (newVal) => {
-      _setValueAndLabel(targetInputId, newVal);
+      _setValue(targetInputId, newVal);
       _persistConfigList('grades', newVal);
+      closeModal();
     },
     allowEditList: true,
     listKey: 'grades',
   });
 };
 
-function _setValueAndLabel(targetInputId, v) {
+function _setValue(targetInputId, v) {
   const input = document.getElementById(targetInputId);
   const label = document.getElementById(targetInputId + '_label');
   if (input) input.value = v;
   if (label) label.textContent = v || t('picker.select');
-  closeModal();
 }
 
-function _openValuePicker({ title, items, current, onPick, addLabel, onAdd, allowEditList, listKey }) {
+function _openValuePicker({ title, items, meta, current, onPick, addLabel, onAdd, allowEditList, listKey }) {
   const itemsHtml = items.length
     ? items.map(v => `
         <button type="button" class="vp-row ${v === current ? 'sel' : ''}" onclick="_vpPick('${esc(v)}')">
-          <span class="vp-label">${esc(v)}</span>
+          <span class="vp-label">${esc(v)}${meta && meta[v] ? `<span class="vp-meta">${esc(meta[v])}</span>` : ''}</span>
           ${v === current ? '<span class="vp-check">✓</span>' : ''}
           ${allowEditList && window.APP.is_admin ? `<button class="vp-delete" onclick="event.stopPropagation(); _vpDeleteFromList('${esc(listKey)}','${esc(v)}')" aria-label="${esc(t('picker.remove'))}" title="${esc(t('picker.removeFromList'))}">×</button>` : ''}
         </button>`).join('')
@@ -1121,6 +1134,19 @@ window._vpDeleteFromList = async function(listKey, value) {
     showToast(t('common.saveFailed'));
   }
 };
+
+async function _persistNewClass(cls, grade) {
+  const cur = window.getClassList();
+  if (cur.includes(cls)) return;
+  const patch = { classes: [...cur, cls] };
+  if (grade) patch.class_grade = { ...window.getClassGradeMap(), [cls]: grade };
+  window.APP.config = Object.assign(window.APP.config || {}, patch);
+  try {
+    await API.updateSchoolConfig(patch);
+  } catch (e) {
+    console.warn('[config] save failed', e);
+  }
+}
 
 async function _persistConfigList(listKey, newValue) {
   const cfg = window.APP.config || {};

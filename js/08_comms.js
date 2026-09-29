@@ -83,15 +83,14 @@ async function doDeleteComm(id) {
 
 window.openParentCommModal = function() {
   _commPickedStudent = null;
-  const classes  = [...new Set(window.APP.students.map(s => s.class).filter(Boolean))].sort();
-  const types    = ['General','Absent Alert','Daily Report','Praise','Incident','Homework','Broadcast'];
+  const types   = ['General','Absent Alert','Daily Report','Praise','Incident','Homework','Broadcast'];
   // Pre-select whichever list filter was active when "+" was tapped (a head
-  // start, not a lock-in) — but it's a real dropdown IN the form now, so
-  // typing a message no longer requires having pre-picked the right filter
-  // chip first. If the active filter is "All", default to "General".
+  // start, not a lock-in) — it's a real dropdown IN the form, so typing a
+  // message never requires having pre-picked the right filter chip first.
   const defaultType = types.includes(_commsType) ? _commsType : 'General';
+  const hasClasses  = window.getClassList().length > 0;
 
-  const html = `
+  openModal(`
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <h3 class="modal-title">${t('comms.sendTitle')}</h3>
@@ -102,24 +101,26 @@ window.openParentCommModal = function() {
       </select>
 
       <label class="field-label">${t('comms.sendTo')}</label>
-      <div class="pill-group" id="commTargetPills">
-        <button type="button" class="pill active" data-value="class" onclick="togglePill(this,'commTargetPills');toggleCommTarget('class')">${t('comms.wholeClass')}</button>
-        <button type="button" class="pill" data-value="student" onclick="togglePill(this,'commTargetPills');toggleCommTarget('student')">${t('comms.individual')}</button>
+      <div class="seg" id="commTargetSeg" role="tablist">
+        <span class="seg-thumb"></span>
+        <button type="button" class="seg-opt on" role="tab" aria-selected="true"  data-target="class"   onclick="setCommTarget('class')">${t('comms.wholeClass')}</button>
+        <button type="button" class="seg-opt"    role="tab" aria-selected="false" data-target="student" onclick="setCommTarget('student')">${t('comms.individual')}</button>
       </div>
 
-      <div id="commClassTarget">
-        <label class="field-label">${t('comms.class')}</label>
-        <select class="form-input" id="commClass">
-          ${classes.map(c => `<option>${esc(c)}</option>`).join('')}
-        </select>
+      <div class="collapse open" id="commClassTarget">
+        <div class="collapse-inner">
+          <label class="field-label">${t('comms.class')}</label>
+          ${hasClasses
+            ? `<select class="form-input" id="commClass">${window.classOptionsHtml('')}</select>`
+            : `<div class="muted" style="font-size:13px;padding:8px 0">${t('comms.noClasses')}</div>`}
+        </div>
       </div>
 
-      <div id="commStudentTarget" style="display:none">
-        <label class="field-label">${t('comms.student')}</label>
-        <button type="button" class="picker-trigger" id="commStuTrigger" onclick="commPickStudent()">
-          <span id="commStuTriggerText">${t('comms.chooseStudent')}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
+      <div class="collapse" id="commStudentTarget" inert>
+        <div class="collapse-inner">
+          <label class="field-label">${t('comms.student')}</label>
+          <button type="button" class="picker-trigger placeholder" id="commStuTrigger" onclick="commPickStudent()"></button>
+        </div>
       </div>
 
       <label class="field-label">${t('comms.message')}</label>
@@ -127,39 +128,70 @@ window.openParentCommModal = function() {
 
       <button class="btn-primary mt16" id="sendCommBtn" onclick="sendParentComm()">${t('comms.send')}</button>
       <button class="btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
-    </div>`;
-
-  openModal(html);
+    </div>`);
+  _commRenderStudentTrigger();
 };
 
-window.toggleCommTarget = function(target) {
-  document.getElementById('commClassTarget').style.display   = target === 'class'   ? 'block' : 'none';
-  document.getElementById('commStudentTarget').style.display = target === 'student' ? 'block' : 'none';
+// Whole class / Individual. One place decides the state: the segmented
+// control's data-target. The two panes animate open/closed; the hidden one is
+// `inert` so it can't be tabbed into or tapped while collapsed.
+window.setCommTarget = function(target) {
+  const seg = document.getElementById('commTargetSeg');
+  if (!seg) return;
+  const idx = target === 'student' ? 1 : 0;
+  seg.style.setProperty('--i', idx);
+  seg.querySelectorAll('.seg-opt').forEach(b => {
+    const on = b.dataset.target === target;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  const cls = document.getElementById('commClassTarget');
+  const stu = document.getElementById('commStudentTarget');
+  cls.classList.toggle('open', target === 'class');
+  stu.classList.toggle('open', target === 'student');
+  cls.toggleAttribute('inert', target !== 'class');
+  stu.toggleAttribute('inert', target !== 'student');
 };
+
+function _commTarget() {
+  return document.querySelector('#commTargetSeg .seg-opt.on')?.dataset.target || 'class';
+}
+
+function _commRenderStudentTrigger() {
+  const el = document.getElementById('commStuTrigger');
+  if (!el) return;
+  const s = _commPickedStudent;
+  const chevron = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
+  if (!s) {
+    el.classList.add('placeholder');
+    el.innerHTML = `<span>${t('comms.chooseStudent')}</span>${chevron}`;
+    return;
+  }
+  const hex = s.home_color ? homeColorHex(s.home_color) : '#8A8A82';
+  const grade = window.getStudentGrade(s);
+  el.classList.remove('placeholder');
+  el.innerHTML = `
+    <span class="comm-stu-pick">
+      <span class="picker-avatar" style="background:${hex}">${avatarContent(s)}</span>
+      <span class="comm-stu-text">
+        <div class="comm-stu-name">${esc(s.name_en || s.name_local)}</div>
+        <div class="comm-stu-sub">${esc([grade, s.class].filter(Boolean).join(' · '))}</div>
+      </span>
+    </span>${chevron}`;
+}
 
 window.commPickStudent = function() {
-  // Close the comm modal temporarily, then open the picker
-  const overlay = document.getElementById('modalOverlay');
-  const savedHtml = overlay.innerHTML;
-
+  // The message modal STAYS OPEN underneath: the picker is just another layer
+  // on the modal stack, and closing it reveals this form exactly as it was
+  // (typed text, chosen purpose and all). It used to clone the modal's HTML
+  // and re-open the clone, which stacked a second copy of the form — with
+  // duplicate element ids, so taps hit the wrong copy — and needed several
+  // Close taps to get out.
+  const clsSel = document.getElementById('commClass');
   openStudentPicker({
-    title:   t('comms.pickerTitle'),
-    onPick:  (s) => {
-      _commPickedStudent = s;
-      // Restore the comm modal
-      openModal(savedHtml);
-      setTimeout(() => {
-        // Re-select the Individual pill state
-        const indivPill = document.querySelectorAll('#commTargetPills .pill')[1];
-        if (indivPill) {
-          document.querySelectorAll('#commTargetPills .pill').forEach(p => p.classList.remove('active'));
-          indivPill.classList.add('active');
-          toggleCommTarget('student');
-        }
-        const trig = document.getElementById('commStuTriggerText');
-        if (trig) trig.textContent = `${s.name_en || s.name_local} (${s.class})`;
-      }, 50);
-    },
+    title:  t('comms.pickerTitle'),
+    classFilter: clsSel?.value || 'All',
+    onPick: (s) => { _commPickedStudent = s; _commRenderStudentTrigger(); },
   });
 };
 
@@ -168,16 +200,20 @@ window.sendParentComm = async function() {
   const msg = document.getElementById('commMsg').value.trim();
   if (!msg) { showToast(t('comms.msgRequired')); return; }
 
-  const isIndividual = document.querySelector('#commTargetPills .pill.active')?.dataset.value === 'student';
+  const isIndividual = _commTarget() === 'student';
+  const className = document.getElementById('commClass')?.value || '';
   if (isIndividual && !_commPickedStudent) {
     showToast(t('comms.pickStudentFirst')); return;
+  }
+  if (!isIndividual && !className) {
+    showToast(t('comms.pickClassFirst')); return;
   }
 
   btn.disabled = true; btn.textContent = t('comms.sending');
   try {
        const res = await API.sendParentComm({
       message_preview: msg,
-      class:           isIndividual ? (_commPickedStudent?.class || '') : document.getElementById('commClass')?.value,
+      class:           isIndividual ? (_commPickedStudent?.class || '') : className,
       student_id:      isIndividual ? _commPickedStudent?.student_id   : null,
       name_en:         isIndividual ? _commPickedStudent?.name_en      : null,
       type:            document.getElementById('commType')?.value || 'General',

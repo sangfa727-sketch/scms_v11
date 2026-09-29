@@ -631,14 +631,26 @@ window.closeModal = function(onCloseOverride) {
   const overlay = document.getElementById('modalOverlay');
   const top = window._modalStack.pop();
   if (!top) {
-    overlay.classList.remove('active');
-    overlay.innerHTML = '';
+    // Nothing left on the stack. Only wipe the overlay once no sheet is still
+    // animating out (a second tap during the exit animation used to hit this
+    // branch and make the sheet vanish mid-slide).
+    if (!overlay.querySelector('.modal-layer')) {
+      overlay.classList.remove('active');
+      overlay.innerHTML = '';
+    }
     return;
   }
-  top.layer.remove();
-  if (!window._modalStack.length) {
-    overlay.classList.remove('active');
-  }
+  // Slide/fade the sheet out instead of yanking it from the DOM. The layer is
+  // already off the stack, so it can't be closed twice, and .closing makes it
+  // ignore taps while it animates.
+  const layer = top.layer;
+  layer.classList.add('closing');
+  // The sheet lingers ~220ms while it animates out. Strip its ids so a modal
+  // re-opened in that window (same ids) is never shadowed by the dying copy
+  // when code does document.getElementById(...).
+  layer.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  if (!window._modalStack.length) overlay.classList.remove('active'); // backdrop fades with the sheet
+  setTimeout(() => layer.remove(), 220);
   const cb = onCloseOverride || top.onClose;
   if (typeof cb === 'function') cb();
 };

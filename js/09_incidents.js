@@ -91,6 +91,22 @@ window.openIncidentModal = function(prefillStudent) {
   });
 };
 
+// Re-choosing the student from INSIDE the open form: the form stays open under
+// the picker, so just update the trigger in place. (Re-rendering the form here
+// stacked a second copy on top of the first — typed text lost, two Close taps.)
+window._incRepickStudent = function() {
+  openStudentPicker({
+    title:  t('inc.pickerTitle'),
+    onPick: (s) => {
+      _incPickedStudent = s;
+      const label = document.getElementById('incStuLabel');
+      const meta  = document.getElementById('incStuMeta');
+      if (label) label.textContent = s.name_en || s.name_local || t('inc.tapChoose');
+      if (meta)  { meta.textContent = s.class || ''; meta.style.display = s.class ? '' : 'none'; }
+    },
+  });
+};
+
 function _renderIncidentForm() {
   const s = _incPickedStudent || {};
   const types      = window.APP.config?.incident_types ||
@@ -103,9 +119,9 @@ function _renderIncidentForm() {
       <h3 class="modal-title">${t('inc.logTitle')}</h3>
 
       <label class="field-label">${t('inc.student')}</label>
-      <button type="button" class="picker-trigger" onclick="openIncidentModal()">
-        <span>${esc(s.name_en || s.name_local || t('inc.tapChoose'))}</span>
-        ${s.class ? `<span class="picker-trigger-meta">${esc(s.class)}</span>` : ''}
+      <button type="button" class="picker-trigger" onclick="_incRepickStudent()">
+        <span id="incStuLabel">${esc(s.name_en || s.name_local || t('inc.tapChoose'))}</span>
+        <span class="picker-trigger-meta" id="incStuMeta" style="${s.class ? '' : 'display:none'}">${esc(s.class || '')}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
 

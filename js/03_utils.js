@@ -209,6 +209,55 @@ window.getGradeList = function() {
   );
   return [...set].sort();
 };
+/* ─── Class ↔ Grade link ──────────────────────────────────────────────────
+ * A grade is the level (G1, KG…); a class is a section inside a grade
+ * (Orchid 1…). The link lives in config.class_grade = { "Orchid 1": "G1" }.
+ * It is additive: config.classes / config.grades stay plain lists, so every
+ * screen that already reads them keeps working. For schools that never set
+ * the link, it is inferred from their students (the grade most students of
+ * that class carry), so nothing looks "unassigned" without reason.
+ */
+window.getClassGradeMap = function() {
+  const cfg = window.APP.config || {};
+  const explicit = (cfg.class_grade && typeof cfg.class_grade === 'object') ? cfg.class_grade : {};
+  const students = window.APP.students || [];
+  const out = {};
+  window.getClassList().forEach(c => {
+    if (explicit[c]) { out[c] = explicit[c]; return; }
+    const counts = {};
+    students.forEach(s => { if (s.class === c && s.grade) counts[s.grade] = (counts[s.grade] || 0) + 1; });
+    const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    if (best) out[c] = best[0];
+  });
+  return out;
+};
+
+window.getClassGrade = function(cls) {
+  return (cls && window.getClassGradeMap()[cls]) || '';
+};
+
+/** Grade to show for a student: the class's configured grade wins (so moving
+ *  a class to another grade is reflected everywhere), then the student's own
+ *  grade field, then whatever the class's students mostly carry. */
+window.getStudentGrade = function(s) {
+  if (!s) return '';
+  const ex = ((window.APP.config || {}).class_grade || {})[s.class];
+  return ex || s.grade || window.getClassGrade(s.class);
+};
+
+/** <option>/<optgroup> HTML for a class <select>, grouped by grade. */
+window.classOptionsHtml = function(selected) {
+  const map = window.getClassGradeMap();
+  const grades = window.getGradeList();
+  const opt = c => `<option value="${esc(c)}"${c === selected ? ' selected' : ''}>${esc(c)}</option>`;
+  const classes = window.getClassList();
+  const groups = grades.map(g => ({ g, list: classes.filter(c => map[c] === g) })).filter(x => x.list.length);
+  const rest = classes.filter(c => !map[c] || !grades.includes(map[c]));
+  if (!groups.length) return classes.map(opt).join('');
+  return groups.map(x => `<optgroup label="${esc(x.g)}">${x.list.map(opt).join('')}</optgroup>`).join('')
+       + rest.map(opt).join('');
+};
+
 /* ─── Subjects (shared by Homework + Grades — single source of truth) ──── */
 
 window._ensureSubjectsLoaded = async function(force = false) {
