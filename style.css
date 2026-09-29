@@ -875,6 +875,68 @@ a { color: inherit; }
   to   { transform: translateY(0); }
 }
 
+/* Modal motion: sheet slides up on phones / pops on desktop, and both play in
+   reverse on close (see closeModal in 14_app.js, which keeps the layer in the
+   DOM for ~220ms). Stacked sheets: the one underneath steps back so it's
+   obvious which layer you are on. */
+.modal-layer.closing { pointer-events: none; }
+.modal-layer.closing .modal-sheet {
+  animation: sheetOut 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes sheetOut { to { transform: translateY(100%); opacity: 0.6; } }
+@keyframes sheetPop {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes sheetPopOut { to { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@media (min-width: 640px) {
+  .modal-sheet { animation: sheetPop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .modal-layer.closing .modal-sheet { animation: sheetPopOut 0.16s ease-in forwards; }
+}
+.modal-layer:not(:last-child) { pointer-events: none; }
+.modal-layer:not(:last-child) .modal-sheet {
+  transform: scale(0.96);
+  filter: brightness(0.93);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), filter 0.28s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-sheet, .modal-layer.closing .modal-sheet { animation: none !important; }
+  .modal-layer:not(:last-child) .modal-sheet { transition: none; }
+}
+
+/* ── Segmented control (2+ options, sliding thumb) ────────────────────────── */
+.seg {
+  --n: 2;
+  position: relative;
+  display: grid; grid-template-columns: repeat(var(--n), 1fr);
+  padding: 3px; margin-bottom: 4px;
+  background: var(--bg2); border: 0.5px solid var(--border); border-radius: 12px;
+}
+.seg-thumb {
+  position: absolute; top: 3px; bottom: 3px; left: 3px;
+  width: calc((100% - 6px) / var(--n));
+  background: var(--surface); border-radius: 9px; box-shadow: var(--shadow);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.seg-opt {
+  position: relative; z-index: 1;
+  padding: 10px 8px; border: none; background: transparent; border-radius: 9px;
+  font: inherit; font-size: 13.5px; font-weight: 600; color: var(--muted);
+  cursor: pointer; transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.seg-opt.on { color: var(--text); }
+
+/* ── Collapsible pane (animates height without measuring it) ──────────────── */
+.collapse {
+  display: grid; grid-template-rows: 0fr; opacity: 0;
+  transition: grid-template-rows 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s;
+}
+.collapse.open { grid-template-rows: 1fr; opacity: 1; }
+.collapse > .collapse-inner { overflow: hidden; min-height: 0; }
+@media (prefers-reduced-motion: reduce) { .collapse, .seg-thumb { transition: none; } }
+
 @media (min-width: 900px) {
   #studentList, #admissionsList, #billingInvoiceList, #dailyList {
     display: grid;
@@ -3904,7 +3966,8 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 .id-card:not(.id-card-vertical) .idc-bottom {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 3cqw;
 }
-.id-card:not(.id-card-vertical) .idc-bottom .idc-value { font-size: 4cqw; }
+.id-card:not(.id-card-vertical) .idc-bottom .idc-value { font-size: 3.8cqw; }
+.idc-fields { display: flex; flex-direction: column; gap: 2cqw; min-width: 0; }
 .id-card:not(.id-card-vertical) .idc-qr { width: 21cqw; height: 21cqw; }
 
 /* Vertical */
@@ -4314,3 +4377,52 @@ button, .tab-btn, .att-code-pill, .pill, .chip {
 /* Sidebar: profile row removed (name/role already in the top bar) → more room for the menu */
 .sidebar-signout { color: #EF4444; }
 .sidebar-signout .sidebar-label { color: #EF4444; }
+
+
+/* ── Classes & grades (grade → classes) ───────────────────────────────────── */
+.cgx-add {
+  background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius);
+  padding: 12px; margin-bottom: 16px;
+}
+.cgx-add-title { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.cgx-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cgx-add .form-input { background: var(--surface); }
+.cgx-add .collapse-inner { padding-top: 8px; }
+.cgx-add .btn-primary { margin-top: 10px; }
+.cgx-group {
+  border: 0.5px solid var(--border); border-radius: var(--radius);
+  padding: 10px 12px 12px; margin-bottom: 10px; background: var(--surface);
+}
+.cgx-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.cgx-grade { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 700; }
+.cgx-count { font-size: 12px; color: var(--muted); margin-right: auto; }
+.cgx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cgx-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 6px 6px 12px; border-radius: 999px;
+  background: var(--bg2); border: 0.5px solid var(--border); font-size: 13.5px; font-weight: 500;
+  animation: cgxIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes cgxIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+.cgx-x {
+  width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
+  color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.cgx-x:hover { background: var(--border); color: var(--text); }
+.cgx-x:disabled { opacity: .3; pointer-events: none; }
+.cgx-empty { font-size: 12.5px; color: var(--muted); padding: 2px 0; }
+.cgx-group.unassigned { border-style: dashed; background: transparent; }
+.cgx-unassigned-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.cgx-unassigned-row .cgx-name { flex: 1; font-size: 14px; font-weight: 500; }
+.cgx-unassigned-row select { max-width: 45%; padding: 7px 8px; font-size: 13px; }
+.cgx-grade-add { display: flex; gap: 8px; margin-top: 4px; }
+.cgx-grade-add .form-input { flex: 1; }
+.vp-meta { font-size: 11.5px; color: var(--muted); margin-left: 8px; }
+
+/* ── Parent message: chosen-student row ───────────────────────────────────── */
+.comm-stu-pick { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; }
+.comm-stu-pick .picker-avatar { flex: 0 0 auto; }
+.comm-stu-pick .comm-stu-text { flex: 1; min-width: 0; }
+.comm-stu-pick .comm-stu-name { font-weight: 600; font-size: 14px; }
+.comm-stu-pick .comm-stu-sub  { font-size: 12px; color: var(--muted); }
